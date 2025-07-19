@@ -1,0 +1,19 @@
+[package]
+name = "my_crate"
+version = "0.1.0"
+edition = "2021"
+authors = ["Diogo Ribeiro <dfr@esmad.ipp.pt>"]
+description = "An example crate showcasing CI, tests and benchmarks"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/DiogoRibeiro7/my_crate"
+readme = "README.md"
+keywords = ["example", "hello-world", "ci"]
+categories = ["command-line-utilities", "data-structures"]
+documentation = "https://docs.rs/my_crate"
+homepage = "https://github.com/DiogoRibeiro7/my_crate"
+exclude = ["/target"]
+
+[dependencies]
+
+[dev-dependencies]
+criterion = "0.5"
