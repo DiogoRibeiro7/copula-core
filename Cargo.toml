@@ -3,12 +3,12 @@
 [package]
 name = "copulas"
 version = "0.1.0"
-edition = "2025"
-authors = ["Your Name <your.email@example.com>"]
+edition = "2021"  # Fixed: was "2025"
+authors = ["Diogo Ribeiro <your.email@example.com>"]
 license = "MIT OR Apache-2.0"
 description = "A comprehensive Rust library for copula modeling, estimation, and simulation"
-homepage = "https://github.com/username/copulas-rs"
-repository = "https://github.com/username/copulas-rs"
+homepage = "https://github.com/diogoribeiro7/copulas-rs"
+repository = "https://github.com/diogoribeiro7/copulas-rs"
 documentation = "https://docs.rs/copulas"
 readme = "README.md"
 keywords = ["statistics", "copula", "finance", "risk", "mathematics"]
@@ -41,6 +41,7 @@ rayon = { version = "1.7", optional = true }
 
 # Serialization support
 serde = { version = "1.0", features = ["derive"], optional = true }
+serde_json = { version = "1.0", optional = true }
 
 # Special functions and numerical methods
 libm = "0.2"
@@ -68,7 +69,7 @@ estimation = ["argmin"]
 parallel = ["rayon"]
 
 # Serialization support
-serde = ["dep:serde", "nalgebra/serde-serialize"]
+serde = ["dep:serde", "dep:serde_json", "nalgebra/serde-serialize"]
 
 # All features for comprehensive testing
 full = ["estimation", "parallel", "serde"]
