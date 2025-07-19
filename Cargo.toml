@@ -1,19 +1,114 @@
+# Cargo.toml
+
 [package]
-name = "my_crate"
+name = "copulas"
 version = "0.1.0"
-edition = "2021"
-authors = ["Diogo Ribeiro <dfr@esmad.ipp.pt>"]
-description = "An example crate showcasing CI, tests and benchmarks"
+edition = "2025"
+authors = ["Your Name <your.email@example.com>"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/DiogoRibeiro7/my_crate"
+description = "A comprehensive Rust library for copula modeling, estimation, and simulation"
+homepage = "https://github.com/username/copulas-rs"
+repository = "https://github.com/username/copulas-rs"
+documentation = "https://docs.rs/copulas"
 readme = "README.md"
-keywords = ["example", "hello-world", "ci"]
-categories = ["command-line-utilities", "data-structures"]
-documentation = "https://docs.rs/my_crate"
-homepage = "https://github.com/DiogoRibeiro7/my_crate"
-exclude = ["/target"]
+keywords = ["statistics", "copula", "finance", "risk", "mathematics"]
+categories = ["science", "mathematics", "algorithms"]
+exclude = [
+    "docs/*",
+    "scripts/*",
+    ".github/*",
+    "*.py",
+    "*.R"
+]
 
 [dependencies]
+# Core mathematical operations
+nalgebra = { version = "0.32", features = ["serde-serialize"] }
+statrs = "0.16"
+
+# Random number generation
+rand = "0.8"
+rand_distr = "0.4"
+
+# Error handling
+thiserror = "1.0"
+
+# Optimization (for parameter estimation)
+argmin = { version = "0.8", optional = true }
+
+# Parallel processing
+rayon = { version = "1.7", optional = true }
+
+# Serialization support
+serde = { version = "1.0", features = ["derive"], optional = true }
+
+# Special functions and numerical methods
+libm = "0.2"
 
 [dev-dependencies]
-criterion = "0.5"
+# Testing and benchmarking
+approx = "0.5"
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.0"
+
+# Additional test utilities
+tempfile = "3.0"
+csv = "1.2"
+
+[features]
+default = ["std"]
+
+# Standard library support
+std = []
+
+# Parameter estimation capabilities
+estimation = ["argmin"]
+
+# Parallel processing
+parallel = ["rayon"]
+
+# Serialization support
+serde = ["dep:serde", "nalgebra/serde-serialize"]
+
+# All features for comprehensive testing
+full = ["estimation", "parallel", "serde"]
+
+# Experimental features (unstable API)
+experimental = []
+
+[[bench]]
+name = "copula_evaluation"
+harness = false
+
+[[bench]]
+name = "parameter_estimation"
+harness = false
+required-features = ["estimation"]
+
+[[bench]]
+name = "sampling_performance"
+harness = false
+
+[[example]]
+name = "basic_usage"
+required-features = ["std"]
+
+[[example]]
+name = "parameter_estimation"
+required-features = ["estimation"]
+
+[[example]]
+name = "risk_management"
+required-features = ["std"]
+
+[package.metadata.docs.rs]
+features = ["full"]
+rustdoc-args = ["--cfg", "docsrs"]
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.bench]
+debug = true
