@@ -18,8 +18,11 @@ exclude = [
     "scripts/*",
     ".github/*",
     "*.py",
-    "*.R"
+    "*.R",
 ]
+
+[lib]
+doctest = false
 
 [dependencies]
 # Core mathematical operations
@@ -92,14 +95,17 @@ harness = false
 
 [[example]]
 name = "basic_usage"
+path = "examples/basic_usage.rs"
 required-features = ["std"]
 
 [[example]]
 name = "parameter_estimation"
+path = "examples/parameter_estimation.rs"
 required-features = ["estimation"]
 
 [[example]]
 name = "risk_management"
+path = "examples/risk_management.rs"
 required-features = ["std"]
 
 [package.metadata.docs.rs]

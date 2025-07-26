@@ -21,45 +21,32 @@
 pub use crate::error::{CopulaError, Result};
 
 // Main traits
-pub use crate::traits::{Copula, ArchimedeanCopula};
+pub use crate::traits::{ArchimedeanCopula, Copula};
 
 #[cfg(feature = "estimation")]
 pub use crate::traits::FittableCopula;
 
 // Utility functions
 pub use crate::utils::{
-    to_pseudo_observations, 
-    empirical_ranks, 
-    kendall_tau, 
-    spearman_rho,
-    validate_correlation_matrix,
-    empirical_copula_cdf,
-    multivariate_kendall_tau,
-    multivariate_spearman_rho,
-    remove_missing_values,
-    information_criteria,
+    empirical_copula_cdf, empirical_ranks, information_criteria, kendall_tau,
+    multivariate_kendall_tau, multivariate_spearman_rho, remove_missing_values, spearman_rho,
+    to_pseudo_observations, validate_correlation_matrix,
 };
 
 // Elliptical copulas
 pub use crate::elliptical::{GaussianCopula, StudentTCopula};
 
 // Archimedean copulas
-pub use crate::archimedean::{
-    ClaytonCopula, 
-    GumbelCopula, 
-    FrankCopula, 
-    JoeCopula, 
-    AMHCopula
-};
+pub use crate::archimedean::{AMHCopula, ClaytonCopula, FrankCopula, GumbelCopula, JoeCopula};
 
 // Other copula families
-pub use crate::other::{MarshallOlkinCopula, EmpiricalCopula};
+pub use crate::other::{EmpiricalCopula, MarshallOlkinCopula};
 
 // External types commonly used with copulas
 pub use nalgebra::{DMatrix, DVector};
 
 // Random number generation (commonly needed for sampling)
-pub use rand::{Rng, thread_rng};
+pub use rand::{thread_rng, Rng};
 
 // Re-export some useful constants
 /// Commonly used confidence levels for statistical tests

@@ -6,7 +6,6 @@
 //! used throughout the library. All copula operations that can fail return a
 //! [`Result<T>`] where the error type is [`CopulaError`].
 
-use std::fmt;
 
 /// Result type used throughout the copulas library.
 pub type Result<T> = std::result::Result<T, CopulaError>;
@@ -296,11 +295,7 @@ pub fn validate_range(value: f64, min: f64, max: f64, name: &str) -> Result<()> 
 }
 
 /// Validate matrix dimensions.
-pub fn validate_dimensions(
-    expected: usize,
-    actual: usize,
-    context: &str,
-) -> Result<()> {
+pub fn validate_dimensions(expected: usize, actual: usize, _context: &str) -> Result<()> {
     if expected == actual {
         Ok(())
     } else {
@@ -328,7 +323,7 @@ mod tests {
     fn test_validate_unit_range() {
         // Valid range
         assert!(validate_unit_range(&[0.0, 0.5, 1.0]).is_ok());
-        
+
         // Invalid range
         assert!(validate_unit_range(&[-0.1, 0.5]).is_err());
         assert!(validate_unit_range(&[0.5, 1.1]).is_err());

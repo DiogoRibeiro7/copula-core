@@ -1,6 +1,6 @@
-use my_crate::hello;
+use copulas::VERSION;
 
 #[test]
-fn it_says_hello() {
-    assert_eq!(hello(), "Hello, world!");
+fn version_is_nonempty() {
+    assert!(!VERSION.is_empty());
 }

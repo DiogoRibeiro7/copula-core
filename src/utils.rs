@@ -5,9 +5,8 @@
 //! This module provides essential utility functions for working with copulas,
 //! including data transformation, rank computation, and dependence measures.
 
-use crate::error::{Result, CopulaError, validate_finite_data};
-use nalgebra::{DMatrix, DVector};
-use std::collections::HashMap;
+use crate::error::{validate_finite_data, CopulaError, Result};
+use nalgebra::DMatrix;
 
 /// Convert raw data to pseudo-observations (empirical copula).
 ///
@@ -51,24 +50,24 @@ use std::collections::HashMap;
 /// Returns [`CopulaError::DataError`] if the data contains non-finite values.
 pub fn to_pseudo_observations(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
     let (n_rows, n_cols) = data.shape();
-    
+
     if n_rows == 0 || n_cols == 0 {
         return Err(CopulaError::data_error("Data matrix is empty"));
     }
-    
+
     let mut pseudo_obs = DMatrix::<f64>::zeros(n_rows, n_cols);
-    
+
     for j in 0..n_cols {
         let column: Vec<f64> = data.column(j).iter().cloned().collect();
         validate_finite_data(&column, &format!("column {}", j))?;
-        
+
         let ranks = empirical_ranks(&column)?;
-        
+
         for i in 0..n_rows {
             pseudo_obs[(i, j)] = ranks[i] / (n_rows as f64 + 1.0);
         }
     }
-    
+
     Ok(pseudo_obs)
 }
 
@@ -104,41 +103,39 @@ pub fn empirical_ranks(data: &[f64]) -> Result<Vec<f64>> {
     if n == 0 {
         return Ok(vec![]);
     }
-    
+
     validate_finite_data(data, "input data")?;
-    
+
     // Create indexed data for sorting while preserving original positions
-    let mut indexed_data: Vec<(f64, usize)> = data.iter()
-        .enumerate()
-        .map(|(i, &x)| (x, i))
-        .collect();
-    
+    let mut indexed_data: Vec<(f64, usize)> =
+        data.iter().enumerate().map(|(i, &x)| (x, i)).collect();
+
     // Sort by value
     indexed_data.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-    
+
     let mut ranks = vec![0.0; n];
     let mut i = 0;
-    
+
     while i < n {
         let current_value = indexed_data[i].0;
         let start_rank = i + 1; // 1-indexed
-        
+
         // Find all equal values
         let mut j = i;
         while j < n && (indexed_data[j].0 - current_value).abs() < f64::EPSILON {
             j += 1;
         }
-        
+
         // Assign average rank to all tied values
         let avg_rank = (start_rank + (i + (j - i))) as f64 / 2.0;
         for k in i..j {
             let original_index = indexed_data[k].1;
             ranks[original_index] = avg_rank;
         }
-        
+
         i = j;
     }
-    
+
     Ok(ranks)
 }
 
@@ -185,24 +182,24 @@ pub fn kendall_tau(x: &[f64], y: &[f64]) -> Result<f64> {
     if x.len() != y.len() {
         return Err(CopulaError::dimension_mismatch(x.len(), y.len()));
     }
-    
+
     let n = x.len();
     if n < 2 {
         return Err(CopulaError::data_error("Need at least 2 observations"));
     }
-    
+
     validate_finite_data(x, "x variable")?;
     validate_finite_data(y, "y variable")?;
-    
+
     let mut concordant = 0;
     let mut discordant = 0;
-    
+
     for i in 0..n {
-        for j in (i+1)..n {
+        for j in (i + 1)..n {
             let x_diff = x[i] - x[j];
             let y_diff = y[i] - y[j];
             let product = x_diff * y_diff;
-            
+
             if product > 0.0 {
                 concordant += 1;
             } else if product < 0.0 {
@@ -211,7 +208,7 @@ pub fn kendall_tau(x: &[f64], y: &[f64]) -> Result<f64> {
             // Equal values contribute neither to concordant nor discordant
         }
     }
-    
+
     let total_pairs = concordant + discordant;
     if total_pairs == 0 {
         Ok(0.0) // All pairs are tied
@@ -258,15 +255,15 @@ pub fn spearman_rho(x: &[f64], y: &[f64]) -> Result<f64> {
     if x.len() != y.len() {
         return Err(CopulaError::dimension_mismatch(x.len(), y.len()));
     }
-    
+
     let n = x.len();
     if n < 2 {
         return Err(CopulaError::data_error("Need at least 2 observations"));
     }
-    
+
     let ranks_x = empirical_ranks(x)?;
     let ranks_y = empirical_ranks(y)?;
-    
+
     pearson_correlation(&ranks_x, &ranks_y)
 }
 
@@ -282,25 +279,25 @@ pub fn spearman_rho(x: &[f64], y: &[f64]) -> Result<f64> {
 /// Pearson correlation in [-1, 1].
 fn pearson_correlation(x: &[f64], y: &[f64]) -> Result<f64> {
     let n = x.len() as f64;
-    
+
     let mean_x = x.iter().sum::<f64>() / n;
     let mean_y = y.iter().sum::<f64>() / n;
-    
+
     let mut numerator = 0.0;
     let mut sum_sq_x = 0.0;
     let mut sum_sq_y = 0.0;
-    
+
     for i in 0..x.len() {
         let dx = x[i] - mean_x;
         let dy = y[i] - mean_y;
-        
+
         numerator += dx * dy;
         sum_sq_x += dx * dx;
         sum_sq_y += dy * dy;
     }
-    
+
     let denominator = (sum_sq_x * sum_sq_y).sqrt();
-    
+
     if denominator < f64::EPSILON {
         Ok(0.0) // No variance in one or both variables
     } else {
@@ -324,24 +321,25 @@ fn pearson_correlation(x: &[f64], y: &[f64]) -> Result<f64> {
 pub fn empirical_cdf_transform(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
     let (n_rows, n_cols) = data.shape();
     let mut transformed = DMatrix::<f64>::zeros(n_rows, n_cols);
-    
+
     for j in 0..n_cols {
         let column: Vec<f64> = data.column(j).iter().cloned().collect();
         validate_finite_data(&column, &format!("column {}", j))?;
-        
+
         let mut sorted_column = column.clone();
         sorted_column.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        
+
         for i in 0..n_rows {
             let value = column[i];
-            let rank = sorted_column.iter()
+            let rank = sorted_column
+                .iter()
                 .position(|&x| x >= value)
                 .unwrap_or(n_rows - 1);
-            
+
             transformed[(i, j)] = (rank + 1) as f64 / (n_rows + 1) as f64;
         }
     }
-    
+
     Ok(transformed)
 }
 
@@ -362,54 +360,54 @@ pub fn empirical_cdf_transform(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
 /// `Ok(())` if valid, error otherwise.
 pub fn validate_correlation_matrix(matrix: &DMatrix<f64>) -> Result<()> {
     let (n_rows, n_cols) = matrix.shape();
-    
+
     // Check if square
     if n_rows != n_cols {
         return Err(CopulaError::invalid_parameter(
-            "Correlation matrix must be square"
+            "Correlation matrix must be square",
         ));
     }
-    
+
     let n = n_rows;
-    
+
     // Check symmetry and unit diagonal
     for i in 0..n {
         // Check diagonal
         if (matrix[(i, i)] - 1.0).abs() > 1e-10 {
             return Err(CopulaError::invalid_parameter(
-                "Correlation matrix must have unit diagonal"
+                "Correlation matrix must have unit diagonal",
             ));
         }
-        
+
         // Check symmetry
         for j in 0..n {
             if (matrix[(i, j)] - matrix[(j, i)]).abs() > 1e-10 {
                 return Err(CopulaError::invalid_parameter(
-                    "Correlation matrix must be symmetric"
+                    "Correlation matrix must be symmetric",
                 ));
             }
         }
-        
+
         // Check off-diagonal bounds
         for j in 0..n {
             if i != j && (matrix[(i, j)].abs() > 1.0) {
                 return Err(CopulaError::invalid_parameter(
-                    "Correlation coefficients must be in [-1, 1]"
+                    "Correlation coefficients must be in [-1, 1]",
                 ));
             }
         }
     }
-    
+
     // Check positive semi-definiteness using eigenvalues
     let eigenvalues = matrix.symmetric_eigenvalues();
     let min_eigenvalue = eigenvalues.iter().fold(f64::INFINITY, |a, &b| a.min(b));
-    
+
     if min_eigenvalue < -1e-10 {
         return Err(CopulaError::invalid_parameter(
-            "Correlation matrix must be positive semi-definite"
+            "Correlation matrix must be positive semi-definite",
         ));
     }
-    
+
     Ok(())
 }
 
@@ -436,30 +434,33 @@ pub fn validate_correlation_matrix(matrix: &DMatrix<f64>) -> Result<()> {
 /// let mut rng = thread_rng();
 /// let corr = random_correlation_matrix(3, &mut rng).unwrap();
 /// ```
-pub fn random_correlation_matrix(dimension: usize, rng: &mut dyn rand::Rng) -> Result<DMatrix<f64>> {
+pub fn random_correlation_matrix<R: rand::Rng + ?Sized>(
+    dimension: usize,
+    rng: &mut R,
+) -> Result<DMatrix<f64>> {
     use rand_distr::{Distribution, StandardNormal};
-    
+
     if dimension == 0 {
         return Err(CopulaError::invalid_parameter("Dimension must be positive"));
     }
-    
+
     if dimension == 1 {
         return Ok(DMatrix::from_element(1, 1, 1.0));
     }
-    
+
     // Generate random matrix
     let mut a = DMatrix::<f64>::zeros(dimension, dimension);
     let normal = StandardNormal;
-    
+
     for i in 0..dimension {
         for j in 0..dimension {
             a[(i, j)] = normal.sample(rng);
         }
     }
-    
+
     // Compute A'A to get positive semi-definite matrix
     let ata = a.transpose() * &a;
-    
+
     // Extract diagonal for normalization
     let mut corr = DMatrix::<f64>::zeros(dimension, dimension);
     for i in 0..dimension {
@@ -467,7 +468,7 @@ pub fn random_correlation_matrix(dimension: usize, rng: &mut dyn rand::Rng) -> R
             corr[(i, j)] = ata[(i, j)] / (ata[(i, i)] * ata[(j, j)]).sqrt();
         }
     }
-    
+
     Ok(corr)
 }
 
@@ -497,19 +498,17 @@ pub fn random_correlation_matrix(dimension: usize, rng: &mut dyn rand::Rng) -> R
 /// ```
 pub fn empirical_copula_cdf(pseudo_obs: &DMatrix<f64>, u: &[f64]) -> Result<f64> {
     let (n_rows, n_cols) = pseudo_obs.shape();
-    
+
     if u.len() != n_cols {
         return Err(CopulaError::dimension_mismatch(n_cols, u.len()));
     }
-    
+
     crate::error::validate_unit_range(u)?;
-    
+
     let count = (0..n_rows)
-        .filter(|&i| {
-            (0..n_cols).all(|j| pseudo_obs[(i, j)] <= u[j])
-        })
+        .filter(|&i| (0..n_cols).all(|j| pseudo_obs[(i, j)] <= u[j]))
         .count();
-    
+
     Ok(count as f64 / n_rows as f64)
 }
 
@@ -526,26 +525,26 @@ pub fn empirical_copula_cdf(pseudo_obs: &DMatrix<f64>, u: &[f64]) -> Result<f64>
 /// Symmetric matrix of pairwise Kendall's tau values.
 pub fn multivariate_kendall_tau(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
     let (n_rows, n_cols) = data.shape();
-    
+
     if n_rows < 2 {
         return Err(CopulaError::data_error("Need at least 2 observations"));
     }
-    
+
     let mut tau_matrix = DMatrix::<f64>::zeros(n_cols, n_cols);
-    
+
     for i in 0..n_cols {
         tau_matrix[(i, i)] = 1.0; // Diagonal is 1
-        
-        for j in (i+1)..n_cols {
+
+        for j in (i + 1)..n_cols {
             let col_i: Vec<f64> = data.column(i).iter().cloned().collect();
             let col_j: Vec<f64> = data.column(j).iter().cloned().collect();
-            
+
             let tau = kendall_tau(&col_i, &col_j)?;
             tau_matrix[(i, j)] = tau;
             tau_matrix[(j, i)] = tau; // Symmetric
         }
     }
-    
+
     Ok(tau_matrix)
 }
 
@@ -562,26 +561,26 @@ pub fn multivariate_kendall_tau(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
 /// Symmetric matrix of pairwise Spearman's rho values.
 pub fn multivariate_spearman_rho(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
     let (n_rows, n_cols) = data.shape();
-    
+
     if n_rows < 2 {
         return Err(CopulaError::data_error("Need at least 2 observations"));
     }
-    
+
     let mut rho_matrix = DMatrix::<f64>::zeros(n_cols, n_cols);
-    
+
     for i in 0..n_cols {
         rho_matrix[(i, i)] = 1.0; // Diagonal is 1
-        
-        for j in (i+1)..n_cols {
+
+        for j in (i + 1)..n_cols {
             let col_i: Vec<f64> = data.column(i).iter().cloned().collect();
             let col_j: Vec<f64> = data.column(j).iter().cloned().collect();
-            
+
             let rho = spearman_rho(&col_i, &col_j)?;
             rho_matrix[(i, j)] = rho;
             rho_matrix[(j, i)] = rho; // Symmetric
         }
     }
-    
+
     Ok(rho_matrix)
 }
 
@@ -598,25 +597,23 @@ pub fn multivariate_spearman_rho(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
 /// Data matrix with rows containing NaN removed.
 pub fn remove_missing_values(data: &DMatrix<f64>) -> DMatrix<f64> {
     let (n_rows, n_cols) = data.shape();
-    
+
     let valid_rows: Vec<usize> = (0..n_rows)
-        .filter(|&i| {
-            (0..n_cols).all(|j| data[(i, j)].is_finite())
-        })
+        .filter(|&i| (0..n_cols).all(|j| data[(i, j)].is_finite()))
         .collect();
-    
+
     if valid_rows.is_empty() {
         return DMatrix::<f64>::zeros(0, n_cols);
     }
-    
+
     let mut clean_data = DMatrix::<f64>::zeros(valid_rows.len(), n_cols);
-    
+
     for (new_i, &old_i) in valid_rows.iter().enumerate() {
         for j in 0..n_cols {
             clean_data[(new_i, j)] = data[(old_i, j)];
         }
     }
-    
+
     clean_data
 }
 
@@ -632,20 +629,20 @@ pub fn remove_missing_values(data: &DMatrix<f64>) -> DMatrix<f64> {
 /// # Returns
 ///
 /// Bootstrap sample with the same dimensions as the original data.
-pub fn bootstrap_sample(data: &DMatrix<f64>, rng: &mut dyn rand::Rng) -> DMatrix<f64> {
+pub fn bootstrap_sample<R: rand::Rng + ?Sized>(data: &DMatrix<f64>, rng: &mut R) -> DMatrix<f64> {
     let (n_rows, n_cols) = data.shape();
     let mut bootstrap_data = DMatrix::<f64>::zeros(n_rows, n_cols);
-    
+
     use rand::seq::SliceRandom;
     let indices: Vec<usize> = (0..n_rows).collect();
-    
+
     for i in 0..n_rows {
         let &sampled_idx = indices.choose(rng).unwrap();
         for j in 0..n_cols {
             bootstrap_data[(i, j)] = data[(sampled_idx, j)];
         }
     }
-    
+
     bootstrap_data
 }
 
@@ -679,7 +676,7 @@ pub fn information_criteria(log_likelihood: f64, n_params: usize, n_obs: usize) 
 /// `Ok(())` if valid, error otherwise.
 pub fn validate_pseudo_observations(pseudo_obs: &DMatrix<f64>) -> Result<()> {
     let (n_rows, n_cols) = pseudo_obs.shape();
-    
+
     for i in 0..n_rows {
         for j in 0..n_cols {
             let val = pseudo_obs[(i, j)];
@@ -691,7 +688,7 @@ pub fn validate_pseudo_observations(pseudo_obs: &DMatrix<f64>) -> Result<()> {
             }
         }
     }
-    
+
     Ok(())
 }
 
@@ -700,12 +697,13 @@ mod tests {
     use super::*;
     use approx::assert_relative_eq;
     use nalgebra::DMatrix;
+    use rand::thread_rng;
 
     #[test]
     fn test_empirical_ranks() {
         let data = vec![3.0, 1.0, 4.0, 1.0, 5.0];
         let ranks = empirical_ranks(&data).unwrap();
-        
+
         // Expected: [3, 1.5, 4, 1.5, 5] (average rank for ties)
         assert_relative_eq!(ranks[0], 3.0);
         assert_relative_eq!(ranks[1], 1.5);
@@ -716,14 +714,10 @@ mod tests {
 
     #[test]
     fn test_to_pseudo_observations() {
-        let data = DMatrix::from_row_slice(3, 2, &[
-            1.0, 4.0,
-            2.0, 5.0,
-            3.0, 6.0,
-        ]);
-        
+        let data = DMatrix::from_row_slice(3, 2, &[1.0, 4.0, 2.0, 5.0, 3.0, 6.0]);
+
         let pseudo_obs = to_pseudo_observations(&data).unwrap();
-        
+
         // Each column should have values [0.25, 0.5, 0.75]
         for j in 0..2 {
             assert_relative_eq!(pseudo_obs[(0, j)], 0.25, epsilon = 1e-10);
@@ -739,7 +733,7 @@ mod tests {
         let y = vec![1.0, 2.0, 3.0, 4.0, 5.0];
         let tau = kendall_tau(&x, &y).unwrap();
         assert_relative_eq!(tau, 1.0, epsilon = 1e-10);
-        
+
         // Perfect negative correlation
         let y_neg = vec![5.0, 4.0, 3.0, 2.0, 1.0];
         let tau_neg = kendall_tau(&x, &y_neg).unwrap();
@@ -757,36 +751,22 @@ mod tests {
     #[test]
     fn test_validate_correlation_matrix() {
         // Valid correlation matrix
-        let valid = DMatrix::from_row_slice(2, 2, &[
-            1.0, 0.5,
-            0.5, 1.0,
-        ]);
+        let valid = DMatrix::from_row_slice(2, 2, &[1.0, 0.5, 0.5, 1.0]);
         assert!(validate_correlation_matrix(&valid).is_ok());
-        
+
         // Invalid: not symmetric
-        let invalid = DMatrix::from_row_slice(2, 2, &[
-            1.0, 0.5,
-            0.3, 1.0,
-        ]);
+        let invalid = DMatrix::from_row_slice(2, 2, &[1.0, 0.5, 0.3, 1.0]);
         assert!(validate_correlation_matrix(&invalid).is_err());
-        
+
         // Invalid: diagonal not 1
-        let invalid2 = DMatrix::from_row_slice(2, 2, &[
-            0.9, 0.5,
-            0.5, 1.0,
-        ]);
+        let invalid2 = DMatrix::from_row_slice(2, 2, &[0.9, 0.5, 0.5, 1.0]);
         assert!(validate_correlation_matrix(&invalid2).is_err());
     }
 
     #[test]
     fn test_empirical_copula_cdf() {
-        let pseudo_obs = DMatrix::from_row_slice(4, 2, &[
-            0.1, 0.1,
-            0.3, 0.7,
-            0.6, 0.4,
-            0.8, 0.9,
-        ]);
-        
+        let pseudo_obs = DMatrix::from_row_slice(4, 2, &[0.1, 0.1, 0.3, 0.4, 0.6, 0.4, 0.8, 0.9]);
+
         // Point (0.5, 0.5) should have 2 observations ≤ it
         let cdf = empirical_copula_cdf(&pseudo_obs, &[0.5, 0.5]).unwrap();
         assert_relative_eq!(cdf, 0.5, epsilon = 1e-10);
@@ -794,12 +774,8 @@ mod tests {
 
     #[test]
     fn test_remove_missing_values() {
-        let data = DMatrix::from_row_slice(3, 2, &[
-            1.0, 2.0,
-            f64::NAN, 4.0,
-            5.0, 6.0,
-        ]);
-        
+        let data = DMatrix::from_row_slice(3, 2, &[1.0, 2.0, f64::NAN, 4.0, 5.0, 6.0]);
+
         let clean = remove_missing_values(&data);
         assert_eq!(clean.nrows(), 2);
         assert_eq!(clean[(0, 0)], 1.0);
@@ -811,5 +787,27 @@ mod tests {
         let (aic, bic) = information_criteria(-100.0, 3, 100);
         assert_eq!(aic, 206.0); // -2*(-100) + 2*3
         assert_relative_eq!(bic, 200.0 + 3.0 * 100.0_f64.ln(), epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_validate_pseudo_observations() {
+        let valid = DMatrix::from_row_slice(2, 2, &[0.5, 0.6, 0.7, 0.8]);
+        assert!(validate_pseudo_observations(&valid).is_ok());
+
+        let invalid = DMatrix::from_row_slice(1, 2, &[1.0, 0.5]);
+        assert!(validate_pseudo_observations(&invalid).is_err());
+
+        let invalid_nan = DMatrix::from_row_slice(1, 1, &[f64::NAN]);
+        assert!(validate_pseudo_observations(&invalid_nan).is_err());
+    }
+
+    #[test]
+    fn test_random_correlation_matrix() {
+        let mut rng = thread_rng();
+        let corr = random_correlation_matrix(3, &mut rng).unwrap();
+        assert_eq!(corr.nrows(), 3);
+        assert!(validate_correlation_matrix(&corr).is_ok());
+
+        assert!(random_correlation_matrix(0, &mut rng).is_err());
     }
 }
