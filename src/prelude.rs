@@ -33,7 +33,7 @@ pub use crate::utils::{
     to_pseudo_observations, validate_correlation_matrix,
 };
 // Goodness-of-fit statistics
-pub use crate::testing::{cramer_von_mises, kolmogorov_smirnov};
+pub use crate::testing::{anderson_darling, cramer_von_mises, kolmogorov_smirnov};
 
 // Elliptical copulas
 pub use crate::elliptical::{GaussianCopula, StudentTCopula};

@@ -39,7 +39,7 @@ A comprehensive Rust library for copula modeling, estimation, and simulation. Th
 - ✅ Random sampling from copulas
 - ✅ Tail dependence computation
 - ✅ Parameter estimation (method of moments and MLE)
-- 🚧 Goodness-of-fit testing (Cramér-von Mises, Kolmogorov-Smirnov)
+- 🚧 Goodness-of-fit testing (Cramér-von Mises, Kolmogorov-Smirnov, Anderson-Darling)
 - ✅ Model selection criteria (AIC, BIC)
 - ⏳ Conditional copulas for vine constructions
 

@@ -81,6 +81,45 @@ pub fn kolmogorov_smirnov<C: Copula>(copula: &C, pseudo_obs: &DMatrix<f64>) -> R
     Ok((n as f64).sqrt() * max_diff)
 }
 
+/// Compute the Anderson-Darling statistic for a copula model.
+///
+/// This statistic compares the distribution of the model CDF values
+/// evaluated at the pseudo-observations against the uniform distribution.
+///
+/// `A^2 = -n - \frac{1}{n} \sum_{i=1}^n (2i-1)[\ln C_{(i)} + \ln(1-C_{(n+1-i)})]`
+/// where `C_{(i)}` are the ordered CDF values.
+pub fn anderson_darling<C: Copula>(copula: &C, pseudo_obs: &DMatrix<f64>) -> Result<f64> {
+    crate::utils::validate_pseudo_observations(pseudo_obs)?;
+    if pseudo_obs.ncols() != copula.dimension() {
+        return Err(CopulaError::dimension_mismatch(
+            copula.dimension(),
+            pseudo_obs.ncols(),
+        ));
+    }
+
+    let n = pseudo_obs.nrows();
+    let mut cdf_vals = Vec::with_capacity(n);
+    for i in 0..n {
+        let row = pseudo_obs.row(i);
+        let u: Vec<f64> = row.iter().copied().collect();
+        let c = copula.cdf(&u)?;
+        // avoid log(0)
+        let c = c.clamp(f64::MIN_POSITIVE, 1.0 - f64::EPSILON);
+        cdf_vals.push(c);
+    }
+    cdf_vals.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+    let mut sum = 0.0;
+    for (i, c) in cdf_vals.iter().enumerate() {
+        let j = i + 1;
+        let term1 = c.ln();
+        let term2 = (1.0 - cdf_vals[n - j]).ln();
+        sum += (2 * j - 1) as f64 * (term1 + term2);
+    }
+
+    Ok(-1.0 * (n as f64) - sum / (n as f64))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -102,6 +141,15 @@ mod tests {
         let cop = ClaytonCopula::new(2.0).unwrap();
         let data = cop.sample(50, &mut rng).unwrap();
         let stat = kolmogorov_smirnov(&cop, &data).unwrap();
+        assert!(stat.is_finite() && stat > 0.0);
+    }
+
+    #[test]
+    fn ad_statistic_finite() {
+        let mut rng = thread_rng();
+        let cop = ClaytonCopula::new(2.0).unwrap();
+        let data = cop.sample(50, &mut rng).unwrap();
+        let stat = anderson_darling(&cop, &data).unwrap();
         assert!(stat.is_finite() && stat > 0.0);
     }
 }

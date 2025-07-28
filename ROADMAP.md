@@ -33,7 +33,7 @@
 - [ ] **Goodness-of-Fit Testing**
 - [x] Cramér-von Mises test
   - [x] Kolmogorov-Smirnov test
-  - [ ] Anderson-Darling test
+  - [x] Anderson-Darling test
   - [ ] Multiplier bootstrap methods
 
 - [ ] **Model Selection**
