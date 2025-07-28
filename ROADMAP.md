@@ -20,7 +20,7 @@
 ### Essential Utilities
 - [x] Empirical rank computation
 - [x] Kendall's tau and Spearman's rho computation
-- [ ] Basic parameter estimation (method of moments)
+- [x] Basic parameter estimation (method of moments)
 
 ## Version 0.2.0 - Statistical Foundation (Q4 2025)
 

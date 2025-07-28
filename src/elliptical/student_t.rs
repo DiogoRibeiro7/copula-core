@@ -9,6 +9,10 @@
 //!   Management: Concepts, Techniques and Tools*. Princeton University Press.
 //! - Nelsen, R. B. (2006). *An Introduction to Copulas*. Springer.
 
+#[cfg(feature = "estimation")]
+use crate::traits::FittableCopula;
+#[cfg(feature = "estimation")]
+use crate::utils::multivariate_kendall_tau;
 use crate::{utils::validate_correlation_matrix, Copula, CopulaError, Result};
 use nalgebra::{DMatrix, DVector};
 use rand::Rng;
@@ -146,6 +150,48 @@ impl Copula for StudentTCopula {
 
     fn dimension(&self) -> usize {
         self.dim()
+    }
+}
+
+#[cfg(feature = "estimation")]
+impl FittableCopula for StudentTCopula {
+    type Parameters = (DMatrix<f64>, f64);
+
+    fn fit(&mut self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
+        self.fit_moments(pseudo_obs)
+    }
+
+    fn log_likelihood(&self, _pseudo_obs: &DMatrix<f64>) -> Result<f64> {
+        Err(CopulaError::not_implemented(
+            "StudentTCopula::log_likelihood",
+        ))
+    }
+
+    fn fit_moments(&mut self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
+        let tau = multivariate_kendall_tau(pseudo_obs)?;
+        let dim = tau.ncols();
+        let mut corr = DMatrix::<f64>::identity(dim, dim);
+        for i in 0..dim {
+            for j in (i + 1)..dim {
+                let val = (std::f64::consts::PI * 0.5 * tau[(i, j)]).sin();
+                corr[(i, j)] = val;
+                corr[(j, i)] = val;
+            }
+        }
+        validate_correlation_matrix(&corr)?;
+        self.correlation = corr.clone();
+        Ok((corr, self.df))
+    }
+
+    fn parameters(&self) -> Self::Parameters {
+        (self.correlation.clone(), self.df)
+    }
+
+    fn set_parameters(&mut self, params: Self::Parameters) -> Result<()> {
+        validate_correlation_matrix(&params.0)?;
+        self.correlation = params.0;
+        self.df = params.1;
+        Ok(())
     }
 }
 #[cfg(test)]

@@ -7,6 +7,10 @@
 //! - Nelsen, R. B. (2006). *An Introduction to Copulas*. Springer.
 //! - Joe, H. (2014). *Dependence Modeling with Copulas*. CRC Press.
 
+#[cfg(feature = "estimation")]
+use crate::traits::FittableCopula;
+#[cfg(feature = "estimation")]
+use crate::utils::kendall_tau;
 use crate::{ArchimedeanCopula, Copula, CopulaError, Result};
 use nalgebra::DMatrix;
 use rand::Rng;
@@ -85,6 +89,49 @@ impl ArchimedeanCopula for GumbelCopula {
             }
             _ => Err(CopulaError::not_implemented("phi_inv_deriv k>2")),
         }
+    }
+}
+
+#[cfg(feature = "estimation")]
+impl FittableCopula for GumbelCopula {
+    type Parameters = f64;
+
+    fn fit(&mut self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
+        self.fit_moments(pseudo_obs)
+    }
+
+    fn log_likelihood(&self, _pseudo_obs: &DMatrix<f64>) -> Result<f64> {
+        Err(CopulaError::not_implemented("GumbelCopula::log_likelihood"))
+    }
+
+    fn fit_moments(&mut self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
+        if pseudo_obs.ncols() != 2 {
+            return Err(CopulaError::dimension_mismatch(2, pseudo_obs.ncols()));
+        }
+        for j in 0..2 {
+            crate::error::validate_unit_range(pseudo_obs.column(j).as_slice())?;
+        }
+        let u: Vec<f64> = pseudo_obs.column(0).iter().copied().collect();
+        let v: Vec<f64> = pseudo_obs.column(1).iter().copied().collect();
+        let tau = kendall_tau(&u, &v)?;
+        if tau >= 1.0 {
+            return Err(CopulaError::invalid_parameter("tau must be < 1"));
+        }
+        let theta = 1.0 / (1.0 - tau);
+        if theta <= 1.0 {
+            return Err(CopulaError::invalid_parameter("theta must be > 1"));
+        }
+        self.theta = theta;
+        Ok(theta)
+    }
+
+    fn parameters(&self) -> Self::Parameters {
+        self.theta
+    }
+
+    fn set_parameters(&mut self, params: Self::Parameters) -> Result<()> {
+        *self = Self::new(params)?;
+        Ok(())
     }
 }
 

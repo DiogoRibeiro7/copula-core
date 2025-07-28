@@ -10,6 +10,10 @@
 //!   Management: Concepts, Techniques and Tools*. Princeton University Press.
 //! - Nelsen, R. B. (2006). *An Introduction to Copulas*. Springer.
 
+#[cfg(feature = "estimation")]
+use crate::traits::FittableCopula;
+#[cfg(feature = "estimation")]
+use crate::utils::multivariate_kendall_tau;
 use crate::{utils::validate_correlation_matrix, Copula, CopulaError, Result};
 use mv_norm::tvpack::bvnd;
 use nalgebra::{DMatrix, DVector};
@@ -129,6 +133,47 @@ impl Copula for GaussianCopula {
 
     fn dimension(&self) -> usize {
         self.dim()
+    }
+}
+
+#[cfg(feature = "estimation")]
+impl FittableCopula for GaussianCopula {
+    type Parameters = DMatrix<f64>;
+
+    fn fit(&mut self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
+        self.fit_moments(pseudo_obs)
+    }
+
+    fn log_likelihood(&self, _pseudo_obs: &DMatrix<f64>) -> Result<f64> {
+        Err(CopulaError::not_implemented(
+            "GaussianCopula::log_likelihood",
+        ))
+    }
+
+    fn fit_moments(&mut self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
+        let tau = multivariate_kendall_tau(pseudo_obs)?;
+        let dim = tau.ncols();
+        let mut corr = DMatrix::<f64>::identity(dim, dim);
+        for i in 0..dim {
+            for j in (i + 1)..dim {
+                let val = (std::f64::consts::PI * 0.5 * tau[(i, j)]).sin();
+                corr[(i, j)] = val;
+                corr[(j, i)] = val;
+            }
+        }
+        validate_correlation_matrix(&corr)?;
+        self.correlation = corr.clone();
+        Ok(corr)
+    }
+
+    fn parameters(&self) -> Self::Parameters {
+        self.correlation.clone()
+    }
+
+    fn set_parameters(&mut self, params: Self::Parameters) -> Result<()> {
+        validate_correlation_matrix(&params)?;
+        self.correlation = params;
+        Ok(())
     }
 }
 #[cfg(test)]
