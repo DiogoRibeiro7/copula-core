@@ -158,13 +158,84 @@ impl FittableCopula for StudentTCopula {
     type Parameters = (DMatrix<f64>, f64);
 
     fn fit(&mut self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
-        self.fit_moments(pseudo_obs)
+        crate::utils::validate_pseudo_observations(pseudo_obs)?;
+        let n = pseudo_obs.nrows();
+        let dim = pseudo_obs.ncols();
+        let t_dist = StudentsT::new(0.0, 1.0, self.df).unwrap();
+        let mut z = DMatrix::<f64>::zeros(n, dim);
+        for i in 0..n {
+            for j in 0..dim {
+                z[(i, j)] = t_dist.inverse_cdf(pseudo_obs[(i, j)]);
+            }
+        }
+
+        let mut corr = DMatrix::<f64>::identity(dim, dim);
+        for i in 0..dim {
+            for j in i + 1..dim {
+                let mut sum_i = 0.0;
+                let mut sum_j = 0.0;
+                for k in 0..n {
+                    sum_i += z[(k, i)];
+                    sum_j += z[(k, j)];
+                }
+                let mean_i = sum_i / n as f64;
+                let mean_j = sum_j / n as f64;
+                let mut cov = 0.0;
+                let mut var_i = 0.0;
+                let mut var_j = 0.0;
+                for k in 0..n {
+                    let xi = z[(k, i)] - mean_i;
+                    let xj = z[(k, j)] - mean_j;
+                    cov += xi * xj;
+                    var_i += xi * xi;
+                    var_j += xj * xj;
+                }
+                cov /= n as f64;
+                var_i /= n as f64;
+                var_j /= n as f64;
+                let r = cov / (var_i.sqrt() * var_j.sqrt());
+                corr[(i, j)] = r;
+                corr[(j, i)] = r;
+            }
+        }
+        validate_correlation_matrix(&corr)?;
+        self.correlation = corr.clone();
+        Ok((corr, self.df))
     }
 
-    fn log_likelihood(&self, _pseudo_obs: &DMatrix<f64>) -> Result<f64> {
-        Err(CopulaError::not_implemented(
-            "StudentTCopula::log_likelihood",
-        ))
+    fn log_likelihood(&self, pseudo_obs: &DMatrix<f64>) -> Result<f64> {
+        crate::utils::validate_pseudo_observations(pseudo_obs)?;
+        if pseudo_obs.ncols() != self.dim() {
+            return Err(CopulaError::dimension_mismatch(self.dim(), pseudo_obs.ncols()));
+        }
+        let n = pseudo_obs.nrows();
+        let t = StudentsT::new(0.0, 1.0, self.df).unwrap();
+        let mut ll = 0.0;
+        let inv = self
+            .correlation
+            .clone()
+            .try_inverse()
+            .ok_or_else(|| CopulaError::matrix_error("inverse", "singular"))?;
+        let det = self.correlation.determinant();
+        for i in 0..n {
+            let x = DVector::from_iterator(
+                self.dim(),
+                (0..self.dim()).map(|j| t.inverse_cdf(pseudo_obs[(i, j)])),
+            );
+            let quad = (inv.clone() * &x).dot(&x);
+            use statrs::function::gamma::ln_gamma;
+            use std::f64::consts::PI;
+            let d = self.dim() as f64;
+            let log_num = ln_gamma((self.df + d) / 2.0);
+            let log_denom = ln_gamma(self.df / 2.0)
+                + (d / 2.0) * (self.df.ln() + PI.ln())
+                + 0.5 * det.ln();
+            let log_kernel = -((self.df + d) / 2.0) * ((1.0 + quad / self.df).ln());
+            let log_joint = log_num - log_denom + log_kernel;
+            let sum_log_marginals: f64 = x.iter().map(|&xi| t.pdf(xi).ln()).sum();
+            ll += log_joint - sum_log_marginals;
+        }
+        Ok(ll)
     }
 
     fn fit_moments(&mut self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {

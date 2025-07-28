@@ -176,6 +176,8 @@ If you use this library in academic work, please cite:
 @software{copulas_rs,
   title = {copulas-rs: A Rust Library for Copula Modeling},
   author = {Diogo Ribeiro},
+  affiliation = {ESMAD - Instituto Politécnico do Porto},
+  email = {dfr@esmad.ipp.pt},
   orcid = {0009-0001-2022-7072},
   year = {2025},
   url = {https://github.com/diogoribeiro7/copulas-rs}

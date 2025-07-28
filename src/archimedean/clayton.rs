@@ -124,13 +124,72 @@ impl FittableCopula for ClaytonCopula {
     type Parameters = f64;
 
     fn fit(&mut self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
-        self.fit_moments(pseudo_obs)
+        use argmin::core::{CostFunction, Error as ArgminError, Executor, State};
+        use argmin::solver::brent::BrentOpt;
+
+        if pseudo_obs.ncols() != 2 {
+            return Err(CopulaError::dimension_mismatch(2, pseudo_obs.ncols()));
+        }
+        crate::utils::validate_pseudo_observations(pseudo_obs)?;
+
+        struct Nll<'a> {
+            data: &'a DMatrix<f64>,
+        }
+
+        impl<'a> CostFunction for Nll<'a> {
+            type Param = f64;
+            type Output = f64;
+
+            fn cost(&self, theta: &Self::Param) -> std::result::Result<f64, ArgminError> {
+                if *theta <= 0.0 {
+                    return Ok(f64::INFINITY);
+                }
+                let mut nll = 0.0;
+                for i in 0..self.data.nrows() {
+                    let u1 = self.data[(i, 0)];
+                    let u2 = self.data[(i, 1)];
+                    let sum = u1.powf(-*theta) + u2.powf(-*theta) - 1.0;
+                    if sum <= 0.0 {
+                        return Ok(f64::INFINITY);
+                    }
+                    let lp = (1.0 + theta).ln()
+                        + (-1.0 - theta) * (u1.ln() + u2.ln())
+                        + (-2.0 - 1.0 / theta) * sum.ln();
+                    nll -= lp;
+                }
+                Ok(nll)
+            }
+        }
+
+        let op = Nll { data: pseudo_obs };
+        let solver = BrentOpt::new(0.01, 10.0);
+        let res = Executor::new(op, solver)
+            .configure(|state| state.max_iters(100))
+            .run()
+            .map_err(|e| CopulaError::optimization(e.to_string()))?;
+        let theta = *res.state().get_best_param().unwrap();
+        self.theta = theta;
+        Ok(theta)
     }
 
-    fn log_likelihood(&self, _pseudo_obs: &DMatrix<f64>) -> Result<f64> {
-        Err(CopulaError::not_implemented(
-            "ClaytonCopula::log_likelihood",
-        ))
+    fn log_likelihood(&self, pseudo_obs: &DMatrix<f64>) -> Result<f64> {
+        if pseudo_obs.ncols() != 2 {
+            return Err(CopulaError::dimension_mismatch(2, pseudo_obs.ncols()));
+        }
+        crate::utils::validate_pseudo_observations(pseudo_obs)?;
+        let mut ll = 0.0;
+        for i in 0..pseudo_obs.nrows() {
+            let u1 = pseudo_obs[(i, 0)];
+            let u2 = pseudo_obs[(i, 1)];
+            let sum = u1.powf(-self.theta) + u2.powf(-self.theta) - 1.0;
+            if sum <= 0.0 {
+                return Err(CopulaError::numerical("log_likelihood invalid sum"));
+            }
+            ll += (1.0 + self.theta).ln()
+                + (-1.0 - self.theta) * (u1.ln() + u2.ln())
+                + (-2.0 - 1.0 / self.theta) * sum.ln();
+        }
+        Ok(ll)
     }
 
     fn fit_moments(&mut self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {

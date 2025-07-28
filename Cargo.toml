@@ -4,7 +4,7 @@
 name = "copulas"
 version = "0.1.0"
 edition = "2021"  # Fixed: was "2025"
-authors = ["Diogo Ribeiro <your.email@example.com>"]
+authors = ["Diogo Ribeiro <dfr@esmad.ipp.pt>"]
 license = "MIT OR Apache-2.0"
 description = "A comprehensive Rust library for copula modeling, estimation, and simulation"
 homepage = "https://github.com/diogoribeiro7/copulas-rs"

@@ -141,13 +141,75 @@ impl FittableCopula for GaussianCopula {
     type Parameters = DMatrix<f64>;
 
     fn fit(&mut self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
-        self.fit_moments(pseudo_obs)
+        crate::utils::validate_pseudo_observations(pseudo_obs)?;
+        let n = pseudo_obs.nrows();
+        let dim = pseudo_obs.ncols();
+        let normal = Normal::new(0.0, 1.0).unwrap();
+        let mut z = DMatrix::<f64>::zeros(n, dim);
+        for i in 0..n {
+            for j in 0..dim {
+                z[(i, j)] = normal.inverse_cdf(pseudo_obs[(i, j)]);
+            }
+        }
+
+        let mut corr = DMatrix::<f64>::identity(dim, dim);
+        for i in 0..dim {
+            for j in i + 1..dim {
+                let mut sum_i = 0.0;
+                let mut sum_j = 0.0;
+                for k in 0..n {
+                    sum_i += z[(k, i)];
+                    sum_j += z[(k, j)];
+                }
+                let mean_i = sum_i / n as f64;
+                let mean_j = sum_j / n as f64;
+                let mut cov = 0.0;
+                let mut var_i = 0.0;
+                let mut var_j = 0.0;
+                for k in 0..n {
+                    let xi = z[(k, i)] - mean_i;
+                    let xj = z[(k, j)] - mean_j;
+                    cov += xi * xj;
+                    var_i += xi * xi;
+                    var_j += xj * xj;
+                }
+                cov /= n as f64;
+                var_i /= n as f64;
+                var_j /= n as f64;
+                let r = cov / (var_i.sqrt() * var_j.sqrt());
+                corr[(i, j)] = r;
+                corr[(j, i)] = r;
+            }
+        }
+        validate_correlation_matrix(&corr)?;
+        self.correlation = corr.clone();
+        Ok(corr)
     }
 
-    fn log_likelihood(&self, _pseudo_obs: &DMatrix<f64>) -> Result<f64> {
-        Err(CopulaError::not_implemented(
-            "GaussianCopula::log_likelihood",
-        ))
+    fn log_likelihood(&self, pseudo_obs: &DMatrix<f64>) -> Result<f64> {
+        crate::utils::validate_pseudo_observations(pseudo_obs)?;
+        if pseudo_obs.ncols() != self.dim() {
+            return Err(CopulaError::dimension_mismatch(self.dim(), pseudo_obs.ncols()));
+        }
+        let n = pseudo_obs.nrows();
+        let normal = Normal::new(0.0, 1.0).unwrap();
+        let mut ll = 0.0;
+        let inv = self
+            .correlation
+            .clone()
+            .try_inverse()
+            .ok_or_else(|| CopulaError::matrix_error("inverse", "singular"))?;
+        let det = self.correlation.determinant();
+        for i in 0..n {
+            let x = DVector::from_iterator(
+                self.dim(),
+                (0..self.dim()).map(|j| normal.inverse_cdf(pseudo_obs[(i, j)])),
+            );
+            let quad = x.transpose() * (&inv * &x);
+            let norm_sq = x.dot(&x);
+            ll += -0.5 * (det.ln() + quad[(0, 0)] - norm_sq);
+        }
+        Ok(ll)
     }
 
     fn fit_moments(&mut self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {

@@ -16,6 +16,17 @@ fn clayton_fit_moments_recovers_theta() {
 
 #[cfg(feature = "estimation")]
 #[test]
+fn clayton_fit_mle_recovers_theta() {
+    let mut rng = thread_rng();
+    let orig = ClaytonCopula::new(1.8).unwrap();
+    let data = orig.sample(500, &mut rng).unwrap();
+    let mut est = ClaytonCopula::new(1.0).unwrap();
+    let theta = est.fit(&data).unwrap();
+    assert!((theta - 1.8).abs() < 0.3);
+}
+
+#[cfg(feature = "estimation")]
+#[test]
 fn gaussian_fit_moments_recovers_corr() {
     let mut rng = thread_rng();
     let corr = DMatrix::from_row_slice(2, 2, &[1.0, 0.6, 0.6, 1.0]);

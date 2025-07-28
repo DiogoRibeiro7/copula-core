@@ -26,7 +26,7 @@
 
 ### Advanced Statistical Methods
 - [ ] **Maximum Likelihood Estimation**
-  - [ ] Numerical optimization with `argmin` crate
+  - [x] Numerical optimization with `argmin` crate
   - [ ] Standard errors and confidence intervals
   - [ ] Constraint handling for parameter bounds
 
