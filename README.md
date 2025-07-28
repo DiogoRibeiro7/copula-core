@@ -38,9 +38,10 @@ A comprehensive Rust library for copula modeling, estimation, and simulation. Th
 - ✅ Copula CDF and PDF evaluation
 - ✅ Random sampling from copulas
 - ✅ Tail dependence computation
-- 🚧 Parameter estimation (MLE, method of moments)
-- 🚧 Goodness-of-fit testing
-- 🚧 Model selection criteria (AIC, BIC)
+- ✅ Parameter estimation (method of moments and MLE)
+- ✅ Goodness-of-fit testing (Cramér-von Mises, Kolmogorov-Smirnov, Anderson-Darling, multiplier bootstrap)
+- ✅ Model selection criteria (AIC, BIC)
+- ✅ Cross-validation for copula selection
 - ⏳ Conditional copulas for vine constructions
 
 ## Quick Start
@@ -175,7 +176,10 @@ If you use this library in academic work, please cite:
 ```bibtex
 @software{copulas_rs,
   title = {copulas-rs: A Rust Library for Copula Modeling},
-  author = {Diogo Ribeiroe},
+  author = {Diogo Ribeiro},
+  affiliation = {ESMAD - Instituto Politécnico do Porto},
+  email = {dfr@esmad.ipp.pt},
+  orcid = {0009-0001-2022-7072},
   year = {2025},
   url = {https://github.com/diogoribeiro7/copulas-rs}
 }

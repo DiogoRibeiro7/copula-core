@@ -5,8 +5,8 @@
 //! This module defines the fundamental traits that all copulas must implement,
 //! as well as specialized traits for specific copula families and capabilities.
 
-use crate::error::{Result, CopulaError};
-use nalgebra::{DMatrix, DVector};
+use crate::error::{CopulaError, Result};
+use nalgebra::DMatrix;
 use rand::Rng;
 
 #[cfg(feature = "serde")]
@@ -100,7 +100,7 @@ pub trait Copula {
     /// # Errors
     ///
     /// Returns [`CopulaError::NumericalError`] if sampling fails due to numerical issues.
-    fn sample(&self, n: usize, rng: &mut dyn Rng) -> Result<DMatrix<f64>>;
+    fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>>;
 
     /// Get the dimension of the copula.
     ///
@@ -128,6 +128,7 @@ pub trait Copula {
     /// Returns [`CopulaError::NotImplemented`] if the copula doesn't support
     /// conditional evaluation.
     fn conditional_cdf(&self, u: &[f64], given: &[usize]) -> Result<f64> {
+        let _ = (u, given);
         Err(CopulaError::not_implemented(format!(
             "conditional_cdf for {}",
             std::any::type_name::<Self>()
@@ -224,7 +225,7 @@ pub trait Copula {
 /// let mut copula = GaussianCopula::new_identity(2)?;
 /// let data = DMatrix::from_row_slice(100, 2, &[/* your data */]);
 /// let pseudo_obs = to_pseudo_observations(&data);
-/// 
+///
 /// let params = copula.fit(&pseudo_obs)?;
 /// println!("Fitted parameters: {:?}", params);
 /// # Ok::<(), copulas::CopulaError>(())
@@ -310,7 +311,7 @@ pub trait FittableCopula: Copula {
     /// # Returns
     ///
     /// Standard errors corresponding to the parameters.
-    fn standard_errors(&self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
+    fn standard_errors(&self, _pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
         Err(CopulaError::not_implemented("standard_errors"))
     }
 
@@ -324,7 +325,11 @@ pub trait FittableCopula: Copula {
     /// # Returns
     ///
     /// Confidence intervals as (lower, upper) bounds.
-    fn confidence_intervals(&self, pseudo_obs: &DMatrix<f64>, confidence_level: f64) -> Result<(Self::Parameters, Self::Parameters)> {
+    fn confidence_intervals(
+        &self,
+        _pseudo_obs: &DMatrix<f64>,
+        _confidence_level: f64,
+    ) -> Result<(Self::Parameters, Self::Parameters)> {
         Err(CopulaError::not_implemented("confidence_intervals"))
     }
 }
@@ -349,10 +354,10 @@ pub trait FittableCopula: Copula {
 /// use copulas::{ArchimedeanCopula, ClaytonCopula};
 ///
 /// let copula = ClaytonCopula::new(2.0)?;
-/// 
+///
 /// // Evaluate generator function
 /// let phi_val = copula.phi(0.5)?;
-/// 
+///
 /// // Evaluate inverse generator
 /// let phi_inv_val = copula.phi_inv(1.0)?;
 /// # Ok::<(), copulas::CopulaError>(())
@@ -402,7 +407,7 @@ pub trait ArchimedeanCopula: Copula {
         let phi_1 = self.phi(1.0)?;
         if (phi_1).abs() > 1e-10 {
             return Err(CopulaError::invalid_parameter(
-                "Generator function must satisfy φ(1) = 0"
+                "Generator function must satisfy φ(1) = 0",
             ));
         }
 
@@ -410,7 +415,7 @@ pub trait ArchimedeanCopula: Copula {
         let phi_0 = self.phi(1e-10)?;
         if !phi_0.is_infinite() && phi_0 < 1e6 {
             return Err(CopulaError::invalid_parameter(
-                "Generator function must satisfy φ(0) = ∞"
+                "Generator function must satisfy φ(0) = ∞",
             ));
         }
 
@@ -451,10 +456,10 @@ pub trait ExtremeValueCopula: Copula {
         // Check boundary conditions
         let a_0 = self.pickands_function(0.0)?;
         let a_1 = self.pickands_function(1.0)?;
-        
+
         if (a_0 - 1.0).abs() > 1e-10 || (a_1 - 1.0).abs() > 1e-10 {
             return Err(CopulaError::invalid_parameter(
-                "Pickands function must satisfy A(0) = A(1) = 1"
+                "Pickands function must satisfy A(0) = A(1) = 1",
             ));
         }
 
@@ -540,10 +545,9 @@ pub trait BoundedParameters {
 pub trait SerializableCopula: Copula + Serialize + for<'de> Deserialize<'de> {
     /// Serialize the copula to a JSON string.
     fn to_json(&self) -> Result<String> {
-        serde_json::to_string(self)
-            .map_err(|e| CopulaError::SerializationError {
-                message: format!("JSON serialization failed: {}", e),
-            })
+        serde_json::to_string(self).map_err(|e| CopulaError::SerializationError {
+            message: format!("JSON serialization failed: {}", e),
+        })
     }
 
     /// Deserialize a copula from a JSON string.
@@ -551,10 +555,9 @@ pub trait SerializableCopula: Copula + Serialize + for<'de> Deserialize<'de> {
     where
         Self: Sized,
     {
-        serde_json::from_str(json)
-            .map_err(|e| CopulaError::SerializationError {
-                message: format!("JSON deserialization failed: {}", e),
-            })
+        serde_json::from_str(json).map_err(|e| CopulaError::SerializationError {
+            message: format!("JSON deserialization failed: {}", e),
+        })
     }
 }
 
@@ -597,18 +600,18 @@ mod tests {
             Ok(1.0) // Independence copula
         }
 
-        fn sample(&self, n: usize, rng: &mut dyn Rng) -> Result<DMatrix<f64>> {
+        fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
             use rand_distr::{Distribution, Uniform};
-            
+
             let uniform = Uniform::new(0.0, 1.0);
             let mut samples = DMatrix::<f64>::zeros(n, self.dimension);
-            
+
             for i in 0..n {
                 for j in 0..self.dimension {
                     samples[(i, j)] = uniform.sample(rng);
                 }
             }
-            
+
             Ok(samples)
         }
 
@@ -624,7 +627,7 @@ mod tests {
     #[test]
     fn test_mock_copula_basic_operations() {
         let copula = MockCopula { dimension: 2 };
-        
+
         // Test CDF
         let cdf = copula.cdf(&[0.5, 0.5]).unwrap();
         assert_eq!(cdf, 0.25);
@@ -643,7 +646,7 @@ mod tests {
     #[test]
     fn test_trait_default_implementations() {
         let copula = MockCopula { dimension: 2 };
-        
+
         // Test default implementations return NotImplemented
         assert!(copula.conditional_cdf(&[0.5, 0.5], &[0]).is_err());
         assert!(copula.tail_dependence().is_err());

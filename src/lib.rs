@@ -76,36 +76,46 @@ pub mod traits;
 pub mod utils;
 
 // Copula family modules
-pub mod elliptical;
 pub mod archimedean;
+pub mod elliptical;
 pub mod extreme_value;
 pub mod other;
 
 // Advanced constructions
-pub mod vine;
 pub mod factor;
+pub mod vine;
 
 // Statistical methods
 #[cfg(feature = "estimation")]
 #[cfg_attr(docsrs, doc(cfg(feature = "estimation")))]
 pub mod estimation;
 
-pub mod testing;
-pub mod sampling;
 pub mod numerical;
+pub mod sampling;
+pub mod testing;
+#[cfg(feature = "estimation")]
+#[cfg_attr(docsrs, doc(cfg(feature = "estimation")))]
+pub mod model_selection;
 
 // Convenience module for common imports
 pub mod prelude;
 
 // Re-export core types and traits
 pub use error::{CopulaError, Result};
-pub use traits::{Copula, FittableCopula, ArchimedeanCopula};
-pub use utils::{to_pseudo_observations, empirical_ranks, kendall_tau, spearman_rho};
+pub use testing::{
+    anderson_darling, cramer_von_mises, cvm_multiplier_bootstrap, kolmogorov_smirnov,
+};
+#[cfg(feature = "estimation")]
+pub use traits::FittableCopula;
+#[cfg(feature = "estimation")]
+pub use model_selection::k_fold_cv;
+pub use traits::{ArchimedeanCopula, Copula};
+pub use utils::{empirical_ranks, kendall_tau, spearman_rho, to_pseudo_observations};
 
 // Re-export main copula types
+pub use archimedean::{AMHCopula, ClaytonCopula, FrankCopula, GumbelCopula, JoeCopula};
 pub use elliptical::{GaussianCopula, StudentTCopula};
-pub use archimedean::{ClaytonCopula, GumbelCopula, FrankCopula, JoeCopula, AMHCopula};
-pub use other::{MarshallOlkinCopula, EmpiricalCopula};
+pub use other::{EmpiricalCopula, MarshallOlkinCopula};
 
 // Re-export commonly used external types
 pub use nalgebra::{DMatrix, DVector};
@@ -116,9 +126,10 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
+    #[allow(clippy::assertions_on_constants)]
     fn test_library_version() {
-        assert!(!VERSION.is_empty());
+        assert_eq!(VERSION, env!("CARGO_PKG_VERSION"));
     }
 }

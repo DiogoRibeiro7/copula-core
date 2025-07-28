@@ -4,7 +4,7 @@
 name = "copulas"
 version = "0.1.0"
 edition = "2021"  # Fixed: was "2025"
-authors = ["Diogo Ribeiro <your.email@example.com>"]
+authors = ["Diogo Ribeiro <dfr@esmad.ipp.pt>"]
 license = "MIT OR Apache-2.0"
 description = "A comprehensive Rust library for copula modeling, estimation, and simulation"
 homepage = "https://github.com/diogoribeiro7/copulas-rs"
@@ -18,13 +18,17 @@ exclude = [
     "scripts/*",
     ".github/*",
     "*.py",
-    "*.R"
+    "*.R",
 ]
+
+[lib]
+doctest = false
 
 [dependencies]
 # Core mathematical operations
 nalgebra = { version = "0.32", features = ["serde-serialize"] }
 statrs = "0.16"
+mv-norm = "0.1.6"
 
 # Random number generation
 rand = "0.8"
@@ -92,14 +96,17 @@ harness = false
 
 [[example]]
 name = "basic_usage"
+path = "examples/basic_usage.rs"
 required-features = ["std"]
 
 [[example]]
 name = "parameter_estimation"
+path = "examples/parameter_estimation.rs"
 required-features = ["estimation"]
 
 [[example]]
 name = "risk_management"
+path = "examples/risk_management.rs"
 required-features = ["std"]
 
 [package.metadata.docs.rs]

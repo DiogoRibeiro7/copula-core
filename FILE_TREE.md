@@ -72,7 +72,7 @@ copulas-rs/
 │   │   ├── mod.rs                      # Statistical testing module
 │   │   ├── goodness_of_fit.rs          # Goodness-of-fit tests
 │   │   ├── independence.rs             # Tests for independence
-│   │   ├── model_selection.rs          # Model selection criteria (AIC, BIC)
+│   │   ├── model_selection.rs          # Model selection (AIC, BIC, cross-validation)
 │   │   └── bootstrap.rs                # Bootstrap methods
 │   │
 │   ├── sampling/
