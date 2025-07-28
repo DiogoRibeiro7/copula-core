@@ -2,30 +2,54 @@
 
 //! Gaussian (Normal) copula implementation.
 
-use crate::{Copula, CopulaError, Result};
+use crate::{utils::validate_correlation_matrix, Copula, CopulaError, Result};
 use nalgebra::DMatrix;
+use statrs::distribution::{ContinuousCDF, Normal};
+use mv_norm::tvpack::bvnd;
 use rand::Rng;
 
 /// Gaussian copula placeholder
 #[derive(Debug, Clone)]
 pub struct GaussianCopula {
-    dimension: usize,
+    correlation: DMatrix<f64>,
 }
 
 impl GaussianCopula {
+    /// Create a Gaussian copula from a correlation matrix.
+    pub fn new(correlation: DMatrix<f64>) -> Result<Self> {
+        validate_correlation_matrix(&correlation)?;
+        Ok(Self { correlation })
+    }
+
     /// Create a Gaussian copula with an identity correlation matrix of the given dimension.
     pub fn new_identity(dim: usize) -> Result<Self> {
-        Ok(Self { dimension: dim })
+        Ok(Self {
+            correlation: DMatrix::<f64>::identity(dim, dim),
+        })
+    }
+
+    fn dim(&self) -> usize {
+        self.correlation.ncols()
     }
 }
 
 impl Copula for GaussianCopula {
     fn cdf(&self, u: &[f64]) -> Result<f64> {
-        if u.len() != self.dimension {
-            return Err(CopulaError::dimension_mismatch(self.dimension, u.len()));
+        if u.len() != self.dim() {
+            return Err(CopulaError::dimension_mismatch(self.dim(), u.len()));
         }
         crate::error::validate_unit_range(u)?;
-        Ok(u.iter().product())
+        if self.dim() != 2 {
+            return Err(CopulaError::not_implemented(
+                "GaussianCopula::cdf for dimension > 2",
+            ));
+        }
+
+        let normal = Normal::new(0.0, 1.0).unwrap();
+        let x = normal.inverse_cdf(u[0]);
+        let y = normal.inverse_cdf(u[1]);
+        let r = self.correlation[(0, 1)];
+        Ok(bvnd(-x, -y, r))
     }
 
     fn pdf(&self, _u: &[f64]) -> Result<f64> {
@@ -37,7 +61,7 @@ impl Copula for GaussianCopula {
     }
 
     fn dimension(&self) -> usize {
-        self.dimension
+        self.dim()
     }
 }
 #[cfg(test)]
@@ -55,5 +79,17 @@ mod tests {
         let cop = GaussianCopula::new_identity(2).unwrap();
         let val = cop.cdf(&[0.1, 0.9]).unwrap();
         assert!((val - 0.1 * 0.9).abs() < 1e-12);
+    }
+
+    #[test]
+    fn cdf_with_correlation() {
+        let corr = DMatrix::from_row_slice(2, 2, &[1.0, 0.5, 0.5, 1.0]);
+        let cop = GaussianCopula::new(corr).unwrap();
+        let normal = Normal::new(0.0, 1.0).unwrap();
+        let x = normal.inverse_cdf(0.4);
+        let y = normal.inverse_cdf(0.7);
+        let expected = bvnd(-x, -y, 0.5);
+        let val = cop.cdf(&[0.4, 0.7]).unwrap();
+        assert!((val - expected).abs() < 1e-12);
     }
 }

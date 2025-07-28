@@ -28,6 +28,7 @@ doctest = false
 # Core mathematical operations
 nalgebra = { version = "0.32", features = ["serde-serialize"] }
 statrs = "0.16"
+mv-norm = "0.1.6"
 
 # Random number generation
 rand = "0.8"
