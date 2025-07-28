@@ -248,7 +248,7 @@ pub fn validate_unit_range(values: &[f64]) -> Result<()> {
     let invalid_values: Vec<f64> = values
         .iter()
         .copied()
-        .filter(|&x| x < 0.0 || x > 1.0 || x.is_nan())
+        .filter(|&x| !(0.0..=1.0).contains(&x))
         .collect();
 
     if invalid_values.is_empty() {

@@ -128,9 +128,8 @@ pub fn empirical_ranks(data: &[f64]) -> Result<Vec<f64>> {
 
         // Assign average rank to all tied values
         let avg_rank = (start_rank + (i + (j - i))) as f64 / 2.0;
-        for k in i..j {
-            let original_index = indexed_data[k].1;
-            ranks[original_index] = avg_rank;
+        for &(_, idx) in &indexed_data[i..j] {
+            ranks[idx] = avg_rank;
         }
 
         i = j;
