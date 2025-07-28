@@ -77,12 +77,50 @@ impl Copula for GaussianCopula {
         Ok(count as f64 / n_samples as f64)
     }
 
-    fn pdf(&self, _u: &[f64]) -> Result<f64> {
-        Err(CopulaError::not_implemented("GaussianCopula::pdf"))
+    fn pdf(&self, u: &[f64]) -> Result<f64> {
+        if u.len() != self.dim() {
+            return Err(CopulaError::dimension_mismatch(self.dim(), u.len()));
+        }
+        crate::error::validate_unit_range(u)?;
+
+        if self.dim() == 1 {
+            return Ok(1.0);
+        }
+
+        let normal = Normal::new(0.0, 1.0).unwrap();
+        let x = DVector::from_iterator(self.dim(), u.iter().map(|&ui| normal.inverse_cdf(ui)));
+        let inv = self
+            .correlation
+            .clone()
+            .try_inverse()
+            .ok_or_else(|| CopulaError::matrix_error("inverse", "singular"))?;
+        let det = self.correlation.determinant();
+        let quad = x.transpose() * (&inv * &x);
+        let norm_sq = x.dot(&x);
+        let exponent = -0.5 * (quad[(0, 0)] - norm_sq);
+        Ok(det.powf(-0.5) * exponent.exp())
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _n: usize, _rng: &mut R) -> Result<DMatrix<f64>> {
-        Err(CopulaError::not_implemented("GaussianCopula::sample"))
+    fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
+        let dim = self.dim();
+        let chol = self
+            .correlation
+            .clone()
+            .cholesky()
+            .ok_or_else(|| CopulaError::invalid_parameter("correlation not PD"))?;
+        let normal = StandardNormal;
+        let std_normal = Normal::new(0.0, 1.0).unwrap();
+        let mut samples = DMatrix::<f64>::zeros(n, dim);
+
+        for i in 0..n {
+            let z = DVector::from_iterator(dim, (0..dim).map(|_| normal.sample(rng)));
+            let x = chol.l() * z;
+            for j in 0..dim {
+                samples[(i, j)] = std_normal.cdf(x[j]);
+            }
+        }
+
+        Ok(samples)
     }
 
     fn dimension(&self) -> usize {
@@ -124,5 +162,27 @@ mod tests {
         let val = cop.cdf(&[0.2, 0.3, 0.4]).unwrap();
         let expected = 0.2 * 0.3 * 0.4;
         assert!((val - expected).abs() < 0.02);
+    }
+
+    #[test]
+    fn pdf_identity_matches_one() {
+        let cop = GaussianCopula::new_identity(2).unwrap();
+        let pdf = cop.pdf(&[0.3, 0.7]).unwrap();
+        // Independence copula density is 1
+        assert!((pdf - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn sample_dimensions() {
+        let mut rng = rand::thread_rng();
+        let cop = GaussianCopula::new_identity(2).unwrap();
+        let samples = cop.sample(5, &mut rng).unwrap();
+        assert_eq!(samples.nrows(), 5);
+        assert_eq!(samples.ncols(), 2);
+        for i in 0..5 {
+            for j in 0..2 {
+                assert!(samples[(i, j)] > 0.0 && samples[(i, j)] < 1.0);
+            }
+        }
     }
 }

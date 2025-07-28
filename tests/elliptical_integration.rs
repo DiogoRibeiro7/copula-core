@@ -15,3 +15,12 @@ fn gaussian_basic_cdf() {
     let expected = bvnd(-x, -y, 0.4);
     assert!((val - expected).abs() < 1e-12);
 }
+
+#[test]
+fn gaussian_sampling() {
+    let cop = GaussianCopula::new_identity(2).unwrap();
+    let mut rng = rand::thread_rng();
+    let samples = cop.sample(3, &mut rng).unwrap();
+    assert_eq!(samples.nrows(), 3);
+    assert_eq!(samples.ncols(), 2);
+}

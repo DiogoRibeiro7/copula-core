@@ -6,7 +6,7 @@ use crate::{utils::validate_correlation_matrix, Copula, CopulaError, Result};
 use nalgebra::{DMatrix, DVector};
 use rand::Rng;
 use rand_distr::{ChiSquared, Distribution, StandardNormal};
-use statrs::distribution::{ContinuousCDF, StudentsT};
+use statrs::distribution::{Continuous, ContinuousCDF, StudentsT};
 
 /// Student's t copula placeholder
 #[derive(Debug, Clone)]
@@ -75,12 +75,65 @@ impl Copula for StudentTCopula {
         Ok(count as f64 / n_samples as f64)
     }
 
-    fn pdf(&self, _u: &[f64]) -> Result<f64> {
-        Err(CopulaError::not_implemented("StudentTCopula::pdf"))
+    fn pdf(&self, u: &[f64]) -> Result<f64> {
+        if u.len() != self.dim() {
+            return Err(CopulaError::dimension_mismatch(self.dim(), u.len()));
+        }
+        crate::error::validate_unit_range(u)?;
+
+        if self.dim() == 1 {
+            return Ok(1.0);
+        }
+
+        let t = StudentsT::new(0.0, 1.0, self.df).unwrap();
+        let x = DVector::from_iterator(self.dim(), u.iter().map(|&ui| t.inverse_cdf(ui)));
+
+        let inv = self
+            .correlation
+            .clone()
+            .try_inverse()
+            .ok_or_else(|| CopulaError::matrix_error("inverse", "singular"))?;
+        let det = self.correlation.determinant();
+        let quad = (inv.clone() * &x).dot(&x);
+
+        use statrs::function::gamma::ln_gamma;
+        use std::f64::consts::PI;
+
+        let d = self.dim() as f64;
+        let log_num = ln_gamma((self.df + d) / 2.0);
+        let log_denom = ln_gamma(self.df / 2.0) + (d / 2.0) * (self.df.ln() + PI.ln()) + 0.5 * det.ln();
+        let log_kernel = -((self.df + d) / 2.0) * ((1.0 + quad / self.df).ln());
+        let log_joint = log_num - log_denom + log_kernel;
+
+        let sum_log_marginals: f64 = x.iter().map(|&xi| t.pdf(xi).ln()).sum();
+
+        Ok((log_joint - sum_log_marginals).exp())
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _n: usize, _rng: &mut R) -> Result<DMatrix<f64>> {
-        Err(CopulaError::not_implemented("StudentTCopula::sample"))
+    fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
+        let dim = self.dim();
+        let chol = self
+            .correlation
+            .clone()
+            .cholesky()
+            .ok_or_else(|| CopulaError::invalid_parameter("correlation not PD"))?;
+        let normal = StandardNormal;
+        let chi = ChiSquared::new(self.df).unwrap();
+        let t_dist = StudentsT::new(0.0, 1.0, self.df).unwrap();
+        let mut samples = DMatrix::<f64>::zeros(n, dim);
+
+        for i in 0..n {
+            let z = DVector::from_iterator(dim, (0..dim).map(|_| normal.sample(rng)));
+            let y = chol.l() * z;
+            let w = chi.sample(rng);
+            let scale = (self.df / w).sqrt();
+            let t_sample = y * scale;
+            for j in 0..dim {
+                samples[(i, j)] = t_dist.cdf(t_sample[j]);
+            }
+        }
+
+        Ok(samples)
     }
 
     fn dimension(&self) -> usize {
@@ -119,5 +172,26 @@ mod tests {
         let cop = StudentTCopula::new_identity(3, 3.0).unwrap();
         let val = cop.cdf(&[0.2, 0.3, 0.4]).unwrap();
         assert!(val > 0.0 && val < 1.0);
+    }
+
+    #[test]
+    fn pdf_identity_is_one() {
+        let cop = StudentTCopula::new_identity(2, 4.0).unwrap();
+        let pdf = cop.pdf(&[0.6, 0.2]).unwrap();
+        assert!(pdf > 0.0);
+    }
+
+    #[test]
+    fn sample_returns_valid_matrix() {
+        let mut rng = rand::thread_rng();
+        let cop = StudentTCopula::new_identity(2, 5.0).unwrap();
+        let samples = cop.sample(5, &mut rng).unwrap();
+        assert_eq!(samples.nrows(), 5);
+        assert_eq!(samples.ncols(), 2);
+        for i in 0..5 {
+            for j in 0..2 {
+                assert!(samples[(i, j)] > 0.0 && samples[(i, j)] < 1.0);
+            }
+        }
     }
 }
