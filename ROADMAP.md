@@ -25,13 +25,13 @@
 ## Version 0.2.0 - Statistical Foundation (Q4 2025)
 
 ### Advanced Statistical Methods
-- [ ] **Maximum Likelihood Estimation**
+- [x] **Maximum Likelihood Estimation**
   - [x] Numerical optimization with `argmin` crate
   - [x] Standard errors and confidence intervals
   - [x] Constraint handling for parameter bounds
 
 - [ ] **Goodness-of-Fit Testing**
-  - [ ] Cramér-von Mises test
+- [x] Cramér-von Mises test
   - [ ] Kolmogorov-Smirnov test
   - [ ] Anderson-Darling test
   - [ ] Multiplier bootstrap methods

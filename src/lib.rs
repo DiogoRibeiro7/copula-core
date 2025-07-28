@@ -99,6 +99,7 @@ pub mod prelude;
 
 // Re-export core types and traits
 pub use error::{CopulaError, Result};
+pub use testing::cramer_von_mises;
 #[cfg(feature = "estimation")]
 pub use traits::FittableCopula;
 pub use traits::{ArchimedeanCopula, Copula};
