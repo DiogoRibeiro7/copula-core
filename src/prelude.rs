@@ -32,8 +32,8 @@ pub use crate::utils::{
     multivariate_kendall_tau, multivariate_spearman_rho, remove_missing_values, spearman_rho,
     to_pseudo_observations, validate_correlation_matrix,
 };
-// Goodness-of-fit statistic
-pub use crate::testing::cramer_von_mises;
+// Goodness-of-fit statistics
+pub use crate::testing::{cramer_von_mises, kolmogorov_smirnov};
 
 // Elliptical copulas
 pub use crate::elliptical::{GaussianCopula, StudentTCopula};

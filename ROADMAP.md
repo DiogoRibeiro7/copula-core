@@ -32,7 +32,7 @@
 
 - [ ] **Goodness-of-Fit Testing**
 - [x] Cramér-von Mises test
-  - [ ] Kolmogorov-Smirnov test
+  - [x] Kolmogorov-Smirnov test
   - [ ] Anderson-Darling test
   - [ ] Multiplier bootstrap methods
 

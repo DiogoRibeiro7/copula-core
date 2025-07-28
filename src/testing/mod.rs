@@ -1,8 +1,9 @@
 //! Statistical testing utilities.
 //!
 //! This module provides goodness-of-fit procedures for evaluating copula
-//! models. At the moment, it contains a basic Cramér-von Mises statistic
-//! for comparing a fitted copula with empirical pseudo-observations.
+//! models. At the moment, it contains goodness-of-fit statistics such as
+//! the Cramér-von Mises and Kolmogorov-Smirnov tests for comparing a
+//! fitted copula with empirical pseudo-observations.
 
 use crate::{utils::empirical_copula_cdf, Copula, CopulaError, Result};
 use nalgebra::DMatrix;
@@ -47,6 +48,39 @@ pub fn cramer_von_mises<C: Copula>(copula: &C, pseudo_obs: &DMatrix<f64>) -> Res
     Ok(n as f64 * sum)
 }
 
+/// Compute the Kolmogorov-Smirnov statistic for a copula model.
+///
+/// This statistic measures the maximum absolute difference between the model
+/// CDF and the empirical copula:
+///
+/// `D = \sqrt{n} \max_i |C(u_i) - C_n(u_i)|`,
+/// where `C` is the copula CDF, `C_n` is the empirical copula and `u_i` are the
+/// pseudo-observations.
+pub fn kolmogorov_smirnov<C: Copula>(copula: &C, pseudo_obs: &DMatrix<f64>) -> Result<f64> {
+    crate::utils::validate_pseudo_observations(pseudo_obs)?;
+    if pseudo_obs.ncols() != copula.dimension() {
+        return Err(CopulaError::dimension_mismatch(
+            copula.dimension(),
+            pseudo_obs.ncols(),
+        ));
+    }
+
+    let n = pseudo_obs.nrows();
+    let mut max_diff = 0.0_f64;
+    for i in 0..n {
+        let row = pseudo_obs.row(i);
+        let u: Vec<f64> = row.iter().copied().collect();
+        let c_n = empirical_copula_cdf(pseudo_obs, &u)?;
+        let c = copula.cdf(&u)?;
+        let diff = (c - c_n).abs();
+        if diff > max_diff {
+            max_diff = diff;
+        }
+    }
+
+    Ok((n as f64).sqrt() * max_diff)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -59,6 +93,15 @@ mod tests {
         let cop = ClaytonCopula::new(2.0).unwrap();
         let data = cop.sample(100, &mut rng).unwrap();
         let stat = cramer_von_mises(&cop, &data).unwrap();
+        assert!(stat.is_finite() && stat > 0.0);
+    }
+
+    #[test]
+    fn ks_statistic_finite() {
+        let mut rng = thread_rng();
+        let cop = ClaytonCopula::new(2.0).unwrap();
+        let data = cop.sample(50, &mut rng).unwrap();
+        let stat = kolmogorov_smirnov(&cop, &data).unwrap();
         assert!(stat.is_finite() && stat > 0.0);
     }
 }
