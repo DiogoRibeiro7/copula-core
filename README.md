@@ -38,7 +38,7 @@ A comprehensive Rust library for copula modeling, estimation, and simulation. Th
 - ✅ Copula CDF and PDF evaluation
 - ✅ Random sampling from copulas
 - ✅ Tail dependence computation
-- 🚧 Parameter estimation (MLE, method of moments)
+- ✅ Parameter estimation (method of moments and MLE)
 - 🚧 Goodness-of-fit testing
 - 🚧 Model selection criteria (AIC, BIC)
 - ⏳ Conditional copulas for vine constructions

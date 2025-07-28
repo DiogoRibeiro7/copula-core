@@ -48,3 +48,18 @@ fn student_t_fit_moments_recovers_corr() {
     let (est_corr, _df) = est.fit_moments(&data).unwrap();
     assert!((est_corr[(0, 1)] - 0.5).abs() < 0.1);
 }
+
+#[cfg(feature = "estimation")]
+#[test]
+fn clayton_standard_errors_and_ci() {
+    let mut rng = thread_rng();
+    let orig = ClaytonCopula::new(2.0).unwrap();
+    let data = orig.sample(800, &mut rng).unwrap();
+
+    let mut est = ClaytonCopula::new(1.5).unwrap();
+    est.fit(&data).unwrap();
+    let se = est.standard_errors(&data).unwrap();
+    assert!(se > 0.0);
+    let (lower, upper) = est.confidence_intervals(&data, 0.95).unwrap();
+    assert!(lower < 2.0 && upper > 2.0);
+}

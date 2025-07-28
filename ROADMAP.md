@@ -27,7 +27,7 @@
 ### Advanced Statistical Methods
 - [ ] **Maximum Likelihood Estimation**
   - [x] Numerical optimization with `argmin` crate
-  - [ ] Standard errors and confidence intervals
+  - [x] Standard errors and confidence intervals
   - [ ] Constraint handling for parameter bounds
 
 - [ ] **Goodness-of-Fit Testing**
@@ -37,7 +37,7 @@
   - [ ] Multiplier bootstrap methods
 
 - [ ] **Model Selection**
-  - [ ] AIC/BIC computation
+  - [x] AIC/BIC computation
   - [ ] Cross-validation for copula selection
   - [ ] Vuong test for non-nested models
 

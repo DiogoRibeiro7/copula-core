@@ -16,6 +16,8 @@ use crate::utils::kendall_tau;
 use crate::{ArchimedeanCopula, Copula, CopulaError, Result};
 use nalgebra::DMatrix;
 use rand::Rng;
+#[cfg(feature = "estimation")]
+use statrs::distribution::ContinuousCDF;
 
 /// Clayton copula with positive parameter `theta`.
 #[derive(Debug, Clone)]
@@ -217,6 +219,46 @@ impl FittableCopula for ClaytonCopula {
     fn set_parameters(&mut self, params: Self::Parameters) -> Result<()> {
         *self = Self::new(params)?;
         Ok(())
+    }
+
+    fn standard_errors(&self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
+        if pseudo_obs.ncols() != 2 {
+            return Err(CopulaError::dimension_mismatch(2, pseudo_obs.ncols()));
+        }
+        crate::utils::validate_pseudo_observations(pseudo_obs)?;
+
+        let h = 1e-5;
+        let theta = self.theta;
+        let ll = |t: f64| {
+            let cop = Self { theta: t };
+            cop.log_likelihood(pseudo_obs)
+        };
+        let ll_p = ll(theta + h)?;
+        let ll_m = ll(theta - h)?;
+        let ll_0 = ll(theta)?;
+        let second = (ll_p - 2.0 * ll_0 + ll_m) / (h * h);
+        if second >= 0.0 || !second.is_finite() {
+            return Err(CopulaError::numerical("invalid hessian"));
+        }
+        let var = -1.0 / second;
+        Ok(var.sqrt())
+    }
+
+    fn confidence_intervals(
+        &self,
+        pseudo_obs: &DMatrix<f64>,
+        confidence_level: f64,
+    ) -> Result<(Self::Parameters, Self::Parameters)> {
+        if !(0.0 < confidence_level && confidence_level < 1.0) {
+            return Err(CopulaError::invalid_parameter("confidence_level"));
+        }
+        let se = self.standard_errors(pseudo_obs)?;
+        let z = statrs::distribution::Normal::new(0.0, 1.0)
+            .unwrap()
+            .inverse_cdf(0.5 + confidence_level / 2.0);
+        let lower = self.theta - z * se;
+        let upper = self.theta + z * se;
+        Ok((lower, upper))
     }
 }
 
