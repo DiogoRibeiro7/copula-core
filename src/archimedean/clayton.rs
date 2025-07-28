@@ -16,6 +16,7 @@ use crate::utils::kendall_tau;
 use crate::{ArchimedeanCopula, Copula, CopulaError, Result};
 use nalgebra::DMatrix;
 use rand::Rng;
+use crate::traits::BoundedParameters;
 #[cfg(feature = "estimation")]
 use statrs::distribution::ContinuousCDF;
 
@@ -33,6 +34,21 @@ impl ClaytonCopula {
             return Err(CopulaError::invalid_parameter("theta must be positive"));
         }
         Ok(Self { theta })
+    }
+}
+
+impl BoundedParameters for ClaytonCopula {
+    fn parameter_bounds() -> Vec<(f64, f64)> {
+        vec![(1e-4, 10.0)]
+    }
+
+    fn check_bounds(&self) -> Result<()> {
+        let (min, max) = Self::parameter_bounds()[0];
+        if self.theta < min || self.theta > max {
+            Err(CopulaError::invalid_parameter("theta out of bounds"))
+        } else {
+            Ok(())
+        }
     }
 }
 
@@ -164,7 +180,8 @@ impl FittableCopula for ClaytonCopula {
         }
 
         let op = Nll { data: pseudo_obs };
-        let solver = BrentOpt::new(0.01, 10.0);
+        let (min, max) = Self::parameter_bounds()[0];
+        let solver = BrentOpt::new(min, max);
         let res = Executor::new(op, solver)
             .configure(|state| state.max_iters(100))
             .run()
@@ -333,5 +350,13 @@ mod tests {
         let (lower, upper) = cop.tail_dependence().unwrap();
         assert!((lower - 2f64.powf(-0.5)).abs() < 1e-12);
         assert_eq!(upper, 0.0);
+    }
+
+    #[test]
+    fn parameter_bounds_are_enforced() {
+        let bad = ClaytonCopula { theta: -1.0 };
+        assert!(bad.check_bounds().is_err());
+        let good = ClaytonCopula::new(2.0).unwrap();
+        assert!(good.check_bounds().is_ok());
     }
 }

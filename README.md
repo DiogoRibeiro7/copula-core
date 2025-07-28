@@ -40,7 +40,7 @@ A comprehensive Rust library for copula modeling, estimation, and simulation. Th
 - ✅ Tail dependence computation
 - ✅ Parameter estimation (method of moments and MLE)
 - 🚧 Goodness-of-fit testing
-- 🚧 Model selection criteria (AIC, BIC)
+- ✅ Model selection criteria (AIC, BIC)
 - ⏳ Conditional copulas for vine constructions
 
 ## Quick Start

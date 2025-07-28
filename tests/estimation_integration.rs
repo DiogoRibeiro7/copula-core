@@ -1,6 +1,8 @@
 #[cfg(feature = "estimation")]
 use copulas::prelude::*;
 #[cfg(feature = "estimation")]
+use copulas::traits::BoundedParameters;
+#[cfg(feature = "estimation")]
 use rand::thread_rng;
 
 #[cfg(feature = "estimation")]
@@ -62,4 +64,16 @@ fn clayton_standard_errors_and_ci() {
     assert!(se > 0.0);
     let (lower, upper) = est.confidence_intervals(&data, 0.95).unwrap();
     assert!(lower < 2.0 && upper > 2.0);
+}
+
+#[cfg(feature = "estimation")]
+#[test]
+fn clayton_fit_respects_bounds() {
+    let mut rng = thread_rng();
+    let orig = ClaytonCopula::new(50.0).unwrap();
+    let data = orig.sample(200, &mut rng).unwrap();
+    let mut est = ClaytonCopula::new(2.0).unwrap();
+    let theta = est.fit(&data).unwrap();
+    let bound = ClaytonCopula::parameter_bounds()[0].1;
+    assert!(theta <= bound);
 }

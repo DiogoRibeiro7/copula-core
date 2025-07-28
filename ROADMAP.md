@@ -28,7 +28,7 @@
 - [ ] **Maximum Likelihood Estimation**
   - [x] Numerical optimization with `argmin` crate
   - [x] Standard errors and confidence intervals
-  - [ ] Constraint handling for parameter bounds
+  - [x] Constraint handling for parameter bounds
 
 - [ ] **Goodness-of-Fit Testing**
   - [ ] Cramér-von Mises test
