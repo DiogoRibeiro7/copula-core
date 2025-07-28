@@ -120,6 +120,52 @@ pub fn anderson_darling<C: Copula>(copula: &C, pseudo_obs: &DMatrix<f64>) -> Res
     Ok(-1.0 * (n as f64) - sum / (n as f64))
 }
 
+/// Generate a distribution of Cramér-von Mises statistics using
+/// a simple multiplier bootstrap.
+///
+/// Random weights with mean 0 and variance 1 are drawn for each
+/// observation and used to perturb the empirical process. This
+/// approximates the sampling distribution of the statistic
+/// without resampling the data.
+pub fn cvm_multiplier_bootstrap<C, R>(
+    copula: &C,
+    pseudo_obs: &DMatrix<f64>,
+    n_rep: usize,
+    rng: &mut R,
+) -> Result<Vec<f64>>
+where
+    C: Copula,
+    R: rand::Rng + ?Sized,
+{
+    crate::utils::validate_pseudo_observations(pseudo_obs)?;
+    if pseudo_obs.ncols() != copula.dimension() {
+        return Err(CopulaError::dimension_mismatch(
+            copula.dimension(),
+            pseudo_obs.ncols(),
+        ));
+    }
+
+    let n = pseudo_obs.nrows();
+    let mut results = Vec::with_capacity(n_rep);
+    use rand_distr::{Distribution, StandardNormal};
+
+    for _ in 0..n_rep {
+        let mut weighted_sum = 0.0_f64;
+        for i in 0..n {
+            let row = pseudo_obs.row(i);
+            let u: Vec<f64> = row.iter().copied().collect();
+            let c_n = empirical_copula_cdf(pseudo_obs, &u)?;
+            let c = copula.cdf(&u)?;
+            let diff = c - c_n;
+            let w: f64 = StandardNormal.sample(rng);
+            weighted_sum += w * diff;
+        }
+        results.push(n as f64 * weighted_sum.powi(2));
+    }
+
+    Ok(results)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -151,5 +197,15 @@ mod tests {
         let data = cop.sample(50, &mut rng).unwrap();
         let stat = anderson_darling(&cop, &data).unwrap();
         assert!(stat.is_finite() && stat > 0.0);
+    }
+
+    #[test]
+    fn multiplier_bootstrap_produces_samples() {
+        let mut rng = thread_rng();
+        let cop = ClaytonCopula::new(2.0).unwrap();
+        let data = cop.sample(40, &mut rng).unwrap();
+        let reps = cvm_multiplier_bootstrap(&cop, &data, 10, &mut rng).unwrap();
+        assert_eq!(reps.len(), 10);
+        assert!(reps.iter().all(|&x| x.is_finite()));
     }
 }

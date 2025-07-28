@@ -34,7 +34,7 @@
 - [x] Cramér-von Mises test
   - [x] Kolmogorov-Smirnov test
   - [x] Anderson-Darling test
-  - [ ] Multiplier bootstrap methods
+  - [x] Multiplier bootstrap methods
 
 - [ ] **Model Selection**
   - [x] AIC/BIC computation
