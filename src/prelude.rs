@@ -25,6 +25,8 @@ pub use crate::traits::{ArchimedeanCopula, Copula};
 
 #[cfg(feature = "estimation")]
 pub use crate::traits::FittableCopula;
+#[cfg(feature = "estimation")]
+pub use crate::model_selection::k_fold_cv;
 
 // Utility functions
 pub use crate::utils::{

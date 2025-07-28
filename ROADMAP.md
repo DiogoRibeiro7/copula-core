@@ -38,7 +38,7 @@
 
 - [ ] **Model Selection**
   - [x] AIC/BIC computation
-  - [ ] Cross-validation for copula selection
+  - [x] Cross-validation for copula selection
   - [ ] Vuong test for non-nested models
 
 ### Numerical Robustness

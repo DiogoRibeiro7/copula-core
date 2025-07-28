@@ -41,6 +41,7 @@ A comprehensive Rust library for copula modeling, estimation, and simulation. Th
 - ✅ Parameter estimation (method of moments and MLE)
 - ✅ Goodness-of-fit testing (Cramér-von Mises, Kolmogorov-Smirnov, Anderson-Darling, multiplier bootstrap)
 - ✅ Model selection criteria (AIC, BIC)
+- ✅ Cross-validation for copula selection
 - ⏳ Conditional copulas for vine constructions
 
 ## Quick Start

@@ -93,6 +93,9 @@ pub mod estimation;
 pub mod numerical;
 pub mod sampling;
 pub mod testing;
+#[cfg(feature = "estimation")]
+#[cfg_attr(docsrs, doc(cfg(feature = "estimation")))]
+pub mod model_selection;
 
 // Convenience module for common imports
 pub mod prelude;
@@ -104,6 +107,8 @@ pub use testing::{
 };
 #[cfg(feature = "estimation")]
 pub use traits::FittableCopula;
+#[cfg(feature = "estimation")]
+pub use model_selection::k_fold_cv;
 pub use traits::{ArchimedeanCopula, Copula};
 pub use utils::{empirical_ranks, kendall_tau, spearman_rho, to_pseudo_observations};
 
