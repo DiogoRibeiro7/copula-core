@@ -3,23 +3,23 @@
 ## Version 0.1.0 - Foundation (Q3 2025)
 
 ### Core Infrastructure ✅
-- [ ] Base trait system (`Copula`, `FittableCopula`, `ArchimedeanCopula`)
-- [ ] Error handling with `CopulaError`
-- [ ] Pseudo-observations conversion utilities
-- [ ] Basic testing framework
-- [ ] Documentation structure
+- [x] Base trait system (`Copula`, `FittableCopula`, `ArchimedeanCopula`)
+- [x] Error handling with `CopulaError`
+- [x] Pseudo-observations conversion utilities
+- [x] Basic testing framework
+- [x] Documentation structure
 
 ### Basic Copula Implementations
-- [ ] **Clayton Copula** - CDF, PDF, sampling, tail dependence
-- [ ] **Gumbel Copula** - CDF implementation
-- [ ] **Frank Copula** - CDF implementation  
-- [ ] **Marshall-Olkin Copula** - CDF implementation
-- [ ] **Gaussian Copula** - Complete multivariate normal CDF implementation
-- [ ] **Student's t Copula** - Full implementation
+- [x] **Clayton Copula** - CDF, PDF, sampling, tail dependence
+- [x] **Gumbel Copula** - CDF implementation
+- [x] **Frank Copula** - CDF implementation
+- [x] **Marshall-Olkin Copula** - CDF implementation
+- [x] **Gaussian Copula** - Complete multivariate normal CDF implementation
+- [x] **Student's t Copula** - Full implementation
 
 ### Essential Utilities
-- [ ] Empirical rank computation
-- [ ] Kendall's tau and Spearman's rho computation
+- [x] Empirical rank computation
+- [x] Kendall's tau and Spearman's rho computation
 - [ ] Basic parameter estimation (method of moments)
 
 ## Version 0.2.0 - Statistical Foundation (Q4 2025)
