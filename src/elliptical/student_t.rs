@@ -41,18 +41,12 @@ impl Copula for StudentTCopula {
             return Err(CopulaError::dimension_mismatch(self.dim(), u.len()));
         }
         crate::error::validate_unit_range(u)?;
-        if self.dim() != 2 {
-            return Err(CopulaError::not_implemented(
-                "StudentTCopula::cdf for dimension > 2",
-            ));
-        }
-
         // Quantiles of univariate Student's t distribution
         let t = StudentsT::new(0.0, 1.0, self.df).unwrap();
-        let x = t.inverse_cdf(u[0]);
-        let y = t.inverse_cdf(u[1]);
+        let quantiles: DVector<f64> =
+            DVector::from_iterator(self.dim(), u.iter().map(|&ui| t.inverse_cdf(ui)));
 
-        // Monte Carlo approximation
+        // Monte Carlo approximation for any dimension
         let chol = self
             .correlation
             .clone()
@@ -66,15 +60,14 @@ impl Copula for StudentTCopula {
         let n_samples = 10_000usize;
 
         for _ in 0..n_samples {
-            let z1: f64 = normal.sample(&mut rng);
-            let z2: f64 = normal.sample(&mut rng);
-            let z = DVector::from_row_slice(&[z1, z2]);
+            let dim = self.dim();
+            let z = DVector::from_iterator(dim, (0..dim).map(|_| normal.sample(&mut rng)));
             let norm = chol.l() * z;
             let w = chi.sample(&mut rng);
             let scale = (self.df / w).sqrt();
             let t_sample = norm * scale;
 
-            if t_sample[0] <= x && t_sample[1] <= y {
+            if (0..self.dim()).all(|i| t_sample[i] <= quantiles[i]) {
                 count += 1;
             }
         }
@@ -119,5 +112,12 @@ mod tests {
         // Just ensure the method runs and returns probability
         let res = cop.cdf(&[0.3, 0.6]).unwrap();
         assert!(res > 0.0 && res < 1.0);
+    }
+
+    #[test]
+    fn cdf_higher_dimension_identity() {
+        let cop = StudentTCopula::new_identity(3, 3.0).unwrap();
+        let val = cop.cdf(&[0.2, 0.3, 0.4]).unwrap();
+        assert!(val > 0.0 && val < 1.0);
     }
 }
