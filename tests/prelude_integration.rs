@@ -12,5 +12,5 @@ fn prelude_smoke() {
     assert_eq!(pseudo.nrows(), 2);
 
     let _level = confidence_levels::LEVEL_95;
-    assert!(VERSION.len() > 0);
+    assert!(!VERSION.is_empty());
 }

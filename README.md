@@ -175,7 +175,8 @@ If you use this library in academic work, please cite:
 ```bibtex
 @software{copulas_rs,
   title = {copulas-rs: A Rust Library for Copula Modeling},
-  author = {Diogo Ribeiroe},
+  author = {Diogo Ribeiro},
+  orcid = {0009-0001-2022-7072},
   year = {2025},
   url = {https://github.com/diogoribeiro7/copulas-rs}
 }

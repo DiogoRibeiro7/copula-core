@@ -311,7 +311,7 @@ pub trait FittableCopula: Copula {
     /// # Returns
     ///
     /// Standard errors corresponding to the parameters.
-    fn standard_errors(&self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
+    fn standard_errors(&self, _pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
         Err(CopulaError::not_implemented("standard_errors"))
     }
 
@@ -327,8 +327,8 @@ pub trait FittableCopula: Copula {
     /// Confidence intervals as (lower, upper) bounds.
     fn confidence_intervals(
         &self,
-        pseudo_obs: &DMatrix<f64>,
-        confidence_level: f64,
+        _pseudo_obs: &DMatrix<f64>,
+        _confidence_level: f64,
     ) -> Result<(Self::Parameters, Self::Parameters)> {
         Err(CopulaError::not_implemented("confidence_intervals"))
     }
