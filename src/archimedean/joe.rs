@@ -1,5 +1,11 @@
 // src/archimedean/joe.rs
 //! Joe copula implementation.
+//!
+//! ## Bibliography
+//! - Joe, H. (1997). *Multivariate Models and Dependence Concepts*. Chapman &
+//!   Hall.
+//! - Nelsen, R. B. (2006). *An Introduction to Copulas*. Springer.
+//! - Joe, H. (2014). *Dependence Modeling with Copulas*. CRC Press.
 
 use crate::{ArchimedeanCopula, Copula, CopulaError, Result};
 use nalgebra::DMatrix;

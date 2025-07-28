@@ -1,5 +1,11 @@
 // src/archimedean/gumbel.rs
 //! Gumbel copula implementation.
+//!
+//! ## Bibliography
+//! - Gumbel, E. J. (1960). Bivariate exponential distributions. *Journal of the
+//!   American Statistical Association*, 55(292), 698-707.
+//! - Nelsen, R. B. (2006). *An Introduction to Copulas*. Springer.
+//! - Joe, H. (2014). *Dependence Modeling with Copulas*. CRC Press.
 
 use crate::{ArchimedeanCopula, Copula, CopulaError, Result};
 use nalgebra::DMatrix;
@@ -73,7 +79,8 @@ impl ArchimedeanCopula for GumbelCopula {
             2 => {
                 let phi_inv = self.phi_inv(s)?;
                 let term1 = (1.0 / self.theta.powi(2)) * s.powf(2.0 / self.theta - 2.0);
-                let term2 = (1.0 / self.theta) * (1.0 / self.theta - 1.0) * s.powf(1.0 / self.theta - 2.0);
+                let term2 =
+                    (1.0 / self.theta) * (1.0 / self.theta - 1.0) * s.powf(1.0 / self.theta - 2.0);
                 Ok(phi_inv * (term1 - term2))
             }
             _ => Err(CopulaError::not_implemented("phi_inv_deriv k>2")),

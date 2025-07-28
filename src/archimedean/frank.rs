@@ -1,5 +1,11 @@
 // src/archimedean/frank.rs
 //! Frank copula implementation.
+//!
+//! ## Bibliography
+//! - Frank, M. J. (1979). On the simultaneous associativity of f(x,y) and
+//!   x+y−f(x,y). *Aequationes Mathematicae*, 19(1), 194-226.
+//! - Nelsen, R. B. (2006). *An Introduction to Copulas*. Springer.
+//! - Joe, H. (2014). *Dependence Modeling with Copulas*. CRC Press.
 
 use crate::{ArchimedeanCopula, Copula, CopulaError, Result};
 use nalgebra::DMatrix;

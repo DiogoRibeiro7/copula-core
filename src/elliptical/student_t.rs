@@ -1,6 +1,13 @@
 // src/elliptical/student_t.rs
 
 //! Student's t copula implementation.
+//!
+//! ## Bibliography
+//! - Demarta, S., & McNeil, A. J. (2005). The t copula and related copulas.
+//!   *International Statistical Review*, 73(1), 111-129.
+//! - McNeil, A. J., Frey, R., & Embrechts, P. (2015). *Quantitative Risk
+//!   Management: Concepts, Techniques and Tools*. Princeton University Press.
+//! - Nelsen, R. B. (2006). *An Introduction to Copulas*. Springer.
 
 use crate::{utils::validate_correlation_matrix, Copula, CopulaError, Result};
 use nalgebra::{DMatrix, DVector};
@@ -101,7 +108,8 @@ impl Copula for StudentTCopula {
 
         let d = self.dim() as f64;
         let log_num = ln_gamma((self.df + d) / 2.0);
-        let log_denom = ln_gamma(self.df / 2.0) + (d / 2.0) * (self.df.ln() + PI.ln()) + 0.5 * det.ln();
+        let log_denom =
+            ln_gamma(self.df / 2.0) + (d / 2.0) * (self.df.ln() + PI.ln()) + 0.5 * det.ln();
         let log_kernel = -((self.df + d) / 2.0) * ((1.0 + quad / self.df).ln());
         let log_joint = log_num - log_denom + log_kernel;
 

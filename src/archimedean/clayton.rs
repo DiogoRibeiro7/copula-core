@@ -1,6 +1,13 @@
 // src/archimedean/clayton.rs
 
 //! Clayton copula implementation.
+//!
+//! ## Bibliography
+//! - Clayton, D. G. (1978). A model for association in bivariate life tables
+//!   and its application in epidemiological studies of familial tendency in
+//!   chronic disease incidence. *Biometrika*, 65(1), 141-151.
+//! - Nelsen, R. B. (2006). *An Introduction to Copulas*. Springer.
+//! - Joe, H. (2014). *Dependence Modeling with Copulas*. CRC Press.
 
 use crate::{ArchimedeanCopula, Copula, CopulaError, Result};
 use nalgebra::DMatrix;
@@ -56,9 +63,8 @@ impl Copula for ClaytonCopula {
     fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
         use rand_distr::{Distribution, Exp1, Gamma};
 
-        let gamma = Gamma::<f64>::new(1.0 / self.theta, 1.0).map_err(|e| {
-            CopulaError::invalid_parameter(format!("gamma distribution: {}", e))
-        })?;
+        let gamma = Gamma::<f64>::new(1.0 / self.theta, 1.0)
+            .map_err(|e| CopulaError::invalid_parameter(format!("gamma distribution: {}", e)))?;
         let mut samples = DMatrix::<f64>::zeros(n, 2);
         for i in 0..n {
             let w: f64 = gamma.sample(rng);

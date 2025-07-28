@@ -1,13 +1,21 @@
 // src/elliptical/gaussian.rs
 
 //! Gaussian (Normal) copula implementation.
+//!
+//! ## Bibliography
+//! - Embrechts, P., McNeil, A., & Straumann, D. (2002). Correlation and
+//!   dependence in risk management: properties and pitfalls. In *Risk
+//!   Management: Value at Risk and Beyond*.
+//! - McNeil, A. J., Frey, R., & Embrechts, P. (2015). *Quantitative Risk
+//!   Management: Concepts, Techniques and Tools*. Princeton University Press.
+//! - Nelsen, R. B. (2006). *An Introduction to Copulas*. Springer.
 
 use crate::{utils::validate_correlation_matrix, Copula, CopulaError, Result};
-use nalgebra::{DMatrix, DVector};
-use statrs::distribution::{ContinuousCDF, Normal};
 use mv_norm::tvpack::bvnd;
+use nalgebra::{DMatrix, DVector};
 use rand::Rng;
 use rand_distr::{Distribution, StandardNormal};
+use statrs::distribution::{ContinuousCDF, Normal};
 
 /// Gaussian copula placeholder
 #[derive(Debug, Clone)]
@@ -65,11 +73,7 @@ impl Copula for GaussianCopula {
         for _ in 0..n_samples {
             let z = DVector::from_iterator(dim, (0..dim).map(|_| normal.sample(&mut rng)));
             let sample = chol.l() * z;
-            if sample
-                .iter()
-                .zip(&quantiles)
-                .all(|(&s, &x)| s <= x)
-            {
+            if sample.iter().zip(&quantiles).all(|(&s, &x)| s <= x) {
                 count += 1;
             }
         }

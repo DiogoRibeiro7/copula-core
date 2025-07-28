@@ -1,4 +1,12 @@
 //! Other copula families module (placeholder).
+//!
+//! ## Bibliography
+//! - Marshall, A. W., & Olkin, I. (1967). A multivariate exponential
+//!   distribution. *Journal of the American Statistical Association*, 62(317),
+//!   30-44.
+//! - Genest, C., & Nešlehová, J. (2007). A primer on copulas for count data.
+//!   *ASTIN Bulletin*, 37(2), 475-515.
+//! - Nelsen, R. B. (2006). *An Introduction to Copulas*. Springer.
 
 use crate::{Copula, CopulaError, Result};
 use nalgebra::DMatrix;
