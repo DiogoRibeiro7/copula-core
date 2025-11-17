@@ -10,6 +10,21 @@
 /// Result type used throughout the copulas library.
 pub type Result<T> = std::result::Result<T, CopulaError>;
 
+/// Helper function to format invalid values for error messages.
+fn format_invalid_values(values: &[f64]) -> String {
+    if values.len() <= 3 {
+        format!("{:?}", values)
+    } else {
+        format!(
+            "[{}, {}, {} ... and {} more]",
+            values[0],
+            values[1],
+            values[2],
+            values.len() - 3
+        )
+    }
+}
+
 /// Errors that can occur in copula operations.
 ///
 /// This enum covers all possible error conditions that can arise when working
@@ -21,29 +36,33 @@ pub enum CopulaError {
     /// This occurs when parameters are outside their valid domain, such as
     /// negative values for parameters that must be positive, or correlation
     /// matrices that are not positive definite.
-    #[error("Invalid parameter: {message}")]
+    #[error("Invalid parameter: {message}{}", .suggestion.as_ref().map(|s| format!("\nSuggestion: {}", s)).unwrap_or_default())]
     InvalidParameter {
         /// Description of what makes the parameter invalid
         message: String,
+        /// Optional suggestion for fixing the issue
+        suggestion: Option<String>,
     },
 
     /// Dimension mismatch between expected and actual dimensions.
     ///
     /// This occurs when the number of variables doesn't match the copula's
     /// expected dimension, or when matrix dimensions are incompatible.
-    #[error("Dimension mismatch: expected {expected}, got {actual}")]
+    #[error("Dimension mismatch{}: expected {expected}, got {actual}", .context.as_ref().map(|c| format!(" in {}", c)).unwrap_or_default())]
     DimensionMismatch {
         /// Expected dimension
         expected: usize,
         /// Actual dimension provided
         actual: usize,
+        /// Optional context about where the mismatch occurred
+        context: Option<String>,
     },
 
     /// Input values are outside the valid range [0,1] for copula evaluation.
     ///
     /// Copula functions are defined on the unit hypercube [0,1]ⁿ, so all
     /// input values must be in this range.
-    #[error("Input values must be in [0,1]: {values:?}")]
+    #[error("Input values must be in [0,1]: found {} invalid value(s) - {}", .values.len(), format_invalid_values(.values))]
     InvalidRange {
         /// The problematic values
         values: Vec<f64>,
@@ -141,12 +160,38 @@ impl CopulaError {
     pub fn invalid_parameter<S: Into<String>>(message: S) -> Self {
         Self::InvalidParameter {
             message: message.into(),
+            suggestion: None,
+        }
+    }
+
+    /// Create an invalid parameter error with a custom message and suggestion.
+    pub fn invalid_parameter_with_suggestion<S: Into<String>>(message: S, suggestion: S) -> Self {
+        Self::InvalidParameter {
+            message: message.into(),
+            suggestion: Some(suggestion.into()),
         }
     }
 
     /// Create a dimension mismatch error.
     pub fn dimension_mismatch(expected: usize, actual: usize) -> Self {
-        Self::DimensionMismatch { expected, actual }
+        Self::DimensionMismatch {
+            expected,
+            actual,
+            context: None,
+        }
+    }
+
+    /// Create a dimension mismatch error with context.
+    pub fn dimension_mismatch_with_context<S: Into<String>>(
+        expected: usize,
+        actual: usize,
+        context: S,
+    ) -> Self {
+        Self::DimensionMismatch {
+            expected,
+            actual,
+            context: Some(context.into()),
+        }
     }
 
     /// Create an invalid range error for values outside [0,1].

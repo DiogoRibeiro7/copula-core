@@ -232,13 +232,13 @@ fn pearson_correlation(x: &[f64], y: &[f64]) -> Result<f64> {
 /// Canonical Maximum Likelihood (CML) estimator.
 ///
 /// Estimates copula parameters using pseudo-observations (empirical marginals).
-pub struct CMLEstimator<'a> {
-    copula: &'a dyn Copula,
+pub struct CMLEstimator<'a, C: Copula> {
+    copula: &'a C,
 }
 
-impl<'a> CMLEstimator<'a> {
+impl<'a, C: Copula> CMLEstimator<'a, C> {
     /// Create a new CML estimator.
-    pub fn new(copula: &'a dyn Copula) -> Self {
+    pub fn new(copula: &'a C) -> Self {
         Self { copula }
     }
 
