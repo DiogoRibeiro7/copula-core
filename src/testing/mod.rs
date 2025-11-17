@@ -117,7 +117,7 @@ pub fn anderson_darling<C: Copula>(copula: &C, pseudo_obs: &DMatrix<f64>) -> Res
         sum += (2 * j - 1) as f64 * (term1 + term2);
     }
 
-    Ok(-1.0 * (n as f64) - sum / (n as f64))
+    Ok(-(n as f64) - sum / (n as f64))
 }
 
 /// Generate a distribution of Cramér-von Mises statistics using

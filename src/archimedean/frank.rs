@@ -15,7 +15,7 @@ use rand::Rng;
 #[derive(Debug, Clone)]
 pub struct FrankCopula {
     /// Copula parameter θ ≠ 0
-    pub theta: f64,
+    theta: f64,
 }
 
 impl FrankCopula {

@@ -19,7 +19,7 @@ use rand::Rng;
 #[derive(Debug, Clone)]
 pub struct GumbelCopula {
     /// Copula parameter θ > 1
-    pub theta: f64,
+    theta: f64,
 }
 
 impl GumbelCopula {

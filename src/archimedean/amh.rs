@@ -15,7 +15,7 @@ use rand::Rng;
 #[derive(Debug, Clone)]
 pub struct AMHCopula {
     /// Copula parameter θ ∈ (-1, 1)
-    pub theta: f64,
+    theta: f64,
 }
 
 impl AMHCopula {
