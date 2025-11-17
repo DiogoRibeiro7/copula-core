@@ -55,9 +55,12 @@ impl Copula for FrankCopula {
         let exp_neg_theta_v = (-theta * u[1]).exp();
         let exp_neg_theta_sum = (-theta * (u[0] + u[1])).exp();
 
-        // c(u,v) = θ(e^(-θ) - 1) × e^(-θ(u+v)) / [(e^(-θu) - 1)(e^(-θv) - 1) + (e^(-θ) - 1)]^2
-        let numerator = theta * (exp_neg_theta - 1.0) * exp_neg_theta_sum;
-        let denominator = ((exp_neg_theta_u - 1.0) * (exp_neg_theta_v - 1.0) + (exp_neg_theta - 1.0)).powi(2);
+        // c(u,v) = θ(1 - e^(-θ)) × e^(-θ(u+v)) / [(e^(-θu) - 1)(e^(-θv) - 1) + (e^(-θ) - 1)]^2
+        // Note: For θ > 0, (1 - e^(-θ)) > 0 ensures positive PDF
+        let numerator = theta * (1.0 - exp_neg_theta) * exp_neg_theta_sum;
+        let term1 = (exp_neg_theta_u - 1.0) * (exp_neg_theta_v - 1.0);
+        let term2 = exp_neg_theta - 1.0;
+        let denominator = (term1 + term2).powi(2);
 
         Ok(numerator / denominator)
     }
