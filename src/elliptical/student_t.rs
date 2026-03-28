@@ -53,7 +53,8 @@ impl Copula for StudentTCopula {
         }
         crate::error::validate_unit_range(u)?;
         // Quantiles of univariate Student's t distribution
-        let t = StudentsT::new(0.0, 1.0, self.df).unwrap();
+        let t = StudentsT::new(0.0, 1.0, self.df)
+            .map_err(|_| CopulaError::computation("failed to create Student's t distribution"))?;
         let quantiles: DVector<f64> =
             DVector::from_iterator(self.dim(), u.iter().map(|&ui| t.inverse_cdf(ui)));
 
@@ -64,7 +65,8 @@ impl Copula for StudentTCopula {
             .cholesky()
             .ok_or_else(|| CopulaError::invalid_parameter("correlation not PD"))?;
         let mut rng = rand::thread_rng();
-        let chi = ChiSquared::new(self.df).unwrap();
+        let chi = ChiSquared::new(self.df)
+            .map_err(|_| CopulaError::computation("failed to create Chi-squared distribution"))?;
         let normal = StandardNormal;
 
         let mut count = 0usize;
@@ -130,8 +132,10 @@ impl Copula for StudentTCopula {
             .cholesky()
             .ok_or_else(|| CopulaError::invalid_parameter("correlation not PD"))?;
         let normal = StandardNormal;
-        let chi = ChiSquared::new(self.df).unwrap();
-        let t_dist = StudentsT::new(0.0, 1.0, self.df).unwrap();
+        let chi = ChiSquared::new(self.df)
+            .map_err(|_| CopulaError::computation("failed to create Chi-squared distribution"))?;
+        let t_dist = StudentsT::new(0.0, 1.0, self.df)
+            .map_err(|_| CopulaError::computation("failed to create Student's t distribution"))?;
         let mut samples = DMatrix::<f64>::zeros(n, dim);
 
         for i in 0..n {

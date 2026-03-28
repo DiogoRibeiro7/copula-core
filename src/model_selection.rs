@@ -42,7 +42,7 @@ where
 
     let mut indices: Vec<usize> = (0..n).collect();
     indices.shuffle(rng);
-    let fold_size = (n + k - 1) / k;
+    let fold_size = n.div_ceil(k);
     let mut total_ll = 0.0;
     let mut folds_used = 0;
 

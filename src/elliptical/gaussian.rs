@@ -52,7 +52,8 @@ impl Copula for GaussianCopula {
             return Err(CopulaError::dimension_mismatch(self.dim(), u.len()));
         }
         crate::error::validate_unit_range(u)?;
-        let normal = Normal::new(0.0, 1.0).unwrap();
+        let normal = Normal::new(0.0, 1.0)
+            .map_err(|_| CopulaError::computation("failed to create Normal(0,1)"))?;
         if self.dim() == 2 {
             let x = normal.inverse_cdf(u[0]);
             let y = normal.inverse_cdf(u[1]);
@@ -95,7 +96,8 @@ impl Copula for GaussianCopula {
             return Ok(1.0);
         }
 
-        let normal = Normal::new(0.0, 1.0).unwrap();
+        let normal = Normal::new(0.0, 1.0)
+            .map_err(|_| CopulaError::computation("failed to create Normal(0,1)"))?;
         let x = DVector::from_iterator(self.dim(), u.iter().map(|&ui| normal.inverse_cdf(ui)));
         let inv = self
             .correlation
@@ -117,7 +119,8 @@ impl Copula for GaussianCopula {
             .cholesky()
             .ok_or_else(|| CopulaError::invalid_parameter("correlation not PD"))?;
         let normal = StandardNormal;
-        let std_normal = Normal::new(0.0, 1.0).unwrap();
+        let std_normal = Normal::new(0.0, 1.0)
+            .map_err(|_| CopulaError::computation("failed to create Normal(0,1)"))?;
         let mut samples = DMatrix::<f64>::zeros(n, dim);
 
         for i in 0..n {

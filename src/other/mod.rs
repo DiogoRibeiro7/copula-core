@@ -11,6 +11,7 @@
 use crate::{Copula, CopulaError, Result};
 use nalgebra::DMatrix;
 use rand::Rng;
+use rand::seq::SliceRandom;
 
 /// Marshall-Olkin copula with parameters α and β in [0,1).
 #[derive(Debug, Clone)]
@@ -44,12 +45,64 @@ impl Copula for MarshallOlkinCopula {
         Ok(term1.min(term2))
     }
 
-    fn pdf(&self, _u: &[f64]) -> Result<f64> {
-        Err(CopulaError::not_implemented("MarshallOlkinCopula::pdf"))
+    fn pdf(&self, u: &[f64]) -> Result<f64> {
+        if u.len() != 2 {
+            return Err(CopulaError::dimension_mismatch(2, u.len()));
+        }
+        crate::error::validate_unit_range(u)?;
+
+        // Marshall-Olkin copula has a singular component (absolutely continuous + singular part)
+        // The absolutely continuous part has density on the region where the CDF is differentiable
+        // This is a simplified implementation that returns the continuous density component
+
+        let u1 = u[0];
+        let u2 = u[1];
+
+        // Check which term gives the minimum in CDF to determine the region
+        let term1 = u1.powf(1.0 - self.alpha) * u2;
+        let term2 = u1 * u2.powf(1.0 - self.beta);
+
+        // The density exists only in certain regions and is complex
+        // For practical purposes, we provide an approximation
+        if (term1 - term2).abs() < 1e-10 {
+            // On the singular diagonal component - technically has infinite density
+            // Return a large but finite value
+            return Ok(1e6);
+        }
+
+        // Off the diagonal, compute the continuous density component
+        if term1 < term2 {
+            Ok((1.0 - self.alpha) * u1.powf(-self.alpha) * u2.powf(0.0))
+        } else {
+            Ok((1.0 - self.beta) * u1.powf(0.0) * u2.powf(-self.beta))
+        }
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _n: usize, _rng: &mut R) -> Result<DMatrix<f64>> {
-        Err(CopulaError::not_implemented("MarshallOlkinCopula::sample"))
+    fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
+        use rand_distr::{Distribution, Exp};
+
+        let mut samples = DMatrix::<f64>::zeros(n, 2);
+
+        // Marshall-Olkin copula can be sampled using exponential random variables
+        // Let X1 ~ Exp(1), X2 ~ Exp(1), X12 ~ Exp(1) be independent
+        // Then U1 = exp(-X1 - X12), U2 = exp(-X2 - X12) follows Marshall-Olkin copula
+
+        let exp_dist = Exp::new(1.0).map_err(|_| CopulaError::computation("failed to create Exp(1)"))?;
+
+        for i in 0..n {
+            let x1 = exp_dist.sample(rng);
+            let x2 = exp_dist.sample(rng);
+            let x12 = exp_dist.sample(rng);
+
+            // Transform using the parameters
+            let u1 = (-x1 / (1.0 - self.alpha) - x12).exp();
+            let u2 = (-x2 / (1.0 - self.beta) - x12).exp();
+
+            samples[(i, 0)] = u1.clamp(1e-10, 1.0 - 1e-10);
+            samples[(i, 1)] = u2.clamp(1e-10, 1.0 - 1e-10);
+        }
+
+        Ok(samples)
     }
 
     fn dimension(&self) -> usize {
@@ -84,12 +137,37 @@ impl Copula for EmpiricalCopula {
         Ok(count as f64 / n_rows as f64)
     }
 
-    fn pdf(&self, _u: &[f64]) -> Result<f64> {
-        Err(CopulaError::not_implemented("EmpiricalCopula::pdf"))
+    fn pdf(&self, u: &[f64]) -> Result<f64> {
+        let (_n_rows, n_cols) = self.data.shape();
+        if u.len() != n_cols {
+            return Err(CopulaError::dimension_mismatch(n_cols, u.len()));
+        }
+        crate::error::validate_unit_range(u)?;
+
+        // Empirical copula is discrete, so PDF is not well-defined in the continuous sense
+        // We could use kernel density estimation, but for now return an error with explanation
+        Err(CopulaError::not_implemented(
+            "Empirical copula PDF is not well-defined (discrete distribution). Use CDF instead or implement kernel density estimation."
+        ))
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _n: usize, _rng: &mut R) -> Result<DMatrix<f64>> {
-        Err(CopulaError::not_implemented("EmpiricalCopula::sample"))
+    fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
+        let (n_rows, n_cols) = self.data.shape();
+        let mut samples = DMatrix::<f64>::zeros(n, n_cols);
+
+        // Sample with replacement from the empirical data
+        let indices: Vec<usize> = (0..n_rows).collect();
+
+        for i in 0..n {
+            let &idx = indices.choose(rng)
+                .ok_or_else(|| CopulaError::computation("failed to sample from indices"))?;
+
+            for j in 0..n_cols {
+                samples[(i, j)] = self.data[(idx, j)];
+            }
+        }
+
+        Ok(samples)
     }
 
     fn dimension(&self) -> usize {

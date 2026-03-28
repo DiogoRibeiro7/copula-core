@@ -14,12 +14,13 @@ use crate::utils::kendall_tau;
 use crate::{ArchimedeanCopula, Copula, CopulaError, Result};
 use nalgebra::DMatrix;
 use rand::Rng;
+use rand_distr::{Distribution, Uniform};
 
 /// Gumbel copula with parameter `theta > 1`.
 #[derive(Debug, Clone)]
 pub struct GumbelCopula {
     /// Copula parameter θ > 1
-    pub theta: f64,
+    theta: f64,
 }
 
 impl GumbelCopula {
@@ -43,12 +44,80 @@ impl Copula for GumbelCopula {
         Ok((-sum.powf(1.0 / self.theta)).exp())
     }
 
-    fn pdf(&self, _u: &[f64]) -> Result<f64> {
-        Err(CopulaError::not_implemented("GumbelCopula::pdf"))
+    fn pdf(&self, u: &[f64]) -> Result<f64> {
+        if u.len() != 2 {
+            return Err(CopulaError::dimension_mismatch(2, u.len()));
+        }
+        crate::error::validate_unit_range(u)?;
+
+        let theta = self.theta;
+        let ln_u = -u[0].ln();
+        let ln_v = -u[1].ln();
+
+        // A = (-ln u)^θ + (-ln v)^θ
+        let a = ln_u.powf(theta) + ln_v.powf(theta);
+
+        // C(u,v) from cdf
+        let c_uv = (-a.powf(1.0 / theta)).exp();
+
+        // PDF formula: c(u,v) = C(u,v) / (uv) × A^(-2 + 2/θ) × [(-ln u)(-ln v)]^(θ-1) × [θ - 1 + A^(1/θ)]
+        let term1 = c_uv / (u[0] * u[1]);
+        let term2 = a.powf(-2.0 + 2.0 / theta);
+        let term3 = (ln_u * ln_v).powf(theta - 1.0);
+        let term4 = theta - 1.0 + a.powf(1.0 / theta);
+
+        Ok(term1 * term2 * term3 * term4)
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _n: usize, _rng: &mut R) -> Result<DMatrix<f64>> {
-        Err(CopulaError::not_implemented("GumbelCopula::sample"))
+    fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
+        let uniform = Uniform::new(0.0, 1.0);
+        let mut samples = DMatrix::<f64>::zeros(n, 2);
+
+        for i in 0..n {
+            // Use conditional distribution method
+            let u1: f64 = uniform.sample(rng);
+            let v: f64 = uniform.sample(rng);
+
+            // For Gumbel copula, the conditional CDF is:
+            // C(u2|u1) = C(u1,u2) / u1 × exp(...) [complex formula]
+            // We use numerical inversion to find u2 given v
+
+            // Numerical root finding for u2 such that C(u2|u1) = v
+            let ln_u1 = -u1.ln();
+            let target = v;
+
+            // Binary search for u2
+            let mut u2_low: f64 = 1e-10;
+            let mut u2_high: f64 = 1.0 - 1e-10;
+            let mut u2: f64 = 0.5;
+
+            for _ in 0..50 {  // max iterations
+                u2 = (u2_low + u2_high) / 2.0;
+                let ln_u2 = -u2.ln();
+                let a = ln_u1.powf(self.theta) + ln_u2.powf(self.theta);
+                let a_root = a.powf(1.0 / self.theta);
+
+                // Conditional CDF: ∂C/∂u1 = C(u1,u2) × (1/u1) × a_root^(-1) × ln_u1^(θ-1) × a^((1-θ)/θ)
+                let c_uv = (-a_root).exp();
+                let cond_cdf = c_uv * a_root.powf(-1.0) * ln_u1.powf(self.theta - 1.0)
+                              * a.powf((1.0 - self.theta) / self.theta) / u1;
+
+                if (cond_cdf - target).abs() < 1e-10 {
+                    break;
+                }
+
+                if cond_cdf < target {
+                    u2_low = u2;
+                } else {
+                    u2_high = u2;
+                }
+            }
+
+            samples[(i, 0)] = u1;
+            samples[(i, 1)] = u2;
+        }
+
+        Ok(samples)
     }
 
     fn dimension(&self) -> usize {
@@ -100,8 +169,22 @@ impl FittableCopula for GumbelCopula {
         self.fit_moments(pseudo_obs)
     }
 
-    fn log_likelihood(&self, _pseudo_obs: &DMatrix<f64>) -> Result<f64> {
-        Err(CopulaError::not_implemented("GumbelCopula::log_likelihood"))
+    fn log_likelihood(&self, pseudo_obs: &DMatrix<f64>) -> Result<f64> {
+        if pseudo_obs.ncols() != 2 {
+            return Err(CopulaError::dimension_mismatch(2, pseudo_obs.ncols()));
+        }
+
+        let mut log_lik = 0.0;
+        for i in 0..pseudo_obs.nrows() {
+            let u = [pseudo_obs[(i, 0)], pseudo_obs[(i, 1)]];
+            let pdf_val = self.pdf(&u)?;
+            if pdf_val <= 0.0 {
+                return Err(CopulaError::numerical("PDF value must be positive for log-likelihood"));
+            }
+            log_lik += pdf_val.ln();
+        }
+
+        Ok(log_lik)
     }
 
     fn fit_moments(&mut self, pseudo_obs: &DMatrix<f64>) -> Result<Self::Parameters> {
