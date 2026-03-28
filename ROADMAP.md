@@ -1,4 +1,4 @@
-# Copulas-rs Development Roadmap
+# copula-core Development Roadmap
 
 ## Version 0.1.0 - Foundation (Q3 2025)
 

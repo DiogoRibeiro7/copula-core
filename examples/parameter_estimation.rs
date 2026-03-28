@@ -8,10 +8,10 @@
 ///
 /// Run with: cargo run --example parameter_estimation --features estimation
 
-use copulas::estimation::{kendall_tau, spearman_rho, to_pseudo_observations, TauEstimator};
-use copulas::prelude::*;
+use copula_core::estimation::{kendall_tau, spearman_rho, to_pseudo_observations, TauEstimator};
+use copula_core::prelude::*;
 
-fn main() -> copulas::Result<()> {
+fn main() -> copula_core::Result<()> {
     println!("=== Parameter Estimation Example ===\n");
 
     // Step 1: Generate synthetic data from a known copula

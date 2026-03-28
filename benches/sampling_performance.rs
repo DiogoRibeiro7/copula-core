@@ -1,4 +1,4 @@
-use copulas::prelude::*;
+use copula_core::prelude::*;
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use rand::thread_rng;
 

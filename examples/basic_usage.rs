@@ -8,10 +8,10 @@
 ///
 /// Run with: cargo run --example basic_usage
 
-use copulas::{prelude::*, VERSION};
+use copula_core::{prelude::*, VERSION};
 use nalgebra::DMatrix;
 
-fn main() -> copulas::Result<()> {
+fn main() -> copula_core::Result<()> {
     println!("=== Copulas Library - Basic Usage Example ===\n");
     println!("Version: {}\n", VERSION);
 
@@ -72,7 +72,7 @@ fn main() -> copulas::Result<()> {
     // Compute empirical correlation
     let u_vals: Vec<f64> = (0..1000).map(|i| samples[(i, 0)]).collect();
     let v_vals: Vec<f64> = (0..1000).map(|i| samples[(i, 1)]).collect();
-    let emp_tau = copulas::utils::kendall_tau(&u_vals, &v_vals)?;
+    let emp_tau = copula_core::utils::kendall_tau(&u_vals, &v_vals)?;
     println!("   Empirical Kendall's tau: {:.4}", emp_tau);
     println!();
 

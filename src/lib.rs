@@ -20,7 +20,7 @@
 //! ## Quick Start
 //!
 //! ```rust
-//! use copulas::{Copula, ClaytonCopula};
+//! use copula_core::{Copula, ClaytonCopula};
 //!
 //! // Create a Clayton copula with parameter θ = 2.0
 //! let copula = ClaytonCopula::new(2.0)?;
@@ -32,7 +32,7 @@
 //! // Generate samples
 //! let mut rng = rand::thread_rng();
 //! let samples = copula.sample(1000, &mut rng)?;
-//! # Ok::<(), copulas::CopulaError>(())
+//! # Ok::<(), copula_core::CopulaError>(())
 //! ```
 //!
 //! ## Copula Families

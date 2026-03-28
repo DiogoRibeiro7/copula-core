@@ -1,7 +1,7 @@
 #[cfg(feature = "estimation")]
-use copulas::prelude::*;
+use copula_core::prelude::*;
 #[cfg(feature = "estimation")]
-use copulas::traits::BoundedParameters;
+use copula_core::traits::BoundedParameters;
 #[cfg(feature = "estimation")]
 use rand::thread_rng;
 

@@ -1,5 +1,5 @@
-use copulas::estimation::{kendall_tau, spearman_rho, to_pseudo_observations, TauEstimator};
-use copulas::prelude::*;
+use copula_core::estimation::{kendall_tau, spearman_rho, to_pseudo_observations, TauEstimator};
+use copula_core::prelude::*;
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use nalgebra::DMatrix;
 use rand::{thread_rng, Rng};

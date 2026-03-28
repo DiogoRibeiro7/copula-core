@@ -1,5 +1,5 @@
-use copulas::prelude::*;
-use copulas::VERSION;
+use copula_core::prelude::*;
+use copula_core::VERSION;
 
 #[test]
 fn workflow_smoke_test() {

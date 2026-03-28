@@ -32,7 +32,7 @@ use nalgebra::DMatrix;
 /// # Examples
 ///
 /// ```rust
-/// use copulas::to_pseudo_observations;
+/// use copula_core::to_pseudo_observations;
 /// use nalgebra::DMatrix;
 ///
 /// let data = DMatrix::from_row_slice(3, 2, &[
@@ -88,7 +88,7 @@ pub fn to_pseudo_observations(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
 /// # Examples
 ///
 /// ```rust
-/// use copulas::empirical_ranks;
+/// use copula_core::empirical_ranks;
 ///
 /// let data = vec![3.0, 1.0, 4.0, 1.0, 5.0];
 /// let ranks = empirical_ranks(&data).unwrap();
@@ -165,7 +165,7 @@ pub fn empirical_ranks(data: &[f64]) -> Result<Vec<f64>> {
 /// # Examples
 ///
 /// ```rust
-/// use copulas::kendall_tau;
+/// use copula_core::kendall_tau;
 ///
 /// let x = vec![1.0, 2.0, 3.0, 4.0, 5.0];
 /// let y = vec![1.0, 2.0, 3.0, 4.0, 5.0];
@@ -238,7 +238,7 @@ pub fn kendall_tau(x: &[f64], y: &[f64]) -> Result<f64> {
 /// # Examples
 ///
 /// ```rust
-/// use copulas::spearman_rho;
+/// use copula_core::spearman_rho;
 ///
 /// let x = vec![1.0, 2.0, 3.0, 4.0, 5.0];
 /// let y = vec![5.0, 4.0, 3.0, 2.0, 1.0];
@@ -427,7 +427,7 @@ pub fn validate_correlation_matrix(matrix: &DMatrix<f64>) -> Result<()> {
 /// # Examples
 ///
 /// ```rust
-/// use copulas::random_correlation_matrix;
+/// use copula_core::random_correlation_matrix;
 /// use rand::thread_rng;
 ///
 /// let mut rng = thread_rng();
@@ -488,7 +488,7 @@ pub fn random_correlation_matrix<R: rand::Rng + ?Sized>(
 /// # Examples
 ///
 /// ```rust
-/// use copulas::{empirical_copula_cdf, to_pseudo_observations};
+/// use copula_core::{empirical_copula_cdf, to_pseudo_observations};
 /// use nalgebra::DMatrix;
 ///
 /// let data = DMatrix::from_row_slice(100, 2, &[/* your data */]);

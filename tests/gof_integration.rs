@@ -1,4 +1,4 @@
-use copulas::prelude::*;
+use copula_core::prelude::*;
 
 #[test]
 fn cramer_von_mises_detects_good_fit() {

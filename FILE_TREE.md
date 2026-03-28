@@ -1,7 +1,7 @@
-# Copulas-rs File Structure
+# copula-core File Structure
 
 ```
-copulas-rs/
+copula-core/
 ├── Cargo.toml
 ├── README.md
 ├── ROADMAP.md
@@ -193,7 +193,7 @@ copulas-rs/
 - Consistent module organization
 
 #### Modules
-- Clear hierarchy: `copulas::archimedean::clayton`
+- Clear hierarchy: `copula_core::archimedean::clayton`
 - Logical grouping: All statistical tests in `testing::*`
 - Public re-exports in `mod.rs` files
 

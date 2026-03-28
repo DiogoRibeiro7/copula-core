@@ -30,7 +30,7 @@ use serde::{Deserialize, Serialize};
 /// # Examples
 ///
 /// ```rust
-/// use copulas::{Copula, ClaytonCopula};
+/// use copula_core::{Copula, ClaytonCopula};
 /// use rand::thread_rng;
 ///
 /// let copula = ClaytonCopula::new(2.0)?;
@@ -44,7 +44,7 @@ use serde::{Deserialize, Serialize};
 /// // Generate samples
 /// let mut rng = thread_rng();
 /// let samples = copula.sample(100, &mut rng)?;
-/// # Ok::<(), copulas::CopulaError>(())
+/// # Ok::<(), copula_core::CopulaError>(())
 /// ```
 pub trait Copula {
     /// Evaluate the copula cumulative distribution function (CDF) at point u.
@@ -218,7 +218,7 @@ pub trait Copula {
 /// # Examples
 ///
 /// ```rust
-/// use copulas::{FittableCopula, GaussianCopula, to_pseudo_observations};
+/// use copula_core::{FittableCopula, GaussianCopula, to_pseudo_observations};
 /// use nalgebra::DMatrix;
 ///
 /// // Create copula and fit to data
@@ -228,7 +228,7 @@ pub trait Copula {
 ///
 /// let params = copula.fit(&pseudo_obs)?;
 /// println!("Fitted parameters: {:?}", params);
-/// # Ok::<(), copulas::CopulaError>(())
+/// # Ok::<(), copula_core::CopulaError>(())
 /// ```
 #[cfg(feature = "estimation")]
 #[cfg_attr(docsrs, doc(cfg(feature = "estimation")))]
@@ -351,7 +351,7 @@ pub trait FittableCopula: Copula {
 /// # Examples
 ///
 /// ```rust
-/// use copulas::{ArchimedeanCopula, ClaytonCopula};
+/// use copula_core::{ArchimedeanCopula, ClaytonCopula};
 ///
 /// let copula = ClaytonCopula::new(2.0)?;
 ///
@@ -360,7 +360,7 @@ pub trait FittableCopula: Copula {
 ///
 /// // Evaluate inverse generator
 /// let phi_inv_val = copula.phi_inv(1.0)?;
-/// # Ok::<(), copulas::CopulaError>(())
+/// # Ok::<(), copula_core::CopulaError>(())
 /// ```
 pub trait ArchimedeanCopula: Copula {
     /// Evaluate the generator function φ(t).

@@ -8,10 +8,10 @@
 ///
 /// Run with: cargo run --example risk_management
 
-use copulas::prelude::*;
+use copula_core::prelude::*;
 use nalgebra::DMatrix;
 
-fn main() -> copulas::Result<()> {
+fn main() -> copula_core::Result<()> {
     println!("=== Copulas in Risk Management ===\n");
 
     let mut rng = rand::thread_rng();

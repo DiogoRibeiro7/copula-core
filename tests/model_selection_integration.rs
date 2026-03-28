@@ -1,5 +1,5 @@
 #[cfg(feature = "estimation")]
-use copulas::prelude::*;
+use copula_core::prelude::*;
 #[cfg(feature = "estimation")]
 use rand::thread_rng;
 

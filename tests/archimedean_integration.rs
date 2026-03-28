@@ -1,5 +1,5 @@
-use copulas::archimedean::{AMHCopula, FrankCopula, JoeCopula};
-use copulas::Copula;
+use copula_core::archimedean::{AMHCopula, FrankCopula, JoeCopula};
+use copula_core::Copula;
 
 #[test]
 fn basic_construction() {

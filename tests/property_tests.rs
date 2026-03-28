@@ -3,7 +3,7 @@
 // These tests verify that copulas satisfy their mathematical properties
 // using the proptest framework for fuzz testing with randomly generated inputs.
 
-use copulas::prelude::*;
+use copula_core::prelude::*;
 use nalgebra::DMatrix;
 use proptest::prelude::*;
 

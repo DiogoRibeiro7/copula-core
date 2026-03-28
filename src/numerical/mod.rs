@@ -8,7 +8,7 @@
 //!
 //! ## Example
 //! ```
-//! use copulas::numerical::{bisection, trapezoid_integrate};
+//! use copula_core::numerical::{bisection, trapezoid_integrate};
 //!
 //! // Find root of f(x) = x^2 - 2 on [0, 2]
 //! let root = bisection(|x| x * x - 2.0, 0.0, 2.0, 1e-10, 100).unwrap();

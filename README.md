@@ -1,4 +1,4 @@
-# Copulas-rs
+# copula-core
 
 A comprehensive Rust library for copula modeling, estimation, and simulation. This library provides implementations of various copula families commonly used in quantitative finance, risk management, and statistical modeling.
 
@@ -50,14 +50,14 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-copulas = "0.1.0"
+copula-core = "0.1.0"
 nalgebra = "0.32"
 ```
 
 ### Basic Example
 
 ```rust
-use copulas::{Copula, ClaytonCopula, to_pseudo_observations};
+use copula_core::{Copula, ClaytonCopula, to_pseudo_observations};
 use nalgebra::DMatrix;
 
 // Create a Clayton copula with parameter θ = 2.0
@@ -79,7 +79,7 @@ let pseudo_obs = to_pseudo_observations(&data);
 ### Parameter Estimation
 
 ```rust
-use copulas::{FittableCopula, GaussianCopula};
+use copula_core::{FittableCopula, GaussianCopula};
 
 // Fit a Gaussian copula to your data
 let mut copula = GaussianCopula::from_dimension(2)?;
@@ -136,8 +136,8 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 ### Development Setup
 
 ```bash
-git clone https://github.com/username/copulas-rs
-cd copulas-rs
+git clone https://github.com/DiogoRibeiro7/copula-core
+cd copula-core
 cargo test
 cargo bench
 ```
@@ -174,14 +174,14 @@ at your option.
 If you use this library in academic work, please cite:
 
 ```bibtex
-@software{copulas_rs,
-  title = {copulas-rs: A Rust Library for Copula Modeling},
+@software{copula_core,
+  title = {copula-core: A Rust Library for Copula Modeling},
   author = {Diogo Ribeiro},
   affiliation = {ESMAD - Instituto Politécnico do Porto},
   email = {dfr@esmad.ipp.pt},
   orcid = {0009-0001-2022-7072},
   year = {2025},
-  url = {https://github.com/diogoribeiro7/copulas-rs}
+  url = {https://github.com/DiogoRibeiro7/copula-core}
 }
 ```
 

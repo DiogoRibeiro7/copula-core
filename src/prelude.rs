@@ -8,7 +8,7 @@
 //! # Examples
 //!
 //! ```rust
-//! use copulas::prelude::*;
+//! use copula_core::prelude::*;
 //!
 //! // Now you have access to all the common types and functions
 //! let copula = ClaytonCopula::new(2.0)?;

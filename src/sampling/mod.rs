@@ -9,7 +9,7 @@
 //!
 //! ## Example
 //! ```
-//! use copulas::sampling::latin_hypercube;
+//! use copula_core::sampling::latin_hypercube;
 //! use rand::thread_rng;
 //!
 //! let mut rng = thread_rng();

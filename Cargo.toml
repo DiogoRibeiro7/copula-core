@@ -1,15 +1,15 @@
 # Cargo.toml
 
 [package]
-name = "copulas"
+name = "copula-core"
 version = "0.1.0"
 edition = "2021"  # Fixed: was "2025"
 authors = ["Diogo Ribeiro <dfr@esmad.ipp.pt>"]
 license = "MIT OR Apache-2.0"
 description = "A comprehensive Rust library for copula modeling, estimation, and simulation"
-homepage = "https://github.com/diogoribeiro7/copulas-rs"
-repository = "https://github.com/diogoribeiro7/copulas-rs"
-documentation = "https://docs.rs/copulas"
+homepage = "https://github.com/DiogoRibeiro7/copula-core"
+repository = "https://github.com/DiogoRibeiro7/copula-core"
+documentation = "https://docs.rs/copula-core"
 readme = "README.md"
 keywords = ["statistics", "copula", "finance", "risk", "mathematics"]
 categories = ["science", "mathematics", "algorithms"]
