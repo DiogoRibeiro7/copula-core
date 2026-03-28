@@ -35,6 +35,7 @@ use rand_distr::{Distribution, Uniform};
 /// # Returns
 /// Matrix of shape (n, d) with samples in [0, 1]^d
 pub fn latin_hypercube<R: Rng + ?Sized>(n: usize, d: usize, rng: &mut R) -> DMatrix<f64> {
+    assert!(n > 0 && d > 0, "latin_hypercube requires n > 0 and d > 0");
     let uniform = Uniform::new(0.0, 1.0);
     let mut samples = DMatrix::<f64>::zeros(n, d);
 
@@ -119,6 +120,10 @@ impl HaltonSequence {
     /// # Returns
     /// A new Halton sequence generator
     pub fn new(dimension: usize) -> Self {
+        assert!(
+            dimension > 0 && dimension <= 16,
+            "HaltonSequence dimension must be between 1 and 16"
+        );
         // Use first d primes as bases
         let primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53];
         let bases: Vec<u32> = primes.iter().take(dimension).copied().collect();

@@ -22,8 +22,8 @@ pub struct JoeCopula {
 impl JoeCopula {
     /// Create a new Joe copula with parameter `theta`.
     pub fn new(theta: f64) -> Result<Self> {
-        if theta <= 1.0 {
-            return Err(CopulaError::invalid_parameter("theta must be > 1"));
+        if !theta.is_finite() || theta <= 1.0 {
+            return Err(CopulaError::invalid_parameter("theta must be finite and > 1"));
         }
         Ok(Self { theta })
     }

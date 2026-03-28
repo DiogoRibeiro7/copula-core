@@ -22,8 +22,10 @@ pub struct FrankCopula {
 impl FrankCopula {
     /// Create a new Frank copula with parameter `theta`.
     pub fn new(theta: f64) -> Result<Self> {
-        if theta.abs() < f64::EPSILON {
-            return Err(CopulaError::invalid_parameter("theta cannot be zero"));
+        if !theta.is_finite() || theta.abs() < f64::EPSILON {
+            return Err(CopulaError::invalid_parameter(
+                "theta must be finite and non-zero",
+            ));
         }
         Ok(Self { theta })
     }

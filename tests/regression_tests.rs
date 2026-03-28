@@ -390,3 +390,86 @@ fn bootstrap_sample_preserves_dimensions() {
     assert_eq!(boot.nrows(), 10);
     assert_eq!(boot.ncols(), 3);
 }
+
+// ============================================================================
+// Issue #31: Hardened input validation across public APIs
+// ============================================================================
+
+#[test]
+fn joe_rejects_nan_and_inf() {
+    assert!(JoeCopula::new(f64::NAN).is_err());
+    assert!(JoeCopula::new(f64::INFINITY).is_err());
+    assert!(JoeCopula::new(f64::NEG_INFINITY).is_err());
+}
+
+#[test]
+fn frank_rejects_nan_and_inf() {
+    assert!(FrankCopula::new(f64::NAN).is_err());
+    assert!(FrankCopula::new(f64::INFINITY).is_err());
+    assert!(FrankCopula::new(f64::NEG_INFINITY).is_err());
+}
+
+#[test]
+fn amh_rejects_nan_and_inf() {
+    assert!(AMHCopula::new(f64::NAN).is_err());
+    assert!(AMHCopula::new(f64::INFINITY).is_err());
+    assert!(AMHCopula::new(f64::NEG_INFINITY).is_err());
+}
+
+#[test]
+fn gaussian_new_identity_rejects_dim_below_2() {
+    assert!(GaussianCopula::new_identity(0).is_err());
+    assert!(GaussianCopula::new_identity(1).is_err());
+    assert!(GaussianCopula::new_identity(2).is_ok());
+}
+
+#[test]
+fn student_t_new_identity_rejects_dim_below_2() {
+    assert!(StudentTCopula::new_identity(0, 5.0).is_err());
+    assert!(StudentTCopula::new_identity(1, 5.0).is_err());
+    assert!(StudentTCopula::new_identity(2, 5.0).is_ok());
+}
+
+#[test]
+fn empirical_cdf_rejects_empty_data() {
+    use copula_core::estimation::EmpiricalCdf;
+    assert!(EmpiricalCdf::new(vec![]).is_err());
+}
+
+#[test]
+fn estimation_to_pseudo_observations_rejects_empty() {
+    use copula_core::estimation;
+    let empty = DMatrix::<f64>::zeros(0, 2);
+    assert!(estimation::to_pseudo_observations(&empty).is_err());
+}
+
+#[test]
+fn cvm_bootstrap_rejects_zero_reps() {
+    use copula_core::testing::cvm_multiplier_bootstrap;
+    let mut rng = rand::thread_rng();
+    let cop = ClaytonCopula::new(2.0).unwrap();
+    let data = cop.sample(20, &mut rng).unwrap();
+    assert!(cvm_multiplier_bootstrap(&cop, &data, 0, &mut rng).is_err());
+}
+
+#[test]
+#[should_panic(expected = "latin_hypercube requires n > 0 and d > 0")]
+fn latin_hypercube_rejects_zero_n() {
+    use copula_core::sampling::latin_hypercube;
+    let mut rng = rand::thread_rng();
+    let _ = latin_hypercube(0, 2, &mut rng);
+}
+
+#[test]
+#[should_panic(expected = "HaltonSequence dimension must be between 1 and 16")]
+fn halton_rejects_zero_dimension() {
+    use copula_core::sampling::HaltonSequence;
+    let _ = HaltonSequence::new(0);
+}
+
+#[test]
+#[should_panic(expected = "HaltonSequence dimension must be between 1 and 16")]
+fn halton_rejects_dimension_above_16() {
+    use copula_core::sampling::HaltonSequence;
+    let _ = HaltonSequence::new(17);
+}

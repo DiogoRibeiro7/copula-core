@@ -36,6 +36,11 @@ impl GaussianCopula {
 
     /// Create a Gaussian copula with an identity correlation matrix of the given dimension.
     pub fn new_identity(dim: usize) -> Result<Self> {
+        if dim < 2 {
+            return Err(CopulaError::invalid_parameter(
+                "Copula dimension must be at least 2",
+            ));
+        }
         Ok(Self {
             correlation: DMatrix::<f64>::identity(dim, dim),
         })

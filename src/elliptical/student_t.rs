@@ -38,6 +38,11 @@ impl StudentTCopula {
 
     /// Identity correlation matrix with given dimension and degrees of freedom.
     pub fn new_identity(dim: usize, df: f64) -> Result<Self> {
+        if dim < 2 {
+            return Err(CopulaError::invalid_parameter(
+                "Copula dimension must be at least 2",
+            ));
+        }
         Self::new(DMatrix::identity(dim, dim), df)
     }
 

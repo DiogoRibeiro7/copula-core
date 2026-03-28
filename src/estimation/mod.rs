@@ -45,6 +45,9 @@ impl EmpiricalCdf {
     /// # Returns
     /// An empirical CDF estimator
     pub fn new(mut data: Vec<f64>) -> Result<Self> {
+        if data.is_empty() {
+            return Err(CopulaError::data_error("EmpiricalCdf requires non-empty data"));
+        }
         if data.iter().any(|x| !x.is_finite()) {
             return Err(CopulaError::data_error(
                 "EmpiricalCdf data contains non-finite values (NaN or infinite)",
@@ -98,6 +101,9 @@ impl EmpiricalCdf {
 pub fn to_pseudo_observations(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
     let n = data.nrows();
     let d = data.ncols();
+    if n == 0 || d == 0 {
+        return Err(CopulaError::data_error("Data matrix must be non-empty"));
+    }
     let mut pseudo = DMatrix::<f64>::zeros(n, d);
 
     // Transform each column independently

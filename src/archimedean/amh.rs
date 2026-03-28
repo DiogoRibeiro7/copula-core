@@ -22,8 +22,10 @@ pub struct AMHCopula {
 impl AMHCopula {
     /// Create a new AMH copula with parameter `theta`.
     pub fn new(theta: f64) -> Result<Self> {
-        if theta.abs() >= 1.0 {
-            return Err(CopulaError::invalid_parameter("|theta| must be < 1"));
+        if !theta.is_finite() || theta.abs() >= 1.0 {
+            return Err(CopulaError::invalid_parameter(
+                "theta must be finite and in (-1, 1)",
+            ));
         }
         Ok(Self { theta })
     }
