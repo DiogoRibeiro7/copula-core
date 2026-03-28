@@ -249,4 +249,72 @@ mod tests {
         let expected = (1.0_f64.exp() + 2.0_f64.exp() + 3.0_f64.exp()).ln();
         assert!((result - expected).abs() < 1e-10);
     }
+
+    #[test]
+    fn test_bisection_no_sign_change() {
+        let result = bisection(|x| x * x + 1.0, 0.0, 2.0, 1e-10, 100);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_bisection_exact_root() {
+        let root = bisection(|x| x, -1.0, 1.0, 1e-10, 100).unwrap();
+        assert!(root.abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_forward_diff() {
+        let deriv = forward_diff(|x| x * x, 3.0, 1e-7);
+        assert!((deriv - 6.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_second_diff() {
+        // f(x) = x^2 => f''(x) = 2 for all x
+        let deriv2 = second_diff(|x| x * x, 5.0, 1e-4);
+        assert!((deriv2 - 2.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn test_linear_interp() {
+        let y = linear_interp(0.0, 0.0, 1.0, 1.0, 0.5);
+        assert!((y - 0.5).abs() < 1e-12);
+
+        let y = linear_interp(0.0, 10.0, 10.0, 20.0, 5.0);
+        assert!((y - 15.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn test_log_sum_exp_empty() {
+        assert_eq!(log_sum_exp(&[]), f64::NEG_INFINITY);
+    }
+
+    #[test]
+    fn test_log_sum_exp_single() {
+        let result = log_sum_exp(&[5.0]);
+        assert!((result - 5.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_log_sum_exp_large_values() {
+        // Should handle large values without overflow
+        let result = log_sum_exp(&[1000.0, 1001.0]);
+        assert!(result.is_finite());
+        assert!(result > 1000.0);
+    }
+
+    #[test]
+    fn test_simpson_accuracy() {
+        // sin(x) from 0 to pi = 2
+        let integral = simpson_integrate(|x| x.sin(), 0.0, std::f64::consts::PI, 1000);
+        assert!((integral - 2.0).abs() < 1e-8);
+    }
+
+    #[test]
+    fn test_trapezoid_accuracy() {
+        // e^x from 0 to 1 = e - 1
+        let integral = trapezoid_integrate(|x| x.exp(), 0.0, 1.0, 10000);
+        let expected = std::f64::consts::E - 1.0;
+        assert!((integral - expected).abs() < 1e-6);
+    }
 }

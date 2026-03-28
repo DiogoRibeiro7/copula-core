@@ -197,4 +197,79 @@ mod tests {
         // manually count
         assert!((cdf - 2.0 / 3.0).abs() < 1e-12);
     }
+
+    #[test]
+    fn marshall_olkin_rejects_invalid_params() {
+        assert!(MarshallOlkinCopula::new(-0.1, 0.5).is_err());
+        assert!(MarshallOlkinCopula::new(0.5, 1.0).is_err());
+        assert!(MarshallOlkinCopula::new(1.0, 0.5).is_err());
+    }
+
+    #[test]
+    fn marshall_olkin_dimension() {
+        let cop = MarshallOlkinCopula::new(0.3, 0.4).unwrap();
+        assert_eq!(cop.dimension(), 2);
+    }
+
+    #[test]
+    fn marshall_olkin_cdf_validates_input() {
+        let cop = MarshallOlkinCopula::new(0.3, 0.4).unwrap();
+        assert!(cop.cdf(&[0.5]).is_err());
+        assert!(cop.cdf(&[0.5, 1.1]).is_err());
+    }
+
+    #[test]
+    fn marshall_olkin_sampling() {
+        let mut rng = rand::thread_rng();
+        let cop = MarshallOlkinCopula::new(0.3, 0.4).unwrap();
+        let samples = cop.sample(50, &mut rng).unwrap();
+        assert_eq!(samples.nrows(), 50);
+        assert_eq!(samples.ncols(), 2);
+        for i in 0..50 {
+            for j in 0..2 {
+                let v = samples[(i, j)];
+                assert!(v > 0.0 && v < 1.0);
+            }
+        }
+    }
+
+    #[test]
+    fn empirical_copula_rejects_invalid_data() {
+        let data = DMatrix::from_row_slice(2, 2, &[1.0, 0.5, 0.3, 0.7]);
+        assert!(EmpiricalCopula::new(data).is_err()); // 1.0 not in (0,1)
+    }
+
+    #[test]
+    fn empirical_copula_dimension() {
+        let data = DMatrix::from_row_slice(3, 3, &[
+            0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.1,
+        ]);
+        let cop = EmpiricalCopula::new(data).unwrap();
+        assert_eq!(cop.dimension(), 3);
+    }
+
+    #[test]
+    fn empirical_copula_cdf_validates_dimension() {
+        let data = DMatrix::from_row_slice(3, 2, &[0.2, 0.3, 0.5, 0.6, 0.8, 0.9]);
+        let cop = EmpiricalCopula::new(data).unwrap();
+        assert!(cop.cdf(&[0.5]).is_err());
+        assert!(cop.cdf(&[0.5, 0.5, 0.5]).is_err());
+    }
+
+    #[test]
+    fn empirical_copula_pdf_not_implemented() {
+        let data = DMatrix::from_row_slice(3, 2, &[0.2, 0.3, 0.5, 0.6, 0.8, 0.9]);
+        let cop = EmpiricalCopula::new(data).unwrap();
+        assert!(cop.pdf(&[0.5, 0.5]).is_err());
+    }
+
+    #[test]
+    fn empirical_copula_sampling() {
+        let mut rng = rand::thread_rng();
+        let data = DMatrix::from_row_slice(3, 2, &[0.2, 0.3, 0.5, 0.6, 0.8, 0.9]);
+        let cop = EmpiricalCopula::new(data).unwrap();
+        let samples = cop.sample(10, &mut rng).unwrap();
+        assert_eq!(samples.nrows(), 10);
+        assert_eq!(samples.ncols(), 2);
+    }
 }

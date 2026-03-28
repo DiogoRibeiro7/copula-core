@@ -809,4 +809,107 @@ mod tests {
 
         assert!(random_correlation_matrix(0, &mut rng).is_err());
     }
+
+    #[test]
+    fn test_empirical_cdf_transform() {
+        let data = DMatrix::from_row_slice(5, 2, &[
+            1.0, 10.0, 2.0, 20.0, 3.0, 30.0, 4.0, 40.0, 5.0, 50.0,
+        ]);
+        let transformed = empirical_cdf_transform(&data).unwrap();
+        assert_eq!(transformed.nrows(), 5);
+        assert_eq!(transformed.ncols(), 2);
+        for i in 0..5 {
+            for j in 0..2 {
+                let v = transformed[(i, j)];
+                assert!(v > 0.0 && v < 1.0, "value {} not in (0,1)", v);
+            }
+        }
+    }
+
+    #[test]
+    fn test_empirical_cdf_transform_rejects_nan() {
+        let data = DMatrix::from_row_slice(2, 1, &[1.0, f64::NAN]);
+        assert!(empirical_cdf_transform(&data).is_err());
+    }
+
+    #[test]
+    fn test_multivariate_kendall_tau() {
+        let data = DMatrix::from_row_slice(5, 3, &[
+            1.0, 1.0, 1.0,
+            2.0, 2.0, 2.0,
+            3.0, 3.0, 3.0,
+            4.0, 4.0, 4.0,
+            5.0, 5.0, 5.0,
+        ]);
+        let tau = multivariate_kendall_tau(&data).unwrap();
+        assert_eq!(tau.nrows(), 3);
+        assert_eq!(tau.ncols(), 3);
+        for i in 0..3 {
+            assert_relative_eq!(tau[(i, i)], 1.0, epsilon = 1e-10);
+            for j in 0..3 {
+                assert_relative_eq!(tau[(i, j)], 1.0, epsilon = 1e-10);
+            }
+        }
+    }
+
+    #[test]
+    fn test_multivariate_kendall_tau_rejects_insufficient_data() {
+        let data = DMatrix::from_row_slice(1, 2, &[1.0, 2.0]);
+        assert!(multivariate_kendall_tau(&data).is_err());
+    }
+
+    #[test]
+    fn test_multivariate_spearman_rho() {
+        let data = DMatrix::from_row_slice(5, 2, &[
+            1.0, 5.0, 2.0, 4.0, 3.0, 3.0, 4.0, 2.0, 5.0, 1.0,
+        ]);
+        let rho = multivariate_spearman_rho(&data).unwrap();
+        assert_eq!(rho.nrows(), 2);
+        assert_relative_eq!(rho[(0, 0)], 1.0, epsilon = 1e-10);
+        assert_relative_eq!(rho[(1, 1)], 1.0, epsilon = 1e-10);
+        assert_relative_eq!(rho[(0, 1)], -1.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_empirical_ranks_empty() {
+        let ranks = empirical_ranks(&[]).unwrap();
+        assert!(ranks.is_empty());
+    }
+
+    #[test]
+    fn test_empirical_ranks_single() {
+        let ranks = empirical_ranks(&[42.0]).unwrap();
+        assert_eq!(ranks.len(), 1);
+        assert_relative_eq!(ranks[0], 1.0);
+    }
+
+    #[test]
+    fn test_empirical_ranks_rejects_nan() {
+        assert!(empirical_ranks(&[1.0, f64::NAN, 3.0]).is_err());
+    }
+
+    #[test]
+    fn test_pseudo_observations_rejects_empty() {
+        let data = DMatrix::<f64>::zeros(0, 2);
+        assert!(to_pseudo_observations(&data).is_err());
+    }
+
+    #[test]
+    fn test_bootstrap_sample_dimensions() {
+        let mut rng = thread_rng();
+        let data = DMatrix::from_row_slice(5, 2, &[
+            0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.1,
+        ]);
+        let boot = bootstrap_sample(&data, &mut rng);
+        assert_eq!(boot.nrows(), 5);
+        assert_eq!(boot.ncols(), 2);
+    }
+
+    #[test]
+    fn test_random_correlation_matrix_1d() {
+        let mut rng = thread_rng();
+        let corr = random_correlation_matrix(1, &mut rng).unwrap();
+        assert_eq!(corr.nrows(), 1);
+        assert_relative_eq!(corr[(0, 0)], 1.0);
+    }
 }

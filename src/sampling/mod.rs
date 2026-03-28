@@ -257,4 +257,85 @@ mod tests {
             assert!(s >= 0.0 && s <= 1.0);
         }
     }
+
+    #[test]
+    fn test_latin_hypercube_stratification() {
+        let mut rng = thread_rng();
+        let n = 100;
+        let samples = latin_hypercube(n, 1, &mut rng);
+
+        // Each stratum [i/n, (i+1)/n] should have exactly one sample
+        let mut counts = vec![0; n];
+        for i in 0..n {
+            let stratum = (samples[(i, 0)] * n as f64).floor() as usize;
+            let stratum = stratum.min(n - 1);
+            counts[stratum] += 1;
+        }
+        for (i, &c) in counts.iter().enumerate() {
+            assert_eq!(c, 1, "stratum {} has {} samples, expected 1", i, c);
+        }
+    }
+
+    #[test]
+    fn test_latin_hypercube_single_sample() {
+        let mut rng = thread_rng();
+        let samples = latin_hypercube(1, 2, &mut rng);
+        assert_eq!(samples.nrows(), 1);
+        assert_eq!(samples.ncols(), 2);
+        assert!(samples[(0, 0)] >= 0.0 && samples[(0, 0)] <= 1.0);
+        assert!(samples[(0, 1)] >= 0.0 && samples[(0, 1)] <= 1.0);
+    }
+
+    #[test]
+    fn test_halton_sequence_deterministic() {
+        let mut h1 = HaltonSequence::new(1);
+        let mut h2 = HaltonSequence::new(1);
+        let s1 = h1.generate(10);
+        let s2 = h2.generate(10);
+        for i in 0..10 {
+            assert!((s1[(i, 0)] - s2[(i, 0)]).abs() < 1e-15);
+        }
+    }
+
+    #[test]
+    fn test_halton_sequence_coverage() {
+        let mut halton = HaltonSequence::new(2);
+        let samples = halton.generate(100);
+        // Low-discrepancy sequences should cover [0,1]^2 well
+        let mut has_low = false;
+        let mut has_high = false;
+        for i in 0..100 {
+            if samples[(i, 0)] < 0.1 {
+                has_low = true;
+            }
+            if samples[(i, 0)] > 0.9 {
+                has_high = true;
+            }
+        }
+        assert!(has_low, "Halton sequence missing low values");
+        assert!(has_high, "Halton sequence missing high values");
+    }
+
+    #[test]
+    fn test_sobol_1d() {
+        let seq = sobol_1d(8);
+        assert_eq!(seq.len(), 8);
+        // First value should be 0.0 (van der Corput of 0)
+        assert!((seq[0] - 0.0).abs() < 1e-15);
+        // Second should be 0.5
+        assert!((seq[1] - 0.5).abs() < 1e-15);
+        for &v in &seq {
+            assert!(v >= 0.0 && v <= 1.0);
+        }
+    }
+
+    #[test]
+    fn test_van_der_corput_base3() {
+        // Base 3: 0, 1/3, 2/3, 1/9, 4/9, ...
+        let expected = [0.0, 1.0 / 3.0, 2.0 / 3.0, 1.0 / 9.0];
+        for (i, &exp) in expected.iter().enumerate() {
+            let val = van_der_corput(i as u64, 3);
+            assert!((val - exp).abs() < 1e-10, "vdc({}, 3) = {} expected {}", i, val, exp);
+        }
+    }
 }
