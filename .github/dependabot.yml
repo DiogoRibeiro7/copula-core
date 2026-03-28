@@ -6,6 +6,8 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 10
+    reviewers:
+      - "diogoribeiro7"
     labels:
       - "enhancement"
       - "type:maintenance"
@@ -18,6 +20,8 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
+    reviewers:
+      - "diogoribeiro7"
     labels:
       - "type:maintenance"
       - "area:ci"
