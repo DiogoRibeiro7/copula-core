@@ -107,7 +107,7 @@ pub fn anderson_darling<C: Copula>(copula: &C, pseudo_obs: &DMatrix<f64>) -> Res
         let c = c.clamp(f64::MIN_POSITIVE, 1.0 - f64::EPSILON);
         cdf_vals.push(c);
     }
-    cdf_vals.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    cdf_vals.sort_by(|a, b| a.total_cmp(b));
 
     let mut sum = 0.0;
     for (i, c) in cdf_vals.iter().enumerate() {

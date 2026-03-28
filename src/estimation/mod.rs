@@ -44,10 +44,15 @@ impl EmpiricalCdf {
     ///
     /// # Returns
     /// An empirical CDF estimator
-    pub fn new(mut data: Vec<f64>) -> Self {
-        data.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    pub fn new(mut data: Vec<f64>) -> Result<Self> {
+        if data.iter().any(|x| !x.is_finite()) {
+            return Err(CopulaError::data_error(
+                "EmpiricalCdf data contains non-finite values (NaN or infinite)",
+            ));
+        }
+        data.sort_by(|a, b| a.total_cmp(b));
         let n = data.len();
-        Self { data, n }
+        Ok(Self { data, n })
     }
 
     /// Evaluate the empirical CDF at a point.
@@ -90,29 +95,26 @@ impl EmpiricalCdf {
 ///
 /// # Returns
 /// Matrix of pseudo-observations in [0,1]^d
-pub fn to_pseudo_observations(data: &DMatrix<f64>) -> DMatrix<f64> {
+pub fn to_pseudo_observations(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
     let n = data.nrows();
     let d = data.ncols();
     let mut pseudo = DMatrix::<f64>::zeros(n, d);
 
     // Transform each column independently
     for j in 0..d {
-        let mut column: Vec<f64> = (0..n).map(|i| data[(i, j)]).collect();
-        let ecdf = EmpiricalCdf::new(column.clone());
-
-        // Get pseudo-observations for this column
-        let pseudo_col = ecdf.to_pseudo_observations();
+        let column: Vec<f64> = (0..n).map(|i| data[(i, j)]).collect();
+        let _ecdf = EmpiricalCdf::new(column.clone())?;
 
         // Need to map back to original order
         let mut indexed: Vec<(usize, f64)> = column.iter().enumerate().map(|(i, &x)| (i, x)).collect();
-        indexed.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+        indexed.sort_by(|a, b| a.1.total_cmp(&b.1));
 
         for (new_idx, (orig_idx, _)) in indexed.iter().enumerate() {
             pseudo[(*orig_idx, j)] = (new_idx + 1) as f64 / (n + 1) as f64;
         }
     }
 
-    pseudo
+    Ok(pseudo)
 }
 
 /// Estimate Kendall's tau from data.
@@ -190,7 +192,7 @@ pub fn spearman_rho(x: &[f64], y: &[f64]) -> Result<f64> {
 fn rank(data: &[f64]) -> Vec<f64> {
     let n = data.len();
     let mut indexed: Vec<(usize, f64)> = data.iter().enumerate().map(|(i, &x)| (i, x)).collect();
-    indexed.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+    indexed.sort_by(|a, b| a.1.total_cmp(&b.1));
 
     let mut ranks = vec![0.0; n];
     for (rank_pos, (orig_idx, _)) in indexed.iter().enumerate() {
@@ -285,7 +287,7 @@ impl<'a, C: Copula> CMLEstimator<'a, C> {
     /// the negative log-likelihood over the parameter space.
     pub fn fit(&self, data: &DMatrix<f64>) -> Result<f64> {
         // Convert to pseudo-observations
-        let pseudo = to_pseudo_observations(data);
+        let pseudo = to_pseudo_observations(data)?;
 
         // Compute log-likelihood at current parameters
         // In practice, would optimize over parameter space here
@@ -348,7 +350,7 @@ mod tests {
     #[test]
     fn test_empirical_cdf() {
         let data = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let ecdf = EmpiricalCdf::new(data);
+        let ecdf = EmpiricalCdf::new(data).unwrap();
 
         assert_eq!(ecdf.eval(0.0), 0.0);
         assert_eq!(ecdf.eval(3.0), 0.6); // 3/5
@@ -358,7 +360,7 @@ mod tests {
     #[test]
     fn test_pseudo_observations() {
         let data = vec![1.0, 3.0, 2.0, 5.0, 4.0];
-        let ecdf = EmpiricalCdf::new(data);
+        let ecdf = EmpiricalCdf::new(data).unwrap();
         let pseudo = ecdf.to_pseudo_observations();
 
         // All values should be in (0, 1)
@@ -411,7 +413,7 @@ mod tests {
     fn test_to_pseudo_observations() {
         let data = DMatrix::from_row_slice(3, 2, &[1.0, 5.0, 2.0, 3.0, 3.0, 1.0]);
 
-        let pseudo = to_pseudo_observations(&data);
+        let pseudo = to_pseudo_observations(&data).unwrap();
 
         // Check dimensions
         assert_eq!(pseudo.nrows(), 3);
@@ -423,5 +425,23 @@ mod tests {
                 assert!(pseudo[(i, j)] > 0.0 && pseudo[(i, j)] < 1.0);
             }
         }
+    }
+
+    #[test]
+    fn empirical_cdf_rejects_nan() {
+        let data = vec![1.0, f64::NAN, 3.0];
+        assert!(EmpiricalCdf::new(data).is_err());
+    }
+
+    #[test]
+    fn empirical_cdf_rejects_infinity() {
+        let data = vec![1.0, f64::INFINITY, 3.0];
+        assert!(EmpiricalCdf::new(data).is_err());
+    }
+
+    #[test]
+    fn to_pseudo_observations_rejects_nan() {
+        let data = DMatrix::from_row_slice(2, 2, &[1.0, 2.0, f64::NAN, 4.0]);
+        assert!(to_pseudo_observations(&data).is_err());
     }
 }

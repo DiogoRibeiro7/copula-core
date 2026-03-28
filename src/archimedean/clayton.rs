@@ -186,7 +186,10 @@ impl FittableCopula for ClaytonCopula {
             .configure(|state| state.max_iters(100))
             .run()
             .map_err(|e| CopulaError::optimization(e.to_string()))?;
-        let theta = *res.state().get_best_param().unwrap();
+        let theta = *res
+            .state()
+            .get_best_param()
+            .ok_or_else(|| CopulaError::optimization("optimizer returned no best parameter"))?;
         self.theta = theta;
         Ok(theta)
     }
@@ -271,7 +274,7 @@ impl FittableCopula for ClaytonCopula {
         }
         let se = self.standard_errors(pseudo_obs)?;
         let z = statrs::distribution::Normal::new(0.0, 1.0)
-            .unwrap()
+            .map_err(|_| CopulaError::computation("failed to create standard normal distribution"))?
             .inverse_cdf(0.5 + confidence_level / 2.0);
         let lower = self.theta - z * se;
         let upper = self.theta + z * se;

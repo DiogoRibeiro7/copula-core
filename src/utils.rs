@@ -111,7 +111,7 @@ pub fn empirical_ranks(data: &[f64]) -> Result<Vec<f64>> {
         data.iter().enumerate().map(|(i, &x)| (x, i)).collect();
 
     // Sort by value
-    indexed_data.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+    indexed_data.sort_by(|a, b| a.0.total_cmp(&b.0));
 
     let mut ranks = vec![0.0; n];
     let mut i = 0;
@@ -326,7 +326,7 @@ pub fn empirical_cdf_transform(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
         validate_finite_data(&column, &format!("column {}", j))?;
 
         let mut sorted_column = column.clone();
-        sorted_column.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        sorted_column.sort_by(|a, b| a.total_cmp(b));
 
         for i in 0..n_rows {
             let value = column[i];

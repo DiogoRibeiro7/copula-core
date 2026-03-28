@@ -80,7 +80,7 @@ fn main() -> copula_core::Result<()> {
     // Step 6: Transform to pseudo-observations
     println!("Step 6: Pseudo-observations transformation");
 
-    let pseudo_obs = to_pseudo_observations(&data);
+    let pseudo_obs = to_pseudo_observations(&data)?;
 
     println!("  Original data range: [0, 1] (already uniform)");
     println!("  Pseudo-obs range:    [{:.3}, {:.3}]",

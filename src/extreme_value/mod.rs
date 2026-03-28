@@ -164,7 +164,9 @@ impl HuslerReissCopula {
     /// Standard normal CDF approximation.
     fn phi(x: f64) -> f64 {
         use statrs::distribution::{ContinuousCDF, Normal};
-        Normal::new(0.0, 1.0).unwrap().cdf(x)
+        Normal::new(0.0, 1.0)
+            .expect("standard normal parameters are always valid")
+            .cdf(x)
     }
 }
 

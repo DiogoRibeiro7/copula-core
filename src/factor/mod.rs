@@ -90,13 +90,13 @@ impl OneFactorGaussianCopula {
     /// Standard normal CDF.
     fn phi(x: f64) -> f64 {
         use statrs::distribution::{ContinuousCDF, Normal};
-        Normal::new(0.0, 1.0).unwrap().cdf(x)
+        Normal::new(0.0, 1.0).expect("standard normal parameters are always valid").cdf(x)
     }
 
     /// Inverse standard normal CDF.
     fn phi_inv(p: f64) -> f64 {
         use statrs::distribution::{ContinuousCDF, Normal};
-        Normal::new(0.0, 1.0).unwrap().inverse_cdf(p)
+        Normal::new(0.0, 1.0).expect("standard normal parameters are always valid").inverse_cdf(p)
     }
 }
 
@@ -269,13 +269,13 @@ impl MultiFactorGaussianCopula {
     /// Standard normal CDF.
     fn phi(x: f64) -> f64 {
         use statrs::distribution::{ContinuousCDF, Normal};
-        Normal::new(0.0, 1.0).unwrap().cdf(x)
+        Normal::new(0.0, 1.0).expect("standard normal parameters are always valid").cdf(x)
     }
 
     /// Inverse standard normal CDF.
     fn phi_inv(p: f64) -> f64 {
         use statrs::distribution::{ContinuousCDF, Normal};
-        Normal::new(0.0, 1.0).unwrap().inverse_cdf(p)
+        Normal::new(0.0, 1.0).expect("standard normal parameters are always valid").inverse_cdf(p)
     }
 }
 

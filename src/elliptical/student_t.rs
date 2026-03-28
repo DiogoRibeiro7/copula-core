@@ -98,7 +98,8 @@ impl Copula for StudentTCopula {
             return Ok(1.0);
         }
 
-        let t = StudentsT::new(0.0, 1.0, self.df).unwrap();
+        let t = StudentsT::new(0.0, 1.0, self.df)
+            .map_err(|_| CopulaError::computation("failed to create Student's t distribution"))?;
         let x = DVector::from_iterator(self.dim(), u.iter().map(|&ui| t.inverse_cdf(ui)));
 
         let inv = self
@@ -165,7 +166,8 @@ impl FittableCopula for StudentTCopula {
         crate::utils::validate_pseudo_observations(pseudo_obs)?;
         let n = pseudo_obs.nrows();
         let dim = pseudo_obs.ncols();
-        let t_dist = StudentsT::new(0.0, 1.0, self.df).unwrap();
+        let t_dist = StudentsT::new(0.0, 1.0, self.df)
+            .map_err(|_| CopulaError::computation("failed to create Student's t distribution"))?;
         let mut z = DMatrix::<f64>::zeros(n, dim);
         for i in 0..n {
             for j in 0..dim {
@@ -213,7 +215,8 @@ impl FittableCopula for StudentTCopula {
             return Err(CopulaError::dimension_mismatch(self.dim(), pseudo_obs.ncols()));
         }
         let n = pseudo_obs.nrows();
-        let t = StudentsT::new(0.0, 1.0, self.df).unwrap();
+        let t = StudentsT::new(0.0, 1.0, self.df)
+            .map_err(|_| CopulaError::computation("failed to create Student's t distribution"))?;
         let mut ll = 0.0;
         let inv = self
             .correlation
