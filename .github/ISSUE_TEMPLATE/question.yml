@@ -1,0 +1,25 @@
+name: Question
+description: Ask a focused usage or API question.
+title: "question: "
+labels:
+  - question
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      placeholder: How should I fit a Gaussian copula to pseudo-observations?
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Include context, code, and what you have already tried.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: main @ efb5ee2

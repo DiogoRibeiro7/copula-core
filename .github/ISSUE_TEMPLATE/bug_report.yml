@@ -1,0 +1,58 @@
+name: Bug report
+description: Report a defect, regression, or numerical issue.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Provide a minimal reproduction when possible. For numerical issues, include the copula family, parameter values, input point(s), and expected vs actual behavior.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: One-sentence description of the problem.
+      placeholder: Gaussian copula CDF returns a non-finite value for...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction
+      description: Exact steps, code sample, or test case.
+      placeholder: |
+        1. Create ...
+        2. Call ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Crate version, commit SHA, or branch.
+      placeholder: main @ efb5ee2
+  - type: input
+    id: toolchain
+    attributes:
+      label: Rust toolchain
+      description: Output of `rustc --version`.
+      placeholder: rustc 1.88.0
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Stack traces, screenshots, benchmark diffs, or related references.

@@ -1,0 +1,39 @@
+name: Feature request
+description: Propose a new copula family, statistical method, API, or workflow.
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: One-sentence proposal.
+      placeholder: Add Plackett copula support
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or motivation
+      description: What gap does this solve?
+      placeholder: The crate currently lacks...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the desired API or behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Existing workaround, adjacent package, or smaller slice.
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Papers, formulas, implementations, or prior art.
