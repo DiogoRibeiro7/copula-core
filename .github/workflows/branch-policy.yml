@@ -4,19 +4,31 @@ on:
   pull_request:
     branches:
       - main
+      - develop
 
 jobs:
+  develop-source-branch:
+    if: github.base_ref == 'develop'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce feature branch to develop flow
+        shell: bash
+        run: |
+          if [ "${{ github.head_ref }}" = "main" ] || [ "${{ github.head_ref }}" = "develop" ]; then
+            echo "PRs into develop must come from a working branch, not from main or develop."
+            echo "Current head branch: ${{ github.head_ref }}"
+            exit 1
+          fi
+
+          echo "Branch policy satisfied: working-branch -> develop"
+
   main-source-branch:
+    if: github.base_ref == 'main'
     runs-on: ubuntu-latest
     steps:
       - name: Enforce develop to main flow
         shell: bash
         run: |
-          if [ "${{ github.base_ref }}" != "main" ]; then
-            echo "This workflow only validates PRs into main."
-            exit 0
-          fi
-
           if [ "${{ github.head_ref }}" != "develop" ]; then
             echo "PRs into main must come from the develop branch."
             echo "Current head branch: ${{ github.head_ref }}"
