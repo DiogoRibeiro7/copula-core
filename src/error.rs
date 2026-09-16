@@ -26,7 +26,12 @@ fn format_invalid_values(values: &[f64]) -> String {
 ///
 /// This enum covers all possible error conditions that can arise when working
 /// with copulas, from parameter validation to numerical computation issues.
+///
+/// The enum is `#[non_exhaustive]`: some variants only exist when the
+/// corresponding Cargo feature is enabled, and new variants may be added in
+/// minor releases. Match with a wildcard arm.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum CopulaError {
     /// Invalid parameter value provided to a copula constructor or method.
     ///
