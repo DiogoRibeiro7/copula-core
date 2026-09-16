@@ -442,6 +442,31 @@ mod tests {
     }
 
     #[test]
+    fn test_cvine_wrong_num_pairs_in_tree() {
+        let clayton = || CopulaType::Clayton(ClaytonCopula::new(2.0).unwrap());
+        // Tree 1 of a 3D C-vine needs 2 pair-copulas.
+        let tree1 = vec![PairCopula::new(clayton(), 0, 1, vec![])];
+        let tree2 = vec![PairCopula::new(clayton(), 1, 2, vec![0])];
+        assert!(CVineCopula::new(3, vec![tree1, tree2]).is_err());
+    }
+
+    #[test]
+    fn test_dvine_wrong_num_trees() {
+        let c12 = CopulaType::Clayton(ClaytonCopula::new(2.0).unwrap());
+        let tree1 = vec![PairCopula::new(c12, 0, 1, vec![])];
+        assert!(DVineCopula::new(3, vec![tree1]).is_err());
+    }
+
+    #[test]
+    fn test_dvine_wrong_num_pairs_in_tree() {
+        let clayton = || CopulaType::Clayton(ClaytonCopula::new(2.0).unwrap());
+        // Tree 1 of a 3D D-vine needs 2 pair-copulas.
+        let tree1 = vec![PairCopula::new(clayton(), 0, 1, vec![])];
+        let tree2 = vec![PairCopula::new(clayton(), 0, 2, vec![1])];
+        assert!(DVineCopula::new(3, vec![tree1, tree2]).is_err());
+    }
+
+    #[test]
     fn test_dvine_creation() {
         // Create a simple 3D D-vine
         let c12 = CopulaType::Clayton(ClaytonCopula::new(2.0).unwrap());

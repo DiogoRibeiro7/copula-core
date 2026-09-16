@@ -383,6 +383,27 @@ mod tests {
     }
 
     #[test]
+    fn test_one_factor_cdf_zero_loadings_is_independence() {
+        let cop = OneFactorGaussianCopula::new(vec![0.0, 0.0]).unwrap();
+        let c = cop.cdf(&[0.3, 0.6]).unwrap();
+        assert!((c - 0.18).abs() < 1e-4, "C(0.3, 0.6) = {c}");
+    }
+
+    #[test]
+    fn test_one_factor_cdf_matches_bivariate_normal_at_median() {
+        // Sheppard's formula: P(X <= 0, Y <= 0) = 1/4 + asin(rho) / (2 pi),
+        // with rho = beta_1 * beta_2 for a one-factor model.
+        let cop = OneFactorGaussianCopula::new(vec![0.6, 0.8]).unwrap();
+        let rho: f64 = 0.6 * 0.8;
+        let expected = 0.25 + rho.asin() / (2.0 * std::f64::consts::PI);
+        let c = cop.cdf(&[0.5, 0.5]).unwrap();
+        assert!(
+            (c - expected).abs() < 1e-3,
+            "C(0.5, 0.5) = {c}, expected {expected}"
+        );
+    }
+
+    #[test]
     fn test_one_factor_sample() {
         use rand::thread_rng;
         let mut rng = thread_rng();
@@ -412,6 +433,13 @@ mod tests {
         ]);
         let cop = MultiFactorGaussianCopula::new(loadings).unwrap();
         assert_eq!(cop.dimension(), 3);
+    }
+
+    #[test]
+    fn test_multi_factor_rejects_row_variance_above_one() {
+        // 0.8^2 + 0.7^2 = 1.13 > 1
+        let loadings = DMatrix::from_row_slice(2, 2, &[0.8, 0.7, 0.5, 0.4]);
+        assert!(MultiFactorGaussianCopula::new(loadings).is_err());
     }
 
     #[test]
