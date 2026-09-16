@@ -47,7 +47,7 @@ impl OneFactorGaussianCopula {
         }
 
         for (i, &loading) in loadings.iter().enumerate() {
-            if loading < 0.0 || loading > 1.0 {
+            if !(0.0..=1.0).contains(&loading) {
                 return Err(CopulaError::invalid_parameter(format!(
                     "loading[{}] = {} must be in [0, 1]",
                     i, loading
@@ -239,6 +239,10 @@ impl MultiFactorGaussianCopula {
             return Err(CopulaError::invalid_parameter(
                 "loadings matrix cannot be empty",
             ));
+        }
+
+        if loadings.iter().any(|x| !x.is_finite()) {
+            return Err(CopulaError::invalid_parameter("loadings must be finite"));
         }
 
         // Check that row sums of squares <= 1

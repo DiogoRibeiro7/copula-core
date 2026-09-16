@@ -60,6 +60,11 @@ impl Copula for GaussianCopula {
             return Err(CopulaError::dimension_mismatch(self.dim(), u.len()));
         }
         crate::error::validate_unit_range(u)?;
+        // Quantile transforms are infinite on the boundary; the copula axioms
+        // give the exact value there.
+        if let Some(value) = crate::utils::copula_boundary_value(u) {
+            return Ok(value);
+        }
         let normal = Normal::new(0.0, 1.0)
             .map_err(|_| CopulaError::computation("failed to create Normal(0,1)"))?;
         if self.dim() == 2 {

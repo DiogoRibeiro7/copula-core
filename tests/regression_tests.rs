@@ -506,3 +506,35 @@ fn halton_rejects_dimension_above_16() {
     use copula_core::sampling::HaltonSequence;
     let _ = HaltonSequence::new(17);
 }
+
+// ============================================================================
+// Non-finite parameters
+// ============================================================================
+
+#[test]
+fn elliptical_copulas_reject_nan_correlation() {
+    let corr = DMatrix::from_row_slice(2, 2, &[1.0, f64::NAN, f64::NAN, 1.0]);
+    assert!(GaussianCopula::new(corr.clone()).is_err());
+    assert!(StudentTCopula::new(corr, 4.0).is_err());
+    assert!(
+        copula_core::utils::validate_correlation_matrix(&DMatrix::from_row_slice(
+            2,
+            2,
+            &[f64::NAN, 0.5, 0.5, 1.0]
+        ))
+        .is_err()
+    );
+}
+
+#[test]
+fn factor_copulas_reject_nan_loadings() {
+    use copula_core::factor::{MultiFactorGaussianCopula, OneFactorGaussianCopula};
+    assert!(OneFactorGaussianCopula::new(vec![f64::NAN, 0.5]).is_err());
+    assert!(
+        MultiFactorGaussianCopula::new(DMatrix::from_row_slice(2, 1, &[f64::NAN, 0.5])).is_err()
+    );
+    assert!(
+        MultiFactorGaussianCopula::new(DMatrix::from_row_slice(2, 1, &[f64::INFINITY, 0.5]))
+            .is_err()
+    );
+}
