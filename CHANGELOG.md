@@ -8,6 +8,8 @@ Before 1.0, breaking changes increment the minor version.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-16
+
 ### Added
 
 - With the `serde` feature, `Serialize` and `Deserialize` for the Gaussian,
@@ -83,5 +85,6 @@ Before 1.0, breaking changes increment the minor version.
 Initial experimental release. Yanked because it was published before the
 crate was ready; use 0.2.0 or later.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/copula-core/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/DiogoRibeiro7/copula-core/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/DiogoRibeiro7/copula-core/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/DiogoRibeiro7/copula-core/releases/tag/v0.1.0
