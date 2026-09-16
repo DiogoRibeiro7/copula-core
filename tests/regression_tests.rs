@@ -538,3 +538,106 @@ fn factor_copulas_reject_nan_loadings() {
             .is_err()
     );
 }
+
+// ============================================================================
+// CDF values within the Fréchet–Hoeffding bounds
+// ============================================================================
+
+/// Grid concentrated near the edges of the unit interval, where cancellation
+/// and rounding push computed values outside the bounds.
+const EDGE_GRID: [f64; 14] = [
+    0.0,
+    1e-6,
+    1e-4,
+    0.001,
+    0.01,
+    0.05,
+    0.3,
+    0.7,
+    0.95,
+    0.99,
+    0.999,
+    0.9999,
+    1.0 - 1e-6,
+    1.0,
+];
+
+fn assert_within_frechet_bounds(copula: &impl Copula, label: &str) {
+    for &u in &EDGE_GRID {
+        for &v in &EDGE_GRID {
+            let c = copula.cdf(&[u, v]).unwrap();
+            let upper = u.min(v);
+            // `u + v - 1` can round above `min(u, v)`, e.g. at (0.01, 1.0).
+            let lower = (u + v - 1.0).max(0.0).min(upper);
+            assert!(
+                (lower..=upper).contains(&c),
+                "{}: C({}, {}) = {:e} outside [{:e}, {:e}]",
+                label,
+                u,
+                v,
+                c,
+                lower,
+                upper
+            );
+        }
+    }
+}
+
+#[test]
+fn cdf_stays_within_frechet_bounds_near_the_edges() {
+    for rho in [-0.99, -0.9, -0.5, 0.0, 0.5, 0.9, 0.99] {
+        let corr = DMatrix::from_row_slice(2, 2, &[1.0, rho, rho, 1.0]);
+        let label = format!("Gaussian({})", rho);
+        assert_within_frechet_bounds(&GaussianCopula::new(corr).unwrap(), &label);
+    }
+    for theta in [0.1, 1.0, 5.0, 20.0] {
+        assert_within_frechet_bounds(&ClaytonCopula::new(theta).unwrap(), "Clayton");
+    }
+    for theta in [-35.0, -5.0, -0.1, 0.1, 5.0, 20.0, 35.0, 60.0] {
+        assert_within_frechet_bounds(&FrankCopula::new(theta).unwrap(), "Frank");
+    }
+    for theta in [1.01, 1.5, 5.0, 20.0] {
+        assert_within_frechet_bounds(&GumbelCopula::new(theta).unwrap(), "Gumbel");
+        assert_within_frechet_bounds(&JoeCopula::new(theta).unwrap(), "Joe");
+    }
+    for theta in [-0.99, -0.5, 0.5, 0.99] {
+        assert_within_frechet_bounds(&AMHCopula::new(theta).unwrap(), "AMH");
+    }
+}
+
+/// Case found by the `gaussian_cdf_in_unit_interval` property test in CI: the
+/// bivariate normal routine returned -2.8e-19.
+#[test]
+fn gaussian_cdf_is_not_negative_for_strong_negative_correlation() {
+    let rho = -0.893429595657124;
+    let corr = DMatrix::from_row_slice(2, 2, &[1.0, rho, rho, 1.0]);
+    let c = GaussianCopula::new(corr)
+        .unwrap()
+        .cdf(&[0.01, 0.01])
+        .unwrap();
+    assert!((0.0..=1.0).contains(&c), "C(0.01, 0.01) = {:e}", c);
+}
+
+/// Reference values computed with 80-digit decimal arithmetic.
+#[test]
+fn frank_cdf_is_accurate_for_large_theta() {
+    let cases = [
+        (0.1, 0.999, 0.9999, 0.9989001050775406),
+        (35.0, 0.999, 0.9999, 0.9989034336526544),
+        (35.0, 0.7, 0.95, 0.6999962595341186),
+        (60.0, 0.7, 0.7, 0.688447547117584),
+        (-20.0, 0.3, 0.95, 0.25021250733036304),
+    ];
+    for (theta, u, v, expected) in cases {
+        let c = FrankCopula::new(theta).unwrap().cdf(&[u, v]).unwrap();
+        assert!(
+            (c - expected).abs() < 1e-14,
+            "Frank({}) C({}, {}) = {:e}, expected {:e}",
+            theta,
+            u,
+            v,
+            c,
+            expected
+        );
+    }
+}

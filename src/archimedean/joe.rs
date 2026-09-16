@@ -41,7 +41,10 @@ impl Copula for JoeCopula {
         let u1 = (1.0 - u[0]).powf(self.theta);
         let u2 = (1.0 - u[1]).powf(self.theta);
         let sum = u1 + u2 - u1 * u2;
-        Ok(1.0 - sum.powf(1.0 / self.theta))
+        Ok(crate::utils::clamp_to_frechet_bounds(
+            u,
+            1.0 - sum.powf(1.0 / self.theta),
+        ))
     }
 
     fn pdf(&self, u: &[f64]) -> Result<f64> {

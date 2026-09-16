@@ -5,3 +5,4 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc ec5faf80f0d306d3739251c817a27ac73bf5cac540ae9ec052818c5631535d10 # shrinks to theta = 0.1, (u, v) = (0.01, 0.01)
+cc ee4e26d92086bc2d10c054d8f880f86e929dfabe9d5cad480605b5fa590a40d7 # shrinks to rho = -0.893429595657124, (u, v) = (0.01, 0.01)
