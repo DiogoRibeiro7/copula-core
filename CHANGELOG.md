@@ -56,6 +56,13 @@ Before 1.0, breaking changes increment the minor version.
 
 ### Fixed
 
+- `FrankCopula::cdf` lost accuracy for large theta when both arguments were
+  near 1 (an error of 4.7e-4 at theta = 35) and returned NaN at theta = 60. It
+  now switches to an expanded form in that regime.
+- Copula CDFs could fall slightly outside the Fréchet–Hoeffding bounds through
+  rounding; `GaussianCopula::cdf` returned values such as -2.8e-19 under strong
+  negative correlation. CDF values of the core families are now clamped to the
+  bounds.
 - `CVineCopula::sample` and `DVineCopula::sample` ignored every tree after the
   first, so vines with three or more variables produced samples with the wrong
   dependence structure. In a D-vine, variables beyond the second were also

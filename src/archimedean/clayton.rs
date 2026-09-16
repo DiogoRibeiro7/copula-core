@@ -62,7 +62,10 @@ impl Copula for ClaytonCopula {
         if sum <= 0.0 {
             Ok(0.0)
         } else {
-            Ok(sum.powf(-1.0 / self.theta))
+            Ok(crate::utils::clamp_to_frechet_bounds(
+                u,
+                sum.powf(-1.0 / self.theta),
+            ))
         }
     }
 

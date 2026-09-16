@@ -38,7 +38,10 @@ impl Copula for AMHCopula {
         }
         crate::error::validate_unit_range(u)?;
         let denom = 1.0 - self.theta * (1.0 - u[0]) * (1.0 - u[1]);
-        Ok(u[0] * u[1] / denom)
+        Ok(crate::utils::clamp_to_frechet_bounds(
+            u,
+            u[0] * u[1] / denom,
+        ))
     }
 
     fn pdf(&self, u: &[f64]) -> Result<f64> {

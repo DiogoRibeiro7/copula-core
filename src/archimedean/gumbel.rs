@@ -41,7 +41,10 @@ impl Copula for GumbelCopula {
         crate::error::validate_unit_range(u)?;
 
         let sum = (-u[0].ln()).powf(self.theta) + (-u[1].ln()).powf(self.theta);
-        Ok((-sum.powf(1.0 / self.theta)).exp())
+        Ok(crate::utils::clamp_to_frechet_bounds(
+            u,
+            (-sum.powf(1.0 / self.theta)).exp(),
+        ))
     }
 
     fn pdf(&self, u: &[f64]) -> Result<f64> {

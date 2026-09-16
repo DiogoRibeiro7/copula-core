@@ -105,7 +105,10 @@ impl Copula for StudentTCopula {
             }
         }
 
-        Ok(count as f64 / n_samples as f64)
+        Ok(crate::utils::clamp_to_frechet_bounds(
+            u,
+            count as f64 / n_samples as f64,
+        ))
     }
 
     fn pdf(&self, u: &[f64]) -> Result<f64> {
