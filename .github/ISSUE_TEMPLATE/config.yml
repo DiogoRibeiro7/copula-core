@@ -1,5 +1,8 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/DiogoRibeiro7/copula-core/security/advisories/new
+    about: Report vulnerabilities privately. Do not open a public issue.
   - name: Maintainer contact
     url: https://github.com/DiogoRibeiro7
     about: Use the maintainer profile for direct contact when an issue template is not appropriate.

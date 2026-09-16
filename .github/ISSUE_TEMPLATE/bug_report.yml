@@ -44,13 +44,19 @@ body:
     attributes:
       label: Version
       description: Crate version, commit SHA, or branch.
-      placeholder: main @ efb5ee2
+      placeholder: 0.2.0, or main @ efb5ee2
+  - type: input
+    id: features
+    attributes:
+      label: Cargo features
+      description: Features enabled for `copula-core`.
+      placeholder: estimation, serde
   - type: input
     id: toolchain
     attributes:
       label: Rust toolchain
       description: Output of `rustc --version`.
-      placeholder: rustc 1.88.0
+      placeholder: rustc 1.89.0
   - type: textarea
     id: context
     attributes:

@@ -19,9 +19,10 @@ paste commands or results
 
 - [ ] Linked issue, if applicable
 - [ ] Added or updated tests
-- [ ] Updated docs/examples for public-facing changes
-- [ ] Called out breaking changes, limitations, or follow-up work
+- [ ] Added a `CHANGELOG.md` entry under `[Unreleased]` for user-visible changes
+- [ ] Updated docs/examples for public API changes
+- [ ] Called out breaking changes, MSRV changes, limitations, or follow-up work
 
 ## Notes for review
 
-Describe any mathematical references, numerical tradeoffs, or areas where reviewer attention is most useful.
+Describe any mathematical references, numerical trade-offs, or areas where reviewer attention is most useful.
