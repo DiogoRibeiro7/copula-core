@@ -51,6 +51,15 @@ Before 1.0, breaking changes increment the minor version.
   value was within 1e-8 of 1.
 - `CVineCopula::new` and `DVineCopula::new` accepted pair-copulas that are not
   bivariate.
+- `GaussianCopula::cdf` returned NaN when a coordinate was exactly 0 and at
+  (1, 1). Gaussian and Student-t CDFs now return the exact values implied by
+  the copula axioms whenever a coordinate is 0 or 1; for the Student-t copula
+  this also replaces a Monte Carlo estimate at those points.
+- `GaussianCopula::new`, `StudentTCopula::new`, and
+  `utils::validate_correlation_matrix` accepted correlation matrices containing
+  NaN.
+- `OneFactorGaussianCopula::new` and `MultiFactorGaussianCopula::new` accepted
+  NaN loadings.
 - `cargo test` with default features failed to compile.
 - Doctests were disabled and four of them failed. All doctests now run.
 - Broken intra-doc links wherever documentation wrote the unit interval as `[0,1]`.

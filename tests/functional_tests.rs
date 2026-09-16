@@ -63,6 +63,56 @@ fn grounding_properties_all_copulas() {
     check_grounding_properties(&StudentTCopula::new(corr, 5.0).unwrap(), "StudentT(0.5,5)");
 }
 
+fn check_exact_boundary_values(cop: &impl Copula, label: &str) {
+    for &u in &[0.0, 0.3, 1.0] {
+        let cases = [
+            ([u, 0.0], 0.0),
+            ([0.0, u], 0.0),
+            ([u, 1.0], u),
+            ([1.0, u], u),
+        ];
+        for (point, expected) in cases {
+            let value = cop.cdf(&point).unwrap();
+            assert!(
+                (value - expected).abs() < 1e-12,
+                "{}: C({}, {}) = {} (expected {})",
+                label,
+                point[0],
+                point[1],
+                value,
+                expected
+            );
+        }
+    }
+}
+
+#[test]
+fn exact_boundary_values_all_copulas() {
+    check_exact_boundary_values(&ClaytonCopula::new(2.0).unwrap(), "Clayton(2)");
+    check_exact_boundary_values(&GumbelCopula::new(2.0).unwrap(), "Gumbel(2)");
+    check_exact_boundary_values(&FrankCopula::new(5.0).unwrap(), "Frank(5)");
+    check_exact_boundary_values(&JoeCopula::new(2.0).unwrap(), "Joe(2)");
+    check_exact_boundary_values(&AMHCopula::new(0.5).unwrap(), "AMH(0.5)");
+
+    let corr = DMatrix::from_row_slice(2, 2, &[1.0, 0.5, 0.5, 1.0]);
+    check_exact_boundary_values(&GaussianCopula::new(corr.clone()).unwrap(), "Gaussian(0.5)");
+    check_exact_boundary_values(&StudentTCopula::new(corr, 5.0).unwrap(), "StudentT(0.5,5)");
+}
+
+#[test]
+fn elliptical_cdf_drops_coordinates_equal_to_one() {
+    let gaussian = GaussianCopula::new_identity(3).unwrap();
+    let student_t = StudentTCopula::new_identity(3, 4.0).unwrap();
+    for (label, value) in [
+        ("Gaussian", gaussian.cdf(&[0.3, 1.0, 1.0]).unwrap()),
+        ("StudentT", student_t.cdf(&[1.0, 0.3, 1.0]).unwrap()),
+    ] {
+        assert!((value - 0.3).abs() < 1e-12, "{}: {}", label, value);
+    }
+    assert_eq!(gaussian.cdf(&[0.3, 0.0, 0.5]).unwrap(), 0.0);
+    assert_eq!(student_t.cdf(&[1.0, 1.0, 1.0]).unwrap(), 1.0);
+}
+
 // ============================================================================
 // Frechet-Hoeffding bounds: max(u+v-1, 0) <= C(u,v) <= min(u,v)
 // ============================================================================

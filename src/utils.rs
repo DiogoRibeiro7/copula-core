@@ -340,6 +340,25 @@ pub fn empirical_cdf_transform(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
     Ok(transformed)
 }
 
+/// The value of any copula at a point with a coordinate equal to 0 or 1, when
+/// it follows from the copula axioms alone.
+///
+/// C(u) = 0 if some u_i = 0. Coordinates equal to 1 drop out, so C(u) = 1 when
+/// every u_i = 1 and C(u) = u_j when u_j is the only coordinate below 1.
+/// Returns `None` when at least two coordinates lie strictly inside (0, 1).
+/// `u` must already be validated to lie in [0, 1].
+pub(crate) fn copula_boundary_value(u: &[f64]) -> Option<f64> {
+    if u.contains(&0.0) {
+        return Some(0.0);
+    }
+    let mut interior = u.iter().copied().filter(|&x| x < 1.0);
+    match (interior.next(), interior.next()) {
+        (None, _) => Some(1.0),
+        (Some(only), None) => Some(only),
+        _ => None,
+    }
+}
+
 /// Check if a matrix is a valid correlation matrix.
 ///
 /// A valid correlation matrix must be:
@@ -347,6 +366,7 @@ pub fn empirical_cdf_transform(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
 /// 2. Symmetric
 /// 3. Have unit diagonal
 /// 4. Be positive semi-definite
+/// 5. Have only finite entries
 ///
 /// # Arguments
 ///
@@ -366,6 +386,13 @@ pub fn validate_correlation_matrix(matrix: &DMatrix<f64>) -> Result<()> {
     }
 
     let n = n_rows;
+
+    // NaN fails every comparison below, so reject non-finite entries first.
+    if matrix.iter().any(|x| !x.is_finite()) {
+        return Err(CopulaError::invalid_parameter(
+            "Correlation matrix entries must be finite",
+        ));
+    }
 
     // Check symmetry and unit diagonal
     for i in 0..n {
