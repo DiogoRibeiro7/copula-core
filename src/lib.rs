@@ -82,6 +82,7 @@
 //! verified estimation. See `ROADMAP.md` in the repository for the current plan.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![forbid(unsafe_code)]
 #![warn(missing_docs, rust_2018_idioms)]
 #![allow(clippy::many_single_char_names)] // Mathematical notation uses single chars
 
