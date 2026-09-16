@@ -1,4 +1,3 @@
-// src/archimedean/frank.rs
 //! Frank copula implementation.
 //!
 //! ## Bibliography

@@ -1,5 +1,3 @@
-// src/lib.rs
-
 //! # copula-core
 //!
 //! `copula-core` is an experimental Rust library for copula modelling,
@@ -64,11 +62,18 @@
 //!
 //! ## Feature flags
 //!
-//! - `estimation` enables estimation and model-selection modules.
-//! - `parallel` enables Rayon-backed parallel support where used.
-//! - `serde` enables serialization support.
-//! - `full` enables the optional features above together.
-//! - `experimental` is reserved for unstable experimental surface.
+//! No features are enabled by default.
+//!
+//! - `estimation` enables the `estimation` and `model_selection` modules and
+//!   the `FittableCopula` trait.
+//! - `serde` enables the `SerializableCopula` trait and `serde` support for
+//!   `nalgebra` types.
+//! - `full` enables all of the above.
+//!
+//! ## Minimum supported Rust version
+//!
+//! Rust 1.89. Raising it is not considered a breaking change before 1.0, but
+//! is always listed in the changelog.
 //!
 //! ## Maturity
 //!
@@ -77,6 +82,7 @@
 //! verified estimation. See `ROADMAP.md` in the repository for the current plan.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![forbid(unsafe_code)]
 #![warn(missing_docs, rust_2018_idioms)]
 #![allow(clippy::many_single_char_names)] // Mathematical notation uses single chars
 
@@ -100,25 +106,25 @@ pub mod vine;
 #[cfg_attr(docsrs, doc(cfg(feature = "estimation")))]
 pub mod estimation;
 
-pub mod numerical;
-pub mod sampling;
-pub mod testing;
 #[cfg(feature = "estimation")]
 #[cfg_attr(docsrs, doc(cfg(feature = "estimation")))]
 pub mod model_selection;
+pub mod numerical;
+pub mod sampling;
+pub mod testing;
 
 // Convenience module for common imports
 pub mod prelude;
 
 // Re-export core types and traits
 pub use error::{CopulaError, Result};
+#[cfg(feature = "estimation")]
+pub use model_selection::k_fold_cv;
 pub use testing::{
     anderson_darling, cramer_von_mises, cvm_multiplier_bootstrap, kolmogorov_smirnov,
 };
 #[cfg(feature = "estimation")]
 pub use traits::FittableCopula;
-#[cfg(feature = "estimation")]
-pub use model_selection::k_fold_cv;
 pub use traits::{ArchimedeanCopula, Copula};
 pub use utils::{empirical_ranks, kendall_tau, spearman_rho, to_pseudo_observations};
 

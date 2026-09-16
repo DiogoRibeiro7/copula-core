@@ -15,18 +15,38 @@ fn check_grounding_properties(cop: &impl Copula, label: &str) {
     // C(0, v) = 0
     let eps = 0.001;
     let c_u0 = cop.cdf(&[0.5, eps]).unwrap();
-    assert!(c_u0 < 0.01 + eps, "{}: C(0.5, ~0) = {} too large", label, c_u0);
+    assert!(
+        c_u0 < 0.01 + eps,
+        "{}: C(0.5, ~0) = {} too large",
+        label,
+        c_u0
+    );
 
     let c_0v = cop.cdf(&[eps, 0.5]).unwrap();
-    assert!(c_0v < 0.01 + eps, "{}: C(~0, 0.5) = {} too large", label, c_0v);
+    assert!(
+        c_0v < 0.01 + eps,
+        "{}: C(~0, 0.5) = {} too large",
+        label,
+        c_0v
+    );
 
     // C(u, 1) ≈ u  (test with near-1 values)
     let near_one = 0.999;
     let c_u1 = cop.cdf(&[0.5, near_one]).unwrap();
-    assert!((c_u1 - 0.5).abs() < 0.02, "{}: C(0.5, ~1) = {} ≠ 0.5", label, c_u1);
+    assert!(
+        (c_u1 - 0.5).abs() < 0.02,
+        "{}: C(0.5, ~1) = {} ≠ 0.5",
+        label,
+        c_u1
+    );
 
     let c_1v = cop.cdf(&[near_one, 0.5]).unwrap();
-    assert!((c_1v - 0.5).abs() < 0.02, "{}: C(~1, 0.5) = {} ≠ 0.5", label, c_1v);
+    assert!(
+        (c_1v - 0.5).abs() < 0.02,
+        "{}: C(~1, 0.5) = {} ≠ 0.5",
+        label,
+        c_1v
+    );
 }
 
 #[test]
@@ -49,8 +69,12 @@ fn grounding_properties_all_copulas() {
 
 fn check_frechet_bounds(cop: &impl Copula, label: &str) {
     let test_points = vec![
-        (0.1, 0.1), (0.1, 0.9), (0.5, 0.5),
-        (0.9, 0.1), (0.9, 0.9), (0.3, 0.7),
+        (0.1, 0.1),
+        (0.1, 0.9),
+        (0.5, 0.5),
+        (0.9, 0.1),
+        (0.9, 0.9),
+        (0.3, 0.7),
     ];
     for (u, v) in test_points {
         let c = cop.cdf(&[u, v]).unwrap();
@@ -58,7 +82,13 @@ fn check_frechet_bounds(cop: &impl Copula, label: &str) {
         let upper = u.min(v);
         assert!(
             c >= lower - 1e-8 && c <= upper + 1e-8,
-            "{}: C({},{}) = {} violates bounds [{}, {}]", label, u, v, c, lower, upper
+            "{}: C({},{}) = {} violates bounds [{}, {}]",
+            label,
+            u,
+            v,
+            c,
+            lower,
+            upper
         );
     }
 }
@@ -93,7 +123,13 @@ fn check_monotonicity(cop: &impl Copula, label: &str) {
     let mut prev = 0.0;
     for &u in &points {
         let c = cop.cdf(&[u, fixed]).unwrap();
-        assert!(c >= prev - 1e-10, "{}: not increasing in u at ({}, {})", label, u, fixed);
+        assert!(
+            c >= prev - 1e-10,
+            "{}: not increasing in u at ({}, {})",
+            label,
+            u,
+            fixed
+        );
         prev = c;
     }
 
@@ -101,7 +137,13 @@ fn check_monotonicity(cop: &impl Copula, label: &str) {
     prev = 0.0;
     for &v in &points {
         let c = cop.cdf(&[fixed, v]).unwrap();
-        assert!(c >= prev - 1e-10, "{}: not increasing in v at ({}, {})", label, fixed, v);
+        assert!(
+            c >= prev - 1e-10,
+            "{}: not increasing in v at ({}, {})",
+            label,
+            fixed,
+            v
+        );
         prev = c;
     }
 }
@@ -139,7 +181,12 @@ fn check_2_increasing(cop: &impl Copula, label: &str) {
         assert!(
             volume >= -1e-8,
             "{}: 2-increasing violated for [{},{},{},{}]: volume = {}",
-            label, u1, v1, u2, v2, volume
+            label,
+            u1,
+            v1,
+            u2,
+            v2,
+            volume
         );
     }
 }
@@ -169,8 +216,14 @@ fn gaussian_independence_copula() {
     for (u, v) in test_points {
         let c = cop.cdf(&[u, v]).unwrap();
         let expected = u * v;
-        assert!((c - expected).abs() < 0.01,
-                "C({},{}) = {} ≠ u*v = {}", u, v, c, expected);
+        assert!(
+            (c - expected).abs() < 0.01,
+            "C({},{}) = {} ≠ u*v = {}",
+            u,
+            v,
+            c,
+            expected
+        );
     }
 }
 
@@ -179,7 +232,11 @@ fn frank_near_independence() {
     // Frank copula approaches independence as theta -> 0+
     let cop = FrankCopula::new(0.01).unwrap();
     let c = cop.cdf(&[0.5, 0.5]).unwrap();
-    assert!((c - 0.25).abs() < 0.01, "Frank(~0): C(0.5,0.5) = {} ≠ 0.25", c);
+    assert!(
+        (c - 0.25).abs() < 0.01,
+        "Frank(~0): C(0.5,0.5) = {} ≠ 0.25",
+        c
+    );
 }
 
 #[test]
@@ -190,8 +247,14 @@ fn gumbel_near_theta_one_approaches_independence() {
     for (u, v) in test_points {
         let c = cop.cdf(&[u, v]).unwrap();
         let expected = u * v;
-        assert!((c - expected).abs() < 0.01,
-                "Gumbel(~1): C({},{}) = {} ≈ u*v = {}", u, v, c, expected);
+        assert!(
+            (c - expected).abs() < 0.01,
+            "Gumbel(~1): C({},{}) = {} ≈ u*v = {}",
+            u,
+            v,
+            c,
+            expected
+        );
     }
 }
 
@@ -203,7 +266,12 @@ fn gumbel_near_theta_one_approaches_independence() {
 fn pdf_is_positive_at_interior_points() {
     fn check(cop: &impl Copula, label: &str) {
         let pdf = cop.pdf(&[0.5, 0.5]).unwrap();
-        assert!(pdf > 0.0, "{}: pdf(0.5, 0.5) = {} should be positive", label, pdf);
+        assert!(
+            pdf > 0.0,
+            "{}: pdf(0.5, 0.5) = {} should be positive",
+            label,
+            pdf
+        );
     }
     check(&ClaytonCopula::new(2.0).unwrap(), "Clayton(2)");
     check(&GumbelCopula::new(2.0).unwrap(), "Gumbel(2)");
@@ -227,7 +295,13 @@ fn cdf_numerical_derivative_approximates_pdf() {
 
     let analytic_pdf = cop.pdf(&[u, v]).unwrap();
     let rel_err = (numerical_pdf - analytic_pdf).abs() / analytic_pdf.max(1e-15);
-    assert!(rel_err < 0.01, "Numerical PDF {} vs analytic {} (rel err {})", numerical_pdf, analytic_pdf, rel_err);
+    assert!(
+        rel_err < 0.01,
+        "Numerical PDF {} vs analytic {} (rel err {})",
+        numerical_pdf,
+        analytic_pdf,
+        rel_err
+    );
 }
 
 // ============================================================================
@@ -241,7 +315,12 @@ fn archimedean_generator_phi_is_decreasing() {
         let mut prev = f64::INFINITY;
         for &t in &points {
             let phi_t = cop.phi(t).unwrap();
-            assert!(phi_t <= prev + 1e-10, "{}: phi not decreasing at t={}", label, t);
+            assert!(
+                phi_t <= prev + 1e-10,
+                "{}: phi not decreasing at t={}",
+                label,
+                t
+            );
             assert!(phi_t >= 0.0, "{}: phi({}) = {} < 0", label, t, phi_t);
             prev = phi_t;
         }
@@ -269,8 +348,18 @@ fn archimedean_generator_phi_at_one_is_zero() {
 fn tail_dependence_in_valid_range() {
     fn check(cop: &impl Copula, label: &str) {
         let (lower, upper) = cop.tail_dependence().unwrap();
-        assert!(lower >= 0.0 && lower <= 1.0, "{}: lower tail {} out of [0,1]", label, lower);
-        assert!(upper >= 0.0 && upper <= 1.0, "{}: upper tail {} out of [0,1]", label, upper);
+        assert!(
+            (0.0..=1.0).contains(&lower),
+            "{}: lower tail {} out of [0,1]",
+            label,
+            lower
+        );
+        assert!(
+            (0.0..=1.0).contains(&upper),
+            "{}: upper tail {} out of [0,1]",
+            label,
+            upper
+        );
     }
     // Only test copulas that implement tail_dependence (Clayton overrides the default)
     check(&ClaytonCopula::new(2.0).unwrap(), "Clayton(2)");
@@ -283,8 +372,17 @@ fn clayton_has_only_lower_tail_dependence() {
     for &theta in &[0.5, 1.0, 2.0, 5.0] {
         let cop = ClaytonCopula::new(theta).unwrap();
         let (lower, upper) = cop.tail_dependence().unwrap();
-        assert!(lower > 0.0, "Clayton({}): lower tail = {} should be > 0", theta, lower);
-        assert_eq!(upper, 0.0, "Clayton({}): upper tail = {} should be 0", theta, upper);
+        assert!(
+            lower > 0.0,
+            "Clayton({}): lower tail = {} should be > 0",
+            theta,
+            lower
+        );
+        assert_eq!(
+            upper, 0.0,
+            "Clayton({}): upper tail = {} should be 0",
+            theta, upper
+        );
     }
 }
 
@@ -315,7 +413,14 @@ fn exchangeable_copulas_are_symmetric() {
             let c_vu = cop.cdf(&[v, u]).unwrap();
             assert!(
                 (c_uv - c_vu).abs() < 1e-8,
-                "{}: C({},{}) = {} ≠ C({},{}) = {}", label, u, v, c_uv, v, u, c_vu
+                "{}: C({},{}) = {} ≠ C({},{}) = {}",
+                label,
+                u,
+                v,
+                c_uv,
+                v,
+                u,
+                c_vu
             );
         }
     }
@@ -369,7 +474,11 @@ fn kendall_tau_from_samples_agrees_with_theory() {
     let col0: Vec<f64> = data.column(0).iter().copied().collect();
     let col1: Vec<f64> = data.column(1).iter().copied().collect();
     let tau = kendall_tau(&col0, &col1).unwrap();
-    assert!((tau - 0.5).abs() < 0.05, "Clayton(2) tau = {} expected ~0.5", tau);
+    assert!(
+        (tau - 0.5).abs() < 0.05,
+        "Clayton(2) tau = {} expected ~0.5",
+        tau
+    );
 }
 
 // ============================================================================
@@ -380,13 +489,23 @@ fn kendall_tau_from_samples_agrees_with_theory() {
 fn cdf_stable_near_boundaries() {
     fn check(cop: &impl Copula, label: &str) {
         let boundary_points = vec![
-            (0.001, 0.5), (0.5, 0.001),
-            (0.999, 0.5), (0.5, 0.999),
-            (0.001, 0.001), (0.999, 0.999),
+            (0.001, 0.5),
+            (0.5, 0.001),
+            (0.999, 0.5),
+            (0.5, 0.999),
+            (0.001, 0.001),
+            (0.999, 0.999),
         ];
         for (u, v) in boundary_points {
             let c = cop.cdf(&[u, v]).unwrap();
-            assert!(c.is_finite(), "{}: C({},{}) = {} is not finite", label, u, v, c);
+            assert!(
+                c.is_finite(),
+                "{}: C({},{}) = {} is not finite",
+                label,
+                u,
+                v,
+                c
+            );
             assert!(c >= 0.0, "{}: C({},{}) = {} is negative", label, u, v, c);
             assert!(c <= 1.0, "{}: C({},{}) = {} exceeds 1", label, u, v, c);
         }
@@ -399,13 +518,17 @@ fn cdf_stable_near_boundaries() {
 #[test]
 fn pdf_stable_near_boundaries() {
     fn check(cop: &impl Copula, label: &str) {
-        let boundary_points = vec![
-            (0.01, 0.5), (0.5, 0.01),
-            (0.99, 0.5), (0.5, 0.99),
-        ];
+        let boundary_points = vec![(0.01, 0.5), (0.5, 0.01), (0.99, 0.5), (0.5, 0.99)];
         for (u, v) in boundary_points {
             let p = cop.pdf(&[u, v]).unwrap();
-            assert!(p.is_finite(), "{}: pdf({},{}) = {} is not finite", label, u, v, p);
+            assert!(
+                p.is_finite(),
+                "{}: pdf({},{}) = {} is not finite",
+                label,
+                u,
+                v,
+                p
+            );
             assert!(p >= 0.0, "{}: pdf({},{}) = {} is negative", label, u, v, p);
         }
     }
@@ -426,8 +549,12 @@ fn empirical_ranks_sum_formula() {
     let n = data.len() as f64;
     let expected_sum = n * (n + 1.0) / 2.0;
     let actual_sum: f64 = ranks.iter().sum();
-    assert!((actual_sum - expected_sum).abs() < 1e-10,
-            "sum of ranks = {} expected {}", actual_sum, expected_sum);
+    assert!(
+        (actual_sum - expected_sum).abs() < 1e-10,
+        "sum of ranks = {} expected {}",
+        actual_sum,
+        expected_sum
+    );
 }
 
 #[test]
@@ -445,8 +572,12 @@ fn pseudo_observations_uniform_marginals() {
 
     for j in 0..2 {
         let mean: f64 = (0..100).map(|i| pseudo[(i, j)]).sum::<f64>() / 100.0;
-        assert!((mean - 0.5).abs() < 0.05,
-                "column {} mean = {} expected ~0.5", j, mean);
+        assert!(
+            (mean - 0.5).abs() < 0.05,
+            "column {} mean = {} expected ~0.5",
+            j,
+            mean
+        );
     }
 }
 
@@ -456,6 +587,7 @@ fn pseudo_observations_uniform_marginals() {
 
 #[test]
 fn multivariate_kendall_tau_is_symmetric() {
+    #[rustfmt::skip]
     let data = DMatrix::from_row_slice(5, 3, &[
         1.0, 2.0, 3.0,
         2.0, 4.0, 1.0,
@@ -467,17 +599,31 @@ fn multivariate_kendall_tau_is_symmetric() {
 
     for i in 0..3 {
         for j in 0..3 {
-            assert!((tau[(i, j)] - tau[(j, i)]).abs() < 1e-10,
-                    "tau[{},{}] = {} ≠ tau[{},{}] = {}", i, j, tau[(i, j)], j, i, tau[(j, i)]);
+            assert!(
+                (tau[(i, j)] - tau[(j, i)]).abs() < 1e-10,
+                "tau[{},{}] = {} ≠ tau[{},{}] = {}",
+                i,
+                j,
+                tau[(i, j)],
+                j,
+                i,
+                tau[(j, i)]
+            );
         }
         // Diagonal should be 1
-        assert!((tau[(i, i)] - 1.0).abs() < 1e-10,
-                "tau[{},{}] = {} ≠ 1.0", i, i, tau[(i, i)]);
+        assert!(
+            (tau[(i, i)] - 1.0).abs() < 1e-10,
+            "tau[{},{}] = {} ≠ 1.0",
+            i,
+            i,
+            tau[(i, i)]
+        );
     }
 }
 
 #[test]
 fn multivariate_spearman_rho_is_symmetric() {
+    #[rustfmt::skip]
     let data = DMatrix::from_row_slice(5, 3, &[
         1.0, 2.0, 3.0,
         2.0, 4.0, 1.0,
@@ -489,8 +635,16 @@ fn multivariate_spearman_rho_is_symmetric() {
 
     for i in 0..3 {
         for j in 0..3 {
-            assert!((rho[(i, j)] - rho[(j, i)]).abs() < 1e-10,
-                    "rho[{},{}] = {} ≠ rho[{},{}] = {}", i, j, rho[(i, j)], j, i, rho[(j, i)]);
+            assert!(
+                (rho[(i, j)] - rho[(j, i)]).abs() < 1e-10,
+                "rho[{},{}] = {} ≠ rho[{},{}] = {}",
+                i,
+                j,
+                rho[(i, j)],
+                j,
+                i,
+                rho[(j, i)]
+            );
         }
         assert!((rho[(i, i)] - 1.0).abs() < 1e-10);
     }

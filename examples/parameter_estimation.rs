@@ -7,7 +7,6 @@
 /// - Model selection and comparison
 ///
 /// Run with: cargo run --example parameter_estimation --features estimation
-
 use copula_core::estimation::{kendall_tau, spearman_rho, to_pseudo_observations, TauEstimator};
 use copula_core::prelude::*;
 
@@ -33,11 +32,13 @@ fn main() -> copula_core::Result<()> {
     let u: Vec<f64> = (0..n_samples).map(|i| data[(i, 0)]).collect();
     let v: Vec<f64> = (0..n_samples).map(|i| data[(i, 1)]).collect();
 
-    println!("  Sample ranges: U ∈ [{:.3}, {:.3}], V ∈ [{:.3}, {:.3}]\n",
-             u.iter().fold(f64::INFINITY, |a, &b| a.min(b)),
-             u.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b)),
-             v.iter().fold(f64::INFINITY, |a, &b| a.min(b)),
-             v.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b)));
+    println!(
+        "  Sample ranges: U ∈ [{:.3}, {:.3}], V ∈ [{:.3}, {:.3}]\n",
+        u.iter().fold(f64::INFINITY, |a, &b| a.min(b)),
+        u.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b)),
+        v.iter().fold(f64::INFINITY, |a, &b| a.min(b)),
+        v.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b))
+    );
 
     // Step 3: Compute dependence measures
     println!("Step 3: Computing dependence measures");
@@ -50,7 +51,10 @@ fn main() -> copula_core::Result<()> {
 
     // Theoretical tau for Clayton: τ = θ/(θ+2)
     let theoretical_tau = true_theta / (true_theta + 2.0);
-    println!("  Theoretical τ:  {:.4} (for θ = {:.1})\n", theoretical_tau, true_theta);
+    println!(
+        "  Theoretical τ:  {:.4} (for θ = {:.1})\n",
+        theoretical_tau, true_theta
+    );
 
     // Step 4: Estimate parameters using method of moments (tau inversion)
     println!("Step 4: Parameter estimation via tau inversion");
@@ -59,7 +63,10 @@ fn main() -> copula_core::Result<()> {
     let est_gumbel_theta = TauEstimator::gumbel_from_tau(tau)?;
     let est_gaussian_rho = TauEstimator::gaussian_from_tau(tau)?;
 
-    println!("  Clayton θ estimate:  {:.4} (true: {:.1})", est_clayton_theta, true_theta);
+    println!(
+        "  Clayton θ estimate:  {:.4} (true: {:.1})",
+        est_clayton_theta, true_theta
+    );
     println!("  Gumbel θ estimate:   {:.4}", est_gumbel_theta);
     println!("  Gaussian ρ estimate: {:.4}\n", est_gaussian_rho);
 
@@ -74,8 +81,14 @@ fn main() -> copula_core::Result<()> {
 
     println!("  C(0.5, 0.5) comparison:");
     println!("    True Clayton:   {:.6}", true_cdf);
-    println!("    Fitted Clayton: {:.6}", fitted_clayton.cdf(&test_point)?);
-    println!("    Fitted Gumbel:  {:.6}\n", fitted_gumbel.cdf(&test_point)?);
+    println!(
+        "    Fitted Clayton: {:.6}",
+        fitted_clayton.cdf(&test_point)?
+    );
+    println!(
+        "    Fitted Gumbel:  {:.6}\n",
+        fitted_gumbel.cdf(&test_point)?
+    );
 
     // Step 6: Transform to pseudo-observations
     println!("Step 6: Pseudo-observations transformation");
@@ -83,9 +96,11 @@ fn main() -> copula_core::Result<()> {
     let pseudo_obs = to_pseudo_observations(&data)?;
 
     println!("  Original data range: [0, 1] (already uniform)");
-    println!("  Pseudo-obs range:    [{:.3}, {:.3}]",
-             pseudo_obs.iter().fold(f64::INFINITY, |a, b| a.min(*b)),
-             pseudo_obs.iter().fold(f64::NEG_INFINITY, |a, b| a.max(*b)));
+    println!(
+        "  Pseudo-obs range:    [{:.3}, {:.3}]",
+        pseudo_obs.iter().fold(f64::INFINITY, |a, b| a.min(*b)),
+        pseudo_obs.iter().fold(f64::NEG_INFINITY, |a, b| a.max(*b))
+    );
 
     // Count how many pseudo-observations are in different quantiles
     let mut q1_count = 0;
@@ -108,24 +123,47 @@ fn main() -> copula_core::Result<()> {
     }
 
     println!("  Quadrant distribution:");
-    println!("    Q1 (U<0.5, V<0.5): {} ({:.1}%)", q1_count, 100.0 * q1_count as f64 / n_samples as f64);
-    println!("    Q2 (U≥0.5, V<0.5): {} ({:.1}%)", q2_count, 100.0 * q2_count as f64 / n_samples as f64);
-    println!("    Q3 (U<0.5, V≥0.5): {} ({:.1}%)", q3_count, 100.0 * q3_count as f64 / n_samples as f64);
-    println!("    Q4 (U≥0.5, V≥0.5): {} ({:.1}%)\n", q4_count, 100.0 * q4_count as f64 / n_samples as f64);
+    println!(
+        "    Q1 (U<0.5, V<0.5): {} ({:.1}%)",
+        q1_count,
+        100.0 * q1_count as f64 / n_samples as f64
+    );
+    println!(
+        "    Q2 (U≥0.5, V<0.5): {} ({:.1}%)",
+        q2_count,
+        100.0 * q2_count as f64 / n_samples as f64
+    );
+    println!(
+        "    Q3 (U<0.5, V≥0.5): {} ({:.1}%)",
+        q3_count,
+        100.0 * q3_count as f64 / n_samples as f64
+    );
+    println!(
+        "    Q4 (U≥0.5, V≥0.5): {} ({:.1}%)\n",
+        q4_count,
+        100.0 * q4_count as f64 / n_samples as f64
+    );
 
     // Step 7: Model comparison summary
     println!("Step 7: Model comparison summary");
     println!("  ┌─────────────┬──────────┬───────────┬────────────┐");
     println!("  │ Model       │ Parameter│ Kendall τ │ Error      │");
     println!("  ├─────────────┼──────────┼───────────┼────────────┤");
-    println!("  │ True        │ θ={:.2}    │ {:.4}     │ -          │", true_theta, theoretical_tau);
-    println!("  │ Fitted Clay │ θ={:.2}   │ {:.4}     │ {:+.4}     │",
-             est_clayton_theta,
-             est_clayton_theta / (est_clayton_theta + 2.0),
-             est_clayton_theta - true_theta);
-    println!("  │ Fitted Gumb │ θ={:.2}   │ {:.4}     │ N/A        │",
-             est_gumbel_theta,
-             1.0 - 1.0 / est_gumbel_theta);
+    println!(
+        "  │ True        │ θ={:.2}    │ {:.4}     │ -          │",
+        true_theta, theoretical_tau
+    );
+    println!(
+        "  │ Fitted Clay │ θ={:.2}   │ {:.4}     │ {:+.4}     │",
+        est_clayton_theta,
+        est_clayton_theta / (est_clayton_theta + 2.0),
+        est_clayton_theta - true_theta
+    );
+    println!(
+        "  │ Fitted Gumb │ θ={:.2}   │ {:.4}     │ N/A        │",
+        est_gumbel_theta,
+        1.0 - 1.0 / est_gumbel_theta
+    );
     println!("  └─────────────┴──────────┴───────────┴────────────┘\n");
 
     println!("✓ Parameter estimation completed successfully!");

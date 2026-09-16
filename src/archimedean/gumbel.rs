@@ -1,4 +1,3 @@
-// src/archimedean/gumbel.rs
 //! Gumbel copula implementation.
 //!
 //! ## Bibliography
@@ -91,7 +90,8 @@ impl Copula for GumbelCopula {
             let mut u2_high: f64 = 1.0 - 1e-10;
             let mut u2: f64 = 0.5;
 
-            for _ in 0..50 {  // max iterations
+            for _ in 0..50 {
+                // max iterations
                 u2 = (u2_low + u2_high) / 2.0;
                 let ln_u2 = -u2.ln();
                 let a = ln_u1.powf(self.theta) + ln_u2.powf(self.theta);
@@ -99,8 +99,11 @@ impl Copula for GumbelCopula {
 
                 // Conditional CDF: ∂C/∂u1 = C(u1,u2) × (1/u1) × a_root^(-1) × ln_u1^(θ-1) × a^((1-θ)/θ)
                 let c_uv = (-a_root).exp();
-                let cond_cdf = c_uv * a_root.powf(-1.0) * ln_u1.powf(self.theta - 1.0)
-                              * a.powf((1.0 - self.theta) / self.theta) / u1;
+                let cond_cdf = c_uv
+                    * a_root.powf(-1.0)
+                    * ln_u1.powf(self.theta - 1.0)
+                    * a.powf((1.0 - self.theta) / self.theta)
+                    / u1;
 
                 if (cond_cdf - target).abs() < 1e-10 {
                     break;
@@ -179,7 +182,9 @@ impl FittableCopula for GumbelCopula {
             let u = [pseudo_obs[(i, 0)], pseudo_obs[(i, 1)]];
             let pdf_val = self.pdf(&u)?;
             if pdf_val <= 0.0 {
-                return Err(CopulaError::numerical("PDF value must be positive for log-likelihood"));
+                return Err(CopulaError::numerical(
+                    "PDF value must be positive for log-likelihood",
+                ));
             }
             log_lik += pdf_val.ln();
         }

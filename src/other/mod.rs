@@ -10,8 +10,8 @@
 
 use crate::{Copula, CopulaError, Result};
 use nalgebra::DMatrix;
-use rand::Rng;
 use rand::seq::SliceRandom;
+use rand::Rng;
 
 /// Marshall-Olkin copula with parameters α and β in [0,1).
 #[derive(Debug, Clone)]
@@ -87,7 +87,8 @@ impl Copula for MarshallOlkinCopula {
         // Let X1 ~ Exp(1), X2 ~ Exp(1), X12 ~ Exp(1) be independent
         // Then U1 = exp(-X1 - X12), U2 = exp(-X2 - X12) follows Marshall-Olkin copula
 
-        let exp_dist = Exp::new(1.0).map_err(|_| CopulaError::computation("failed to create Exp(1)"))?;
+        let exp_dist =
+            Exp::new(1.0).map_err(|_| CopulaError::computation("failed to create Exp(1)"))?;
 
         for i in 0..n {
             let x1 = exp_dist.sample(rng);
@@ -159,7 +160,8 @@ impl Copula for EmpiricalCopula {
         let indices: Vec<usize> = (0..n_rows).collect();
 
         for i in 0..n {
-            let &idx = indices.choose(rng)
+            let &idx = indices
+                .choose(rng)
                 .ok_or_else(|| CopulaError::computation("failed to sample from indices"))?;
 
             for j in 0..n_cols {
@@ -241,9 +243,7 @@ mod tests {
 
     #[test]
     fn empirical_copula_dimension() {
-        let data = DMatrix::from_row_slice(3, 3, &[
-            0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.1,
-        ]);
+        let data = DMatrix::from_row_slice(3, 3, &[0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.1]);
         let cop = EmpiricalCopula::new(data).unwrap();
         assert_eq!(cop.dimension(), 3);
     }

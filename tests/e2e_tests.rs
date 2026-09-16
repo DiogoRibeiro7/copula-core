@@ -36,8 +36,14 @@ fn e2e_archimedean_copula_workflow() {
     let col1: Vec<f64> = data.column(1).iter().copied().collect();
     let tau = kendall_tau(&col0, &col1).unwrap();
     let rho = spearman_rho(&col0, &col1).unwrap();
-    assert!(tau > 0.0, "expected positive Kendall's tau for Clayton(2.0)");
-    assert!(rho > 0.0, "expected positive Spearman's rho for Clayton(2.0)");
+    assert!(
+        tau > 0.0,
+        "expected positive Kendall's tau for Clayton(2.0)"
+    );
+    assert!(
+        rho > 0.0,
+        "expected positive Spearman's rho for Clayton(2.0)"
+    );
 
     // 4. Evaluate the copula at several points
     let cdf_val = true_copula.cdf(&[0.5, 0.5]).unwrap();
@@ -48,7 +54,7 @@ fn e2e_archimedean_copula_workflow() {
 
     // 5. Compute empirical copula CDF
     let emp_cdf = empirical_copula_cdf(&pseudo, &[0.5, 0.5]).unwrap();
-    assert!(emp_cdf >= 0.0 && emp_cdf <= 1.0);
+    assert!((0.0..=1.0).contains(&emp_cdf));
 }
 
 #[test]
@@ -127,7 +133,7 @@ fn e2e_multi_copula_comparison() {
 
     // All CDFs should be valid probabilities
     for &c in &[c_clayton, c_gumbel, c_frank, c_gaussian] {
-        assert!(c >= 0.0 && c <= 1.0);
+        assert!((0.0..=1.0).contains(&c));
     }
 
     // Independence copula CDF should equal u*v
@@ -136,7 +142,7 @@ fn e2e_multi_copula_comparison() {
     // Empirical copula for reference
     let pseudo = to_pseudo_observations(&data).unwrap();
     let emp = empirical_copula_cdf(&pseudo, &test_point).unwrap();
-    assert!(emp >= 0.0 && emp <= 1.0);
+    assert!((0.0..=1.0).contains(&emp));
 }
 
 #[test]
@@ -184,6 +190,7 @@ fn e2e_dependence_measures_consistency() {
 #[test]
 fn e2e_pseudo_observations_rank_ordering_preserved() {
     // Check that the rank order is preserved through transformation
+    #[rustfmt::skip]
     let data = DMatrix::from_row_slice(5, 2, &[
         10.0, 100.0,
         20.0, 200.0,
@@ -196,8 +203,13 @@ fn e2e_pseudo_observations_rank_ordering_preserved() {
     // Monotone data -> pseudo-observations should also be monotone
     for j in 0..2 {
         for i in 1..5 {
-            assert!(pseudo[(i, j)] > pseudo[(i - 1, j)],
-                    "rank order not preserved at column {} rows {}-{}", j, i - 1, i);
+            assert!(
+                pseudo[(i, j)] > pseudo[(i - 1, j)],
+                "rank order not preserved at column {} rows {}-{}",
+                j,
+                i - 1,
+                i
+            );
         }
     }
 }
@@ -224,8 +236,12 @@ mod estimation_e2e {
         // Fit via moments
         let mut fitted_moments = ClaytonCopula::new(1.0).unwrap();
         let theta_moments = fitted_moments.fit_moments(&data).unwrap();
-        assert!((theta_moments - true_theta).abs() < 0.5,
-                "moments estimate {} too far from true {}", theta_moments, true_theta);
+        assert!(
+            (theta_moments - true_theta).abs() < 0.5,
+            "moments estimate {} too far from true {}",
+            theta_moments,
+            true_theta
+        );
 
         // Fit via MLE
         let mut fitted_mle = ClaytonCopula::new(1.0).unwrap();
@@ -239,8 +255,12 @@ mod estimation_e2e {
         assert!(ll_moments.is_finite());
 
         // MLE should have equal or better log-likelihood
-        assert!(ll_mle >= ll_moments - 1.0,
-                "MLE ll {} should be >= moments ll {}", ll_mle, ll_moments);
+        assert!(
+            ll_mle >= ll_moments - 1.0,
+            "MLE ll {} should be >= moments ll {}",
+            ll_mle,
+            ll_moments
+        );
     }
 
     #[test]
@@ -256,8 +276,12 @@ mod estimation_e2e {
         let est_corr = est.fit_moments(&data).unwrap();
         let est_rho = est_corr[(0, 1)];
 
-        assert!((est_rho - true_rho).abs() < 0.1,
-                "estimated rho {} too far from true {}", est_rho, true_rho);
+        assert!(
+            (est_rho - true_rho).abs() < 0.1,
+            "estimated rho {} too far from true {}",
+            est_rho,
+            true_rho
+        );
     }
 
     #[test]
@@ -273,8 +297,12 @@ mod estimation_e2e {
         let (est_corr, _) = est.fit_moments(&data).unwrap();
         let est_rho = est_corr[(0, 1)];
 
-        assert!((est_rho - true_rho).abs() < 0.15,
-                "estimated rho {} too far from true {}", est_rho, true_rho);
+        assert!(
+            (est_rho - true_rho).abs() < 0.15,
+            "estimated rho {} too far from true {}",
+            est_rho,
+            true_rho
+        );
     }
 }
 
@@ -309,6 +337,7 @@ fn e2e_goodness_of_fit_workflow() {
 #[test]
 fn e2e_data_cleaning_pipeline() {
     // Start with dirty data
+    #[rustfmt::skip]
     let dirty = DMatrix::from_row_slice(5, 2, &[
         1.0, 2.0,
         f64::NAN, 4.0,

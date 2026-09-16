@@ -6,11 +6,12 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 10
-    reviewers:
-      - "diogoribeiro7"
     labels:
-      - "enhancement"
       - "type:maintenance"
+      - "area:build"
+    # No lockfile is committed, so these PRs are requirement bumps outside the
+    # current semver range. Keep them ungrouped: several of these crates
+    # (`rand`, `nalgebra`, `statrs`) appear in the public API.
     commit-message:
       prefix: "chore(deps)"
 
@@ -20,10 +21,11 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
-    reviewers:
-      - "diogoribeiro7"
     labels:
       - "type:maintenance"
       - "area:ci"
     commit-message:
       prefix: "chore(ci)"
+    groups:
+      github-actions:
+        patterns: ["*"]

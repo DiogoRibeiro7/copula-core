@@ -6,6 +6,8 @@ on:
       - main
       - develop
 
+permissions: {}
+
 jobs:
   develop-source-branch:
     if: github.base_ref == 'develop'
@@ -13,10 +15,12 @@ jobs:
     steps:
       - name: Enforce feature branch to develop flow
         shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          if [ "${{ github.head_ref }}" = "main" ] || [ "${{ github.head_ref }}" = "develop" ]; then
+          if [ "$HEAD_REF" = "main" ] || [ "$HEAD_REF" = "develop" ]; then
             echo "PRs into develop must come from a working branch, not from main or develop."
-            echo "Current head branch: ${{ github.head_ref }}"
+            echo "Current head branch: $HEAD_REF"
             exit 1
           fi
 
@@ -28,10 +32,14 @@ jobs:
     steps:
       - name: Enforce develop to main flow
         shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
         run: |
-          if [ "${{ github.head_ref }}" != "develop" ]; then
-            echo "PRs into main must come from the develop branch."
-            echo "Current head branch: ${{ github.head_ref }}"
+          if [ "$HEAD_REF" != "develop" ] || [ "$HEAD_REPO" != "$BASE_REPO" ]; then
+            echo "PRs into main must come from the develop branch of $BASE_REPO."
+            echo "Current head: $HEAD_REPO:$HEAD_REF"
             exit 1
           fi
 

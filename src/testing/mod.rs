@@ -138,9 +138,7 @@ where
     R: rand::Rng + ?Sized,
 {
     if n_rep == 0 {
-        return Err(CopulaError::invalid_parameter(
-            "n_rep must be at least 1",
-        ));
+        return Err(CopulaError::invalid_parameter("n_rep must be at least 1"));
     }
     crate::utils::validate_pseudo_observations(pseudo_obs)?;
     if pseudo_obs.ncols() != copula.dimension() {

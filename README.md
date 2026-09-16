@@ -1,62 +1,37 @@
 # copula-core
 
-`copula-core` is an experimental Rust library for copula modelling, simulation,
-and statistical dependence analysis.
+[![crates.io](https://img.shields.io/crates/v/copula-core.svg)](https://crates.io/crates/copula-core)
+[![docs.rs](https://img.shields.io/docsrs/copula-core)](https://docs.rs/copula-core)
+[![CI](https://github.com/DiogoRibeiro7/copula-core/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/DiogoRibeiro7/copula-core/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/DiogoRibeiro7/copula-core/branch/main/graph/badge.svg)](https://codecov.io/gh/DiogoRibeiro7/copula-core)
+[![MSRV 1.89](https://img.shields.io/badge/MSRV-1.89-blue.svg)](#minimum-supported-rust-version)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 
-The project is under active development. Some modules are substantially tested,
-while others are research-oriented implementations that still need stronger
-numerical validation before they should be treated as stable statistical software.
+Copula modelling, simulation, and dependence analysis for Rust.
 
-## Current capability levels
+> [!WARNING]
+> **Experimental, pre-1.0.** The API changes between minor releases, and parts of
+> the numerical surface are not yet validated for inferential work. Read
+> [Maturity](#maturity) before depending on this crate.
 
-### Core, tested surface
+## Installation
 
-The most mature public surface currently includes:
-
-- Gaussian and Student-t copulas
-- Clayton, Gumbel, Frank, Joe, and Ali-Mikhail-Haq copulas
-- Marshall-Olkin and empirical copulas
-- CDF/PDF evaluation where a continuous density is defined
-- random sampling
-- tail-dependence calculations where implemented by the family
-- pseudo-observations and rank-based dependence utilities
-- property-based tests for important copula axioms and numerical invariants
-
-### Feature-gated statistical functionality
-
-With the `estimation` feature enabled, the crate also exposes parameter-estimation
-and model-selection functionality. These routines are still evolving and should
-be validated for the intended model, parameter regime, and sample size before
-being used in inferential work.
-
-Available Cargo features are:
-
-- `estimation`
-- `parallel`
-- `serde`
-- `full`
-- `experimental`
-
-### Experimental research modules
-
-The crate also contains implementations for advanced constructions including
-extreme-value, factor, and vine copulas. These modules are useful for research and
-experimentation but are not yet part of a stable API contract. Several algorithms
-use numerical differentiation, iterative inversion, Monte Carlo, or simplified
-constructions whose accuracy and robustness require further validation.
-
-See [ROADMAP.md](ROADMAP.md) for the current engineering priorities.
-
-## Quick start
-
-Add the crate to `Cargo.toml`:
-
-```toml
-[dependencies]
-copula-core = "0.1.0"
+```sh
+cargo add copula-core
+cargo add rand@0.8   # sampling takes a `rand` 0.8 RNG
 ```
 
-A basic Clayton example:
+### Cargo features
+
+No features are enabled by default.
+
+| Feature      | Enables                                                                  |
+| ------------ | ------------------------------------------------------------------------ |
+| `estimation` | `FittableCopula`, the `estimation` and `model_selection` modules         |
+| `serde`      | `SerializableCopula` trait and `serde` support for `nalgebra` types      |
+| `full`       | All of the above                                                         |
+
+## Quick start
 
 ```rust
 use copula_core::{ClaytonCopula, Copula};
@@ -75,6 +50,49 @@ fn main() -> Result<(), copula_core::CopulaError> {
 }
 ```
 
+More complete programs are in [`examples/`](examples):
+
+```sh
+cargo run --example basic_usage
+cargo run --example risk_management
+cargo run --example parameter_estimation --features estimation
+```
+
+## What is included
+
+### Core surface
+
+The most mature part of the crate, with the strongest test coverage:
+
+- Gaussian and Student-t copulas
+- Clayton, Gumbel, Frank, Joe, and Ali-Mikhail-Haq copulas
+- Marshall-Olkin and empirical copulas
+- CDF/PDF evaluation where a continuous density is defined
+- random sampling
+- tail-dependence coefficients where implemented by the family
+- pseudo-observations and rank-based dependence measures (Kendall's tau, Spearman's rho)
+- goodness-of-fit statistics (Cramér-von Mises, Kolmogorov-Smirnov, Anderson-Darling)
+- AIC/BIC information criteria
+
+Property-based tests check copula axioms and numerical invariants for the main
+families: unit-interval bounds, Fréchet-Hoeffding bounds, density non-negativity,
+and sampling range.
+
+### Behind the `estimation` feature
+
+Parameter estimation (`FittableCopula`, canonical maximum likelihood, inversion
+of Kendall's tau) and k-fold cross-validation for model selection. These routines
+are still evolving; validate them for your model, parameter regime, and sample
+size before using them for inference.
+
+### Experimental modules
+
+Extreme-value, factor, and vine copulas, plus low-discrepancy and auxiliary
+sampling utilities. They are useful for research and experimentation but are not
+part of a stable API contract. Several algorithms rely on numerical
+differentiation, iterative inversion, Monte Carlo, or simplified constructions
+whose accuracy has not been validated.
+
 ## Mathematical background
 
 For continuous marginals, Sklar's theorem gives
@@ -83,59 +101,23 @@ For continuous marginals, Sklar's theorem gives
 F(x1, ..., xd) = C(F1(x1), ..., Fd(xd)),
 ```
 
-where `C` is the copula and the `Fi` are marginal distribution functions.
+where `C` is the copula and the `Fi` are the marginal distribution functions.
 
-The implementation is therefore concerned not only with producing numbers but
-with preserving mathematical constraints such as:
+An implementation must therefore preserve mathematical constraints, not only
+return finite numbers:
 
 - values in the unit interval
-- correct margins
+- uniform margins
 - Fréchet-Hoeffding bounds
 - non-negative densities where a density exists
 - valid parameter domains
 - stable behaviour near parameter and probability boundaries
 
-Property-based tests cover a subset of these invariants for the main families.
+## Maturity
 
-## Development and verification
-
-Clone the repository and use the standard Rust toolchain:
-
-```bash
-git clone https://github.com/DiogoRibeiro7/copula-core
-cd copula-core
-cargo test --all-features
-cargo clippy --all-targets --all-features -- -D warnings
-cargo fmt --all -- --check
-cargo doc --no-deps --all-features
-```
-
-To run the Criterion benchmarks:
-
-```bash
-cargo bench --all-features
-```
-
-Benchmark results are environment-dependent. The repository intentionally does
-not claim fixed nanosecond or millisecond performance targets without recording
-compiler, CPU, feature set, sample size, and benchmark protocol.
-
-## CI
-
-The permanent CI workflow checks multiple operating systems and Rust toolchains,
-feature combinations, Clippy, formatting, documentation, coverage, dependency
-audit, benchmarks on `main`, and the minimum supported Rust version.
-
-The repository uses a `working branch -> develop -> main` flow. `main` is the
-protected release-facing branch.
-
-## Scope and maturity
-
-This crate is pre-1.0 statistical software. API stability is not guaranteed.
-The immediate priority is numerical and statistical validation of the existing
-surface rather than adding many more copula families.
-
-The next engineering sequence is:
+This is pre-1.0 statistical software, and API stability is not guaranteed. The
+current priority is numerical validation of the existing surface rather than
+adding more copula families:
 
 ```text
 parameter-domain validation
@@ -146,9 +128,37 @@ parameter-domain validation
 -> only then broader family coverage
 ```
 
+See [ROADMAP.md](ROADMAP.md) for milestones and release-readiness criteria.
+
+## Minimum supported Rust version
+
+Rust **1.89**, tested in CI. Before 1.0, an MSRV increase may ship in a minor
+release and is always listed in the [changelog](CHANGELOG.md).
+
+## Versioning
+
+The crate follows [Semantic Versioning](https://semver.org/). Before 1.0, breaking
+changes increment the minor version (`0.x.0`). All notable changes are recorded in
+[CHANGELOG.md](CHANGELOG.md).
+
+## Contributing
+
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for the
+development workflow and the checks a pull request must pass. Report security
+issues privately as described in [SECURITY.md](SECURITY.md).
+
 ## License
 
-Licensed under MIT OR Apache-2.0 as declared in `Cargo.toml`.
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or <https://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or <https://opensource.org/licenses/MIT>)
+
+at your option.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
 
 ## References
 
