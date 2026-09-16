@@ -33,7 +33,7 @@
 //! let c = copula.cdf(&[0.5, 0.5])?;
 //! assert!((0.0..=1.0).contains(&c));
 //!
-//! let mut rng = rand::thread_rng();
+//! let mut rng = rand::rng();
 //! let samples = copula.sample(100, &mut rng)?;
 //! assert_eq!(samples.ncols(), 2);
 //!

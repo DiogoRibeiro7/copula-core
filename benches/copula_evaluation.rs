@@ -1,5 +1,7 @@
 use copula_core::prelude::*;
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use std::hint::black_box;
+
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 
 fn clayton_cdf_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("clayton_cdf");

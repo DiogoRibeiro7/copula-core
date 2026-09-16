@@ -310,8 +310,7 @@ proptest! {
     /// Clayton samples should all be in [0,1]
     #[test]
     fn clayton_samples_in_unit_cube(theta in 0.1f64..10.0f64, n in 10usize..100usize) {
-        use rand::thread_rng;
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let copula = ClaytonCopula::new(theta).unwrap();
         let samples = copula.sample(n, &mut rng).unwrap();
 
@@ -327,8 +326,7 @@ proptest! {
     /// Gaussian samples should all be in [0,1]
     #[test]
     fn gaussian_samples_in_unit_cube(rho in -0.9f64..0.9f64, n in 10usize..100usize) {
-        use rand::thread_rng;
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let corr = DMatrix::from_row_slice(2, 2, &[1.0, rho, rho, 1.0]);
         let copula = GaussianCopula::new(corr).unwrap();
         let samples = copula.sample(n, &mut rng).unwrap();

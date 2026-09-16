@@ -20,7 +20,7 @@ fn main() -> copula_core::Result<()> {
     let true_theta = 3.0;
     let true_copula = ClaytonCopula::new(true_theta)?;
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let n_samples = 1000;
     let data = true_copula.sample(n_samples, &mut rng)?;
 

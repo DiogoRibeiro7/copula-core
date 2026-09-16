@@ -12,8 +12,7 @@ use crate::traits::FittableCopula;
 use crate::utils::kendall_tau;
 use crate::{ArchimedeanCopula, Copula, CopulaError, Result};
 use nalgebra::DMatrix;
-use rand::Rng;
-use rand_distr::{Distribution, Uniform};
+use rand::{Rng, RngExt};
 
 /// Gumbel copula with parameter `theta > 1`.
 #[derive(Debug, Clone)]
@@ -71,13 +70,12 @@ impl Copula for GumbelCopula {
     }
 
     fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
-        let uniform = Uniform::new(0.0, 1.0);
         let mut samples = DMatrix::<f64>::zeros(n, 2);
 
         for i in 0..n {
             // Use conditional distribution method
-            let u1: f64 = uniform.sample(rng);
-            let v: f64 = uniform.sample(rng);
+            let u1: f64 = rng.random::<f64>();
+            let v: f64 = rng.random::<f64>();
 
             // For Gumbel copula, the conditional CDF is:
             // C(u2|u1) = C(u1,u2) / u1 × exp(...) [complex formula]

@@ -13,7 +13,7 @@ use nalgebra::DMatrix;
 fn main() -> copula_core::Result<()> {
     println!("=== Copulas in Risk Management ===\n");
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let n_scenarios = 10000;
 
     // SCENARIO 1: Portfolio of two assets with different tail dependencies

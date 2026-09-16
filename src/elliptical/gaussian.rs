@@ -84,7 +84,7 @@ impl Copula for GaussianCopula {
             .clone()
             .cholesky()
             .ok_or_else(|| CopulaError::invalid_parameter("correlation not PD"))?;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let normal = StandardNormal;
 
         let mut count = 0usize;
@@ -310,7 +310,7 @@ mod tests {
 
     #[test]
     fn sample_dimensions() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let cop = GaussianCopula::new_identity(2).unwrap();
         let samples = cop.sample(5, &mut rng).unwrap();
         assert_eq!(samples.nrows(), 5);

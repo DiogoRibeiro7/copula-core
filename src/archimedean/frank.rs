@@ -8,8 +8,7 @@
 
 use crate::{ArchimedeanCopula, Copula, CopulaError, Result};
 use nalgebra::DMatrix;
-use rand::Rng;
-use rand_distr::{Distribution, Uniform};
+use rand::{Rng, RngExt};
 
 /// Frank copula with non-zero parameter `theta`.
 #[derive(Debug, Clone)]
@@ -69,12 +68,11 @@ impl Copula for FrankCopula {
     }
 
     fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
-        let uniform = Uniform::new(0.0, 1.0);
         let mut samples = DMatrix::<f64>::zeros(n, 2);
 
         for i in 0..n {
-            let u1: f64 = uniform.sample(rng);
-            let v: f64 = uniform.sample(rng);
+            let u1: f64 = rng.random::<f64>();
+            let v: f64 = rng.random::<f64>();
 
             // Use conditional distribution method similar to Gumbel
             let theta = self.theta;

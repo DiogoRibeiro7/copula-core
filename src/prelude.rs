@@ -51,7 +51,7 @@ pub use crate::other::{EmpiricalCopula, MarshallOlkinCopula};
 pub use nalgebra::{DMatrix, DVector};
 
 // Random number generation (commonly needed for sampling)
-pub use rand::{thread_rng, Rng};
+pub use rand::{rng, Rng, RngExt};
 
 // Re-export some useful constants
 /// Commonly used confidence levels for statistical tests

@@ -454,7 +454,7 @@ pub fn validate_correlation_matrix(matrix: &DMatrix<f64>) -> Result<()> {
 /// ```rust
 /// use copula_core::utils::random_correlation_matrix;
 ///
-/// let mut rng = rand::thread_rng();
+/// let mut rng = rand::rng();
 /// let corr = random_correlation_matrix(3, &mut rng)?;
 /// assert_eq!(corr.shape(), (3, 3));
 /// # Ok::<(), copula_core::CopulaError>(())
@@ -660,7 +660,7 @@ pub fn bootstrap_sample<R: rand::Rng + ?Sized>(data: &DMatrix<f64>, rng: &mut R)
     let (n_rows, n_cols) = data.shape();
     let mut bootstrap_data = DMatrix::<f64>::zeros(n_rows, n_cols);
 
-    use rand::seq::SliceRandom;
+    use rand::seq::IndexedRandom;
     let indices: Vec<usize> = (0..n_rows).collect();
 
     for i in 0..n_rows {
@@ -724,7 +724,6 @@ mod tests {
     use super::*;
     use approx::assert_relative_eq;
     use nalgebra::DMatrix;
-    use rand::thread_rng;
 
     #[test]
     fn test_empirical_ranks() {
@@ -830,7 +829,7 @@ mod tests {
 
     #[test]
     fn test_random_correlation_matrix() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let corr = random_correlation_matrix(3, &mut rng).unwrap();
         assert_eq!(corr.nrows(), 3);
         assert!(validate_correlation_matrix(&corr).is_ok());
@@ -926,7 +925,7 @@ mod tests {
 
     #[test]
     fn test_bootstrap_sample_dimensions() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let data =
             DMatrix::from_row_slice(5, 2, &[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.1]);
         let boot = bootstrap_sample(&data, &mut rng);
@@ -936,7 +935,7 @@ mod tests {
 
     #[test]
     fn test_random_correlation_matrix_1d() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let corr = random_correlation_matrix(1, &mut rng).unwrap();
         assert_eq!(corr.nrows(), 1);
         assert_relative_eq!(corr[(0, 0)], 1.0);

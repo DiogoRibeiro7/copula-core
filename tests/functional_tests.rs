@@ -516,7 +516,7 @@ fn stronger_dependence_gives_higher_cdf() {
 
 #[test]
 fn kendall_tau_from_samples_agrees_with_theory() {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     // Clayton(2): theoretical tau = theta/(theta+2) = 2/4 = 0.5
     let cop = ClaytonCopula::new(2.0).unwrap();
