@@ -56,7 +56,10 @@ impl OneFactorGaussianCopula {
         }
 
         let dimension = loadings.len();
-        Ok(Self { loadings, dimension })
+        Ok(Self {
+            loadings,
+            dimension,
+        })
     }
 
     /// Get the implied correlation between dimensions i and j.
@@ -90,13 +93,17 @@ impl OneFactorGaussianCopula {
     /// Standard normal CDF.
     fn phi(x: f64) -> f64 {
         use statrs::distribution::{ContinuousCDF, Normal};
-        Normal::new(0.0, 1.0).expect("standard normal parameters are always valid").cdf(x)
+        Normal::new(0.0, 1.0)
+            .expect("standard normal parameters are always valid")
+            .cdf(x)
     }
 
     /// Inverse standard normal CDF.
     fn phi_inv(p: f64) -> f64 {
         use statrs::distribution::{ContinuousCDF, Normal};
-        Normal::new(0.0, 1.0).expect("standard normal parameters are always valid").inverse_cdf(p)
+        Normal::new(0.0, 1.0)
+            .expect("standard normal parameters are always valid")
+            .inverse_cdf(p)
     }
 }
 
@@ -118,7 +125,11 @@ impl Copula for OneFactorGaussianCopula {
 
         for k in 0..n_points {
             let z = z_min + k as f64 * h;
-            let weight = if k == 0 || k == n_points - 1 { 0.5 } else { 1.0 };
+            let weight = if k == 0 || k == n_points - 1 {
+                0.5
+            } else {
+                1.0
+            };
 
             // Compute conditional probability given Z=z
             let mut cond_prob = 1.0;
@@ -269,13 +280,17 @@ impl MultiFactorGaussianCopula {
     /// Standard normal CDF.
     fn phi(x: f64) -> f64 {
         use statrs::distribution::{ContinuousCDF, Normal};
-        Normal::new(0.0, 1.0).expect("standard normal parameters are always valid").cdf(x)
+        Normal::new(0.0, 1.0)
+            .expect("standard normal parameters are always valid")
+            .cdf(x)
     }
 
     /// Inverse standard normal CDF.
     fn phi_inv(p: f64) -> f64 {
         use statrs::distribution::{ContinuousCDF, Normal};
-        Normal::new(0.0, 1.0).expect("standard normal parameters are always valid").inverse_cdf(p)
+        Normal::new(0.0, 1.0)
+            .expect("standard normal parameters are always valid")
+            .inverse_cdf(p)
     }
 }
 
@@ -398,6 +413,7 @@ mod tests {
 
     #[test]
     fn test_multi_factor_new() {
+        #[rustfmt::skip]
         let loadings = DMatrix::from_row_slice(3, 2, &[
             0.5, 0.3,  // dim 1
             0.6, 0.4,  // dim 2
@@ -412,10 +428,7 @@ mod tests {
         use rand::thread_rng;
         let mut rng = thread_rng();
 
-        let loadings = DMatrix::from_row_slice(2, 2, &[
-            0.6, 0.3,
-            0.5, 0.4,
-        ]);
+        let loadings = DMatrix::from_row_slice(2, 2, &[0.6, 0.3, 0.5, 0.4]);
         let cop = MultiFactorGaussianCopula::new(loadings).unwrap();
         let samples = cop.sample(50, &mut rng).unwrap();
 

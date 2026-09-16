@@ -250,7 +250,13 @@ mod tests {
         let mut rng = thread_rng();
 
         // Sample from a truncated normal using uniform proposal
-        let target = |x: f64| if x >= 0.0 && x <= 1.0 { (-x * x / 2.0).exp() } else { 0.0 };
+        let target = |x: f64| {
+            if x >= 0.0 && x <= 1.0 {
+                (-x * x / 2.0).exp()
+            } else {
+                0.0
+            }
+        };
         let proposal = |rng: &mut rand::rngs::ThreadRng| Uniform::new(0.0, 1.0).sample(rng);
         let proposal_density = |_x: f64| 1.0;
         let m = 1.5; // M such that target(x) <= M * proposal_density(x)
@@ -340,7 +346,13 @@ mod tests {
         let expected = [0.0, 1.0 / 3.0, 2.0 / 3.0, 1.0 / 9.0];
         for (i, &exp) in expected.iter().enumerate() {
             let val = van_der_corput(i as u64, 3);
-            assert!((val - exp).abs() < 1e-10, "vdc({}, 3) = {} expected {}", i, val, exp);
+            assert!(
+                (val - exp).abs() < 1e-10,
+                "vdc({}, 3) = {} expected {}",
+                i,
+                val,
+                exp
+            );
         }
     }
 }

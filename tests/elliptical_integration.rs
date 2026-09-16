@@ -1,7 +1,7 @@
 use copula_core::elliptical::GaussianCopula;
 use copula_core::Copula;
-use statrs::distribution::{ContinuousCDF, Normal};
 use mv_norm::tvpack::bvnd;
+use statrs::distribution::{ContinuousCDF, Normal};
 
 #[test]
 fn gaussian_basic_cdf() {

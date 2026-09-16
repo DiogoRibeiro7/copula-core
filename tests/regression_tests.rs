@@ -123,6 +123,7 @@ fn pseudo_observations_rejects_infinite_values() {
 
 #[test]
 fn pseudo_observations_output_strictly_in_unit_interval() {
+    #[rustfmt::skip]
     let data = DMatrix::from_row_slice(5, 2, &[
         1.0, 10.0,
         2.0, 20.0,
@@ -134,7 +135,13 @@ fn pseudo_observations_output_strictly_in_unit_interval() {
     for i in 0..pseudo.nrows() {
         for j in 0..pseudo.ncols() {
             let v = pseudo[(i, j)];
-            assert!(v > 0.0 && v < 1.0, "pseudo[{},{}] = {} not in (0,1)", i, j, v);
+            assert!(
+                v > 0.0 && v < 1.0,
+                "pseudo[{},{}] = {} not in (0,1)",
+                i,
+                j,
+                v
+            );
         }
     }
 }
@@ -216,6 +223,7 @@ fn sample_returns_correct_dimensions() {
     assert_eq!(samples.nrows(), 50);
     assert_eq!(samples.ncols(), 2);
 
+    #[rustfmt::skip]
     let corr = DMatrix::from_row_slice(3, 3, &[
         1.0, 0.3, 0.2,
         0.3, 1.0, 0.4,
@@ -236,7 +244,13 @@ fn sample_values_in_unit_interval() {
         for i in 0..samples.nrows() {
             for j in 0..samples.ncols() {
                 let v = samples[(i, j)];
-                assert!(v > 0.0 && v < 1.0, "sample[{},{}] = {} not in (0,1)", i, j, v);
+                assert!(
+                    v > 0.0 && v < 1.0,
+                    "sample[{},{}] = {} not in (0,1)",
+                    i,
+                    j,
+                    v
+                );
             }
         }
     }
@@ -259,7 +273,10 @@ fn archimedean_phi_roundtrip() {
         let t_back = cop.phi_inv(s).unwrap();
         assert!(
             (t - t_back).abs() < 1e-10,
-            "phi_inv(phi({})) = {}, expected {}", t, t_back, t
+            "phi_inv(phi({})) = {}, expected {}",
+            t,
+            t_back,
+            t
         );
     }
 }
@@ -272,7 +289,10 @@ fn gumbel_phi_roundtrip() {
         let t_back = cop.phi_inv(s).unwrap();
         assert!(
             (t - t_back).abs() < 1e-10,
-            "phi_inv(phi({})) = {}, expected {}", t, t_back, t
+            "phi_inv(phi({})) = {}, expected {}",
+            t,
+            t_back,
+            t
         );
     }
 }
@@ -326,9 +346,18 @@ fn copula_error_categories() {
     assert_eq!(CopulaError::invalid_parameter("x").category(), "parameter");
     assert_eq!(CopulaError::data_error("x").category(), "data");
     assert_eq!(CopulaError::computation("x").category(), "computation");
-    assert_eq!(CopulaError::not_implemented("x").category(), "implementation");
-    assert_eq!(CopulaError::matrix_error("op", "reason").category(), "matrix");
-    assert_eq!(CopulaError::dimension_mismatch(2, 3).category(), "dimension");
+    assert_eq!(
+        CopulaError::not_implemented("x").category(),
+        "implementation"
+    );
+    assert_eq!(
+        CopulaError::matrix_error("op", "reason").category(),
+        "matrix"
+    );
+    assert_eq!(
+        CopulaError::dimension_mismatch(2, 3).category(),
+        "dimension"
+    );
 }
 
 #[test]
@@ -359,6 +388,7 @@ fn information_criteria_formulas() {
 
 #[test]
 fn remove_missing_values_filters_nan() {
+    #[rustfmt::skip]
     let data = DMatrix::from_row_slice(4, 2, &[
         1.0, 2.0,
         f64::NAN, 4.0,
@@ -374,6 +404,7 @@ fn remove_missing_values_filters_nan() {
 #[test]
 fn bootstrap_sample_preserves_dimensions() {
     let mut rng = rand::thread_rng();
+    #[rustfmt::skip]
     let data = DMatrix::from_row_slice(10, 3, &[
         0.1, 0.2, 0.3,
         0.4, 0.5, 0.6,

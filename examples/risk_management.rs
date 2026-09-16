@@ -7,7 +7,6 @@
 /// - Stress testing scenarios
 ///
 /// Run with: cargo run --example risk_management
-
 use copula_core::prelude::*;
 use nalgebra::DMatrix;
 
@@ -53,8 +52,14 @@ fn main() -> copula_core::Result<()> {
     println!("    Joint extreme losses (both < 5% quantile):");
     println!("      Clayton: {:.2}% of scenarios", clayton_joint_pct);
     println!("      Gumbel:  {:.2}% of scenarios", gumbel_joint_pct);
-    println!("      Clayton shows {} higher joint crash risk!\n",
-             if clayton_joint_pct > gumbel_joint_pct { "SIGNIFICANTLY" } else { "moderately" });
+    println!(
+        "      Clayton shows {} higher joint crash risk!\n",
+        if clayton_joint_pct > gumbel_joint_pct {
+            "SIGNIFICANTLY"
+        } else {
+            "moderately"
+        }
+    );
 
     // SCENARIO 2: Value-at-Risk (VaR) calculation
     println!("Scenario 2: Value-at-Risk (VaR) Computation");
@@ -82,8 +87,14 @@ fn main() -> copula_core::Result<()> {
     let var_99 = -clayton_portfolio_returns[var_99_idx];
 
     println!("  Portfolio VaR (lower tail dependence model):");
-    println!("    95% VaR: {:.4} (5% chance of loss exceeding this)", var_95);
-    println!("    99% VaR: {:.4} (1% chance of loss exceeding this)\n", var_99);
+    println!(
+        "    95% VaR: {:.4} (5% chance of loss exceeding this)",
+        var_95
+    );
+    println!(
+        "    99% VaR: {:.4} (1% chance of loss exceeding this)\n",
+        var_99
+    );
 
     // SCENARIO 3: Stress Testing
     println!("Scenario 3: Stress Testing");
@@ -102,7 +113,10 @@ fn main() -> copula_core::Result<()> {
             normal_joint_extreme += 1;
         }
     }
-    println!("    Joint extreme events: {:.2}%", 100.0 * normal_joint_extreme as f64 / n_scenarios as f64);
+    println!(
+        "    Joint extreme events: {:.2}%",
+        100.0 * normal_joint_extreme as f64 / n_scenarios as f64
+    );
 
     println!("  Crisis scenario (θ = 6.0):");
     let crisis_samples = crisis_copula.sample(n_scenarios, &mut rng)?;
@@ -112,10 +126,16 @@ fn main() -> copula_core::Result<()> {
             crisis_joint_extreme += 1;
         }
     }
-    println!("    Joint extreme events: {:.2}%", 100.0 * crisis_joint_extreme as f64 / n_scenarios as f64);
+    println!(
+        "    Joint extreme events: {:.2}%",
+        100.0 * crisis_joint_extreme as f64 / n_scenarios as f64
+    );
 
     let crisis_multiplier = crisis_joint_extreme as f64 / normal_joint_extreme.max(1) as f64;
-    println!("    Crisis increases joint crash risk by {:.1}x\n", crisis_multiplier);
+    println!(
+        "    Crisis increases joint crash risk by {:.1}x\n",
+        crisis_multiplier
+    );
 
     // SCENARIO 4: Model Comparison for Risk Assessment
     println!("Scenario 4: Comparing Risk Models");
@@ -165,7 +185,10 @@ fn main() -> copula_core::Result<()> {
             0.0
         };
 
-        println!("  │ {:<17} │ {:>11.2}% │ {:>11.2}% │", name, joint_pct, cond_pct);
+        println!(
+            "  │ {:<17} │ {:>11.2}% │ {:>11.2}% │",
+            name, joint_pct, cond_pct
+        );
     }
 
     println!("  └───────────────────┴──────────────┴──────────────┘");
@@ -204,8 +227,10 @@ fn main() -> copula_core::Result<()> {
     println!("    95% VaR: {:.4}", perfect_var);
     println!("  Diversified portfolio:");
     println!("    95% VaR: {:.4}", diversified_var);
-    println!("  Diversification benefit: {:.1}% reduction in VaR\n",
-             100.0 * (perfect_var - diversified_var) / perfect_var);
+    println!(
+        "  Diversification benefit: {:.1}% reduction in VaR\n",
+        100.0 * (perfect_var - diversified_var) / perfect_var
+    );
 
     println!("✓ Risk management analysis completed!\n");
 

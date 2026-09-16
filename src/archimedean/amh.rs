@@ -1,4 +1,3 @@
-// src/archimedean/amh.rs
 //! Ali-Mikhail-Haq (AMH) copula implementation.
 //!
 //! ## Bibliography

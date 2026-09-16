@@ -1,5 +1,3 @@
-// src/archimedean/clayton.rs
-
 //! Clayton copula implementation.
 //!
 //! ## Bibliography
@@ -9,6 +7,7 @@
 //! - Nelsen, R. B. (2006). *An Introduction to Copulas*. Springer.
 //! - Joe, H. (2014). *Dependence Modeling with Copulas*. CRC Press.
 
+use crate::traits::BoundedParameters;
 #[cfg(feature = "estimation")]
 use crate::traits::FittableCopula;
 #[cfg(feature = "estimation")]
@@ -16,7 +15,6 @@ use crate::utils::kendall_tau;
 use crate::{ArchimedeanCopula, Copula, CopulaError, Result};
 use nalgebra::DMatrix;
 use rand::Rng;
-use crate::traits::BoundedParameters;
 #[cfg(feature = "estimation")]
 use statrs::distribution::ContinuousCDF;
 

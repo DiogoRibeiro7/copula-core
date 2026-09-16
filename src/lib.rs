@@ -1,5 +1,3 @@
-// src/lib.rs
-
 //! # copula-core
 //!
 //! `copula-core` is an experimental Rust library for copula modelling,
@@ -100,25 +98,25 @@ pub mod vine;
 #[cfg_attr(docsrs, doc(cfg(feature = "estimation")))]
 pub mod estimation;
 
-pub mod numerical;
-pub mod sampling;
-pub mod testing;
 #[cfg(feature = "estimation")]
 #[cfg_attr(docsrs, doc(cfg(feature = "estimation")))]
 pub mod model_selection;
+pub mod numerical;
+pub mod sampling;
+pub mod testing;
 
 // Convenience module for common imports
 pub mod prelude;
 
 // Re-export core types and traits
 pub use error::{CopulaError, Result};
+#[cfg(feature = "estimation")]
+pub use model_selection::k_fold_cv;
 pub use testing::{
     anderson_darling, cramer_von_mises, cvm_multiplier_bootstrap, kolmogorov_smirnov,
 };
 #[cfg(feature = "estimation")]
 pub use traits::FittableCopula;
-#[cfg(feature = "estimation")]
-pub use model_selection::k_fold_cv;
 pub use traits::{ArchimedeanCopula, Copula};
 pub use utils::{empirical_ranks, kendall_tau, spearman_rho, to_pseudo_observations};
 

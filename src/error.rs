@@ -1,11 +1,8 @@
-// src/error.rs
-
 //! Error types and handling for the copulas library.
 //!
 //! This module defines the main error type [`CopulaError`] and result type [`Result`]
 //! used throughout the library. All copula operations that can fail return a
 //! [`Result<T>`] where the error type is [`CopulaError`].
-
 
 /// Result type used throughout the copulas library.
 pub type Result<T> = std::result::Result<T, CopulaError>;

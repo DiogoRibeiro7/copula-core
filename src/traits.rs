@@ -1,5 +1,3 @@
-// src/traits.rs
-
 //! Core traits that define the interface for all copula types.
 //!
 //! This module defines the fundamental traits that all copulas must implement,

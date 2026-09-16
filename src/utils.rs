@@ -1,5 +1,3 @@
-// src/utils.rs
-
 //! Utility functions for copula modeling and data preprocessing.
 //!
 //! This module provides essential utility functions for working with copulas,
@@ -812,9 +810,11 @@ mod tests {
 
     #[test]
     fn test_empirical_cdf_transform() {
-        let data = DMatrix::from_row_slice(5, 2, &[
-            1.0, 10.0, 2.0, 20.0, 3.0, 30.0, 4.0, 40.0, 5.0, 50.0,
-        ]);
+        let data = DMatrix::from_row_slice(
+            5,
+            2,
+            &[1.0, 10.0, 2.0, 20.0, 3.0, 30.0, 4.0, 40.0, 5.0, 50.0],
+        );
         let transformed = empirical_cdf_transform(&data).unwrap();
         assert_eq!(transformed.nrows(), 5);
         assert_eq!(transformed.ncols(), 2);
@@ -834,6 +834,7 @@ mod tests {
 
     #[test]
     fn test_multivariate_kendall_tau() {
+        #[rustfmt::skip]
         let data = DMatrix::from_row_slice(5, 3, &[
             1.0, 1.0, 1.0,
             2.0, 2.0, 2.0,
@@ -860,9 +861,8 @@ mod tests {
 
     #[test]
     fn test_multivariate_spearman_rho() {
-        let data = DMatrix::from_row_slice(5, 2, &[
-            1.0, 5.0, 2.0, 4.0, 3.0, 3.0, 4.0, 2.0, 5.0, 1.0,
-        ]);
+        let data =
+            DMatrix::from_row_slice(5, 2, &[1.0, 5.0, 2.0, 4.0, 3.0, 3.0, 4.0, 2.0, 5.0, 1.0]);
         let rho = multivariate_spearman_rho(&data).unwrap();
         assert_eq!(rho.nrows(), 2);
         assert_relative_eq!(rho[(0, 0)], 1.0, epsilon = 1e-10);
@@ -897,9 +897,8 @@ mod tests {
     #[test]
     fn test_bootstrap_sample_dimensions() {
         let mut rng = thread_rng();
-        let data = DMatrix::from_row_slice(5, 2, &[
-            0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.1,
-        ]);
+        let data =
+            DMatrix::from_row_slice(5, 2, &[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.1]);
         let boot = bootstrap_sample(&data, &mut rng);
         assert_eq!(boot.nrows(), 5);
         assert_eq!(boot.ncols(), 2);

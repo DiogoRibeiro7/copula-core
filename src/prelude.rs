@@ -1,5 +1,3 @@
-// src/prelude.rs
-
 //! Convenient imports for common copula operations.
 //!
 //! This module re-exports the most commonly used types and functions,
@@ -24,9 +22,9 @@ pub use crate::error::{CopulaError, Result};
 pub use crate::traits::{ArchimedeanCopula, Copula};
 
 #[cfg(feature = "estimation")]
-pub use crate::traits::FittableCopula;
-#[cfg(feature = "estimation")]
 pub use crate::model_selection::k_fold_cv;
+#[cfg(feature = "estimation")]
+pub use crate::traits::FittableCopula;
 
 // Utility functions
 pub use crate::utils::{

@@ -13,4 +13,3 @@ fn k_fold_cv_produces_score() {
     let score = k_fold_cv(template, &data, 5, &mut rng).unwrap();
     assert!(score.is_finite());
 }
-

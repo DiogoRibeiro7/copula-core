@@ -1,5 +1,3 @@
-// src/elliptical/student_t.rs
-
 //! Student's t copula implementation.
 //!
 //! ## Bibliography
@@ -217,7 +215,10 @@ impl FittableCopula for StudentTCopula {
     fn log_likelihood(&self, pseudo_obs: &DMatrix<f64>) -> Result<f64> {
         crate::utils::validate_pseudo_observations(pseudo_obs)?;
         if pseudo_obs.ncols() != self.dim() {
-            return Err(CopulaError::dimension_mismatch(self.dim(), pseudo_obs.ncols()));
+            return Err(CopulaError::dimension_mismatch(
+                self.dim(),
+                pseudo_obs.ncols(),
+            ));
         }
         let n = pseudo_obs.nrows();
         let t = StudentsT::new(0.0, 1.0, self.df)
@@ -239,9 +240,8 @@ impl FittableCopula for StudentTCopula {
             use std::f64::consts::PI;
             let d = self.dim() as f64;
             let log_num = ln_gamma((self.df + d) / 2.0);
-            let log_denom = ln_gamma(self.df / 2.0)
-                + (d / 2.0) * (self.df.ln() + PI.ln())
-                + 0.5 * det.ln();
+            let log_denom =
+                ln_gamma(self.df / 2.0) + (d / 2.0) * (self.df.ln() + PI.ln()) + 0.5 * det.ln();
             let log_kernel = -((self.df + d) / 2.0) * ((1.0 + quad / self.df).ln());
             let log_joint = log_num - log_denom + log_kernel;
             let sum_log_marginals: f64 = x.iter().map(|&xi| t.pdf(xi).ln()).sum();

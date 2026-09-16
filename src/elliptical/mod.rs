@@ -1,5 +1,3 @@
-// src/elliptical/mod.rs
-
 //! Elliptical copulas module.
 //!
 //! This module contains copulas derived from elliptical distributions.

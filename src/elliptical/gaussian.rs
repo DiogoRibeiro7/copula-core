@@ -1,5 +1,3 @@
-// src/elliptical/gaussian.rs
-
 //! Gaussian (Normal) copula implementation.
 //!
 //! ## Bibliography
@@ -152,8 +150,9 @@ impl FittableCopula for GaussianCopula {
         crate::utils::validate_pseudo_observations(pseudo_obs)?;
         let n = pseudo_obs.nrows();
         let dim = pseudo_obs.ncols();
-        let normal = Normal::new(0.0, 1.0)
-            .map_err(|_| CopulaError::computation("failed to create standard normal distribution"))?;
+        let normal = Normal::new(0.0, 1.0).map_err(|_| {
+            CopulaError::computation("failed to create standard normal distribution")
+        })?;
         let mut z = DMatrix::<f64>::zeros(n, dim);
         for i in 0..n {
             for j in 0..dim {
@@ -198,11 +197,15 @@ impl FittableCopula for GaussianCopula {
     fn log_likelihood(&self, pseudo_obs: &DMatrix<f64>) -> Result<f64> {
         crate::utils::validate_pseudo_observations(pseudo_obs)?;
         if pseudo_obs.ncols() != self.dim() {
-            return Err(CopulaError::dimension_mismatch(self.dim(), pseudo_obs.ncols()));
+            return Err(CopulaError::dimension_mismatch(
+                self.dim(),
+                pseudo_obs.ncols(),
+            ));
         }
         let n = pseudo_obs.nrows();
-        let normal = Normal::new(0.0, 1.0)
-            .map_err(|_| CopulaError::computation("failed to create standard normal distribution"))?;
+        let normal = Normal::new(0.0, 1.0).map_err(|_| {
+            CopulaError::computation("failed to create standard normal distribution")
+        })?;
         let mut ll = 0.0;
         let inv = self
             .correlation

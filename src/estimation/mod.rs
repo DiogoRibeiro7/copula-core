@@ -46,7 +46,9 @@ impl EmpiricalCdf {
     /// An empirical CDF estimator
     pub fn new(mut data: Vec<f64>) -> Result<Self> {
         if data.is_empty() {
-            return Err(CopulaError::data_error("EmpiricalCdf requires non-empty data"));
+            return Err(CopulaError::data_error(
+                "EmpiricalCdf requires non-empty data",
+            ));
         }
         if data.iter().any(|x| !x.is_finite()) {
             return Err(CopulaError::data_error(
@@ -112,7 +114,8 @@ pub fn to_pseudo_observations(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
         let _ecdf = EmpiricalCdf::new(column.clone())?;
 
         // Need to map back to original order
-        let mut indexed: Vec<(usize, f64)> = column.iter().enumerate().map(|(i, &x)| (i, x)).collect();
+        let mut indexed: Vec<(usize, f64)> =
+            column.iter().enumerate().map(|(i, &x)| (i, x)).collect();
         indexed.sort_by(|a, b| a.1.total_cmp(&b.1));
 
         for (new_idx, (orig_idx, _)) in indexed.iter().enumerate() {
@@ -141,7 +144,9 @@ pub fn kendall_tau(x: &[f64], y: &[f64]) -> Result<f64> {
 
     let n = x.len();
     if n < 2 {
-        return Err(CopulaError::invalid_parameter("need at least 2 observations"));
+        return Err(CopulaError::invalid_parameter(
+            "need at least 2 observations",
+        ));
     }
 
     let mut concordant = 0;
@@ -183,7 +188,9 @@ pub fn spearman_rho(x: &[f64], y: &[f64]) -> Result<f64> {
 
     let n = x.len();
     if n < 2 {
-        return Err(CopulaError::invalid_parameter("need at least 2 observations"));
+        return Err(CopulaError::invalid_parameter(
+            "need at least 2 observations",
+        ));
     }
 
     // Convert to ranks
@@ -212,7 +219,9 @@ fn rank(data: &[f64]) -> Vec<f64> {
 fn pearson_correlation(x: &[f64], y: &[f64]) -> Result<f64> {
     let n = x.len();
     if n < 2 {
-        return Err(CopulaError::invalid_parameter("need at least 2 observations"));
+        return Err(CopulaError::invalid_parameter(
+            "need at least 2 observations",
+        ));
     }
 
     let mean_x: f64 = x.iter().sum::<f64>() / n as f64;
@@ -262,10 +271,7 @@ impl<'a, C: Copula> CMLEstimator<'a, C> {
         let d = pseudo_obs.ncols();
 
         if d != self.copula.dimension() {
-            return Err(CopulaError::dimension_mismatch(
-                self.copula.dimension(),
-                d,
-            ));
+            return Err(CopulaError::dimension_mismatch(self.copula.dimension(), d));
         }
 
         let mut log_lik = 0.0;

@@ -20,7 +20,7 @@
 //! - Bedford, T., & Cooke, R. M. (2002). Vines - A new graphical model for dependent random variables.
 //! - Joe, H. (2014). *Dependence Modeling with Copulas*. CRC Press.
 
-use crate::archimedean::{ClaytonCopula, FrankCopula, GumbelCopula, JoeCopula, AMHCopula};
+use crate::archimedean::{AMHCopula, ClaytonCopula, FrankCopula, GumbelCopula, JoeCopula};
 use crate::elliptical::{GaussianCopula, StudentTCopula};
 use crate::{Copula, CopulaError, Result};
 use nalgebra::DMatrix;
@@ -93,12 +93,7 @@ pub struct PairCopula {
 
 impl PairCopula {
     /// Create a new pair-copula.
-    pub fn new(
-        copula: CopulaType,
-        var1: usize,
-        var2: usize,
-        conditioning_set: Vec<usize>,
-    ) -> Self {
+    pub fn new(copula: CopulaType, var1: usize, var2: usize, conditioning_set: Vec<usize>) -> Self {
         Self {
             copula,
             var1,
@@ -276,7 +271,8 @@ impl Copula for CVineCopula {
                 for (j, pair_cop) in self.trees[level].iter().enumerate() {
                     let idx = level + j + 1;
                     if idx < d {
-                        let cond_val = pair_cop.h_function(v[level - 1][idx], v[level - 1][level])?;
+                        let cond_val =
+                            pair_cop.h_function(v[level - 1][idx], v[level - 1][level])?;
                         v[level][idx] = pair_cop.h_inv(cond_val, v[level - 1][level])?;
                     }
                 }

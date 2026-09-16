@@ -65,7 +65,9 @@ where
         }
     }
 
-    Err(CopulaError::numerical("bisection: maximum iterations exceeded"))
+    Err(CopulaError::numerical(
+        "bisection: maximum iterations exceeded",
+    ))
 }
 
 /// Numerical integration using the trapezoidal rule.
