@@ -21,9 +21,6 @@ exclude = [
     "*.R",
 ]
 
-[lib]
-doctest = false
-
 [dependencies]
 # Core mathematical operations
 nalgebra = { version = "0.32", features = ["serde-serialize"] }

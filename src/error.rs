@@ -1,10 +1,10 @@
-//! Error types and handling for the copulas library.
+//! Error types and handling for `copula-core`.
 //!
 //! This module defines the main error type [`CopulaError`] and result type [`Result`]
 //! used throughout the library. All copula operations that can fail return a
 //! [`Result<T>`] where the error type is [`CopulaError`].
 
-/// Result type used throughout the copulas library.
+/// Result type used throughout the crate.
 pub type Result<T> = std::result::Result<T, CopulaError>;
 
 /// Helper function to format invalid values for error messages.
@@ -55,9 +55,9 @@ pub enum CopulaError {
         context: Option<String>,
     },
 
-    /// Input values are outside the valid range [0,1] for copula evaluation.
+    /// Input values are outside the valid range [0, 1] for copula evaluation.
     ///
-    /// Copula functions are defined on the unit hypercube [0,1]ⁿ, so all
+    /// Copula functions are defined on the unit hypercube [0, 1]ⁿ, so all
     /// input values must be in this range.
     #[error("Input values must be in [0,1]: found {} invalid value(s) - {}", .values.len(), format_invalid_values(.values))]
     InvalidRange {
@@ -191,7 +191,7 @@ impl CopulaError {
         }
     }
 
-    /// Create an invalid range error for values outside [0,1].
+    /// Create an invalid range error for values outside [0, 1].
     pub fn invalid_range(values: Vec<f64>) -> Self {
         Self::InvalidRange { values }
     }
@@ -283,7 +283,7 @@ impl CopulaError {
     }
 }
 
-/// Validate that all values are in the range [0,1].
+/// Validate that all values are in the range [0, 1].
 ///
 /// This is a common validation step for copula inputs.
 pub fn validate_unit_range(values: &[f64]) -> Result<()> {

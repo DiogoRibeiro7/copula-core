@@ -8,10 +8,11 @@
 //! ```rust
 //! use copula_core::prelude::*;
 //!
-//! // Now you have access to all the common types and functions
 //! let copula = ClaytonCopula::new(2.0)?;
-//! let data = DMatrix::from_row_slice(100, 2, &[/* your data */]);
+//! let data = DMatrix::from_row_slice(4, 2, &[1.2, 0.3, 0.7, 0.9, 2.5, 1.1, 1.9, 2.0]);
 //! let pseudo_obs = to_pseudo_observations(&data)?;
+//! let density = copula.pdf(&[pseudo_obs[(0, 0)], pseudo_obs[(0, 1)]])?;
+//! assert!(density >= 0.0);
 //! # Ok::<(), CopulaError>(())
 //! ```
 

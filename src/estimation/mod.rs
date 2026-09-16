@@ -99,7 +99,7 @@ impl EmpiricalCdf {
 /// * `data` - Matrix of observations (n × d)
 ///
 /// # Returns
-/// Matrix of pseudo-observations in [0,1]^d
+/// Matrix of pseudo-observations in [0, 1]^d
 pub fn to_pseudo_observations(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
     let n = data.nrows();
     let d = data.ncols();
@@ -262,7 +262,7 @@ impl<'a, C: Copula> CMLEstimator<'a, C> {
     /// Compute the negative log-likelihood for CML estimation.
     ///
     /// # Arguments
-    /// * `pseudo_obs` - Pseudo-observations (n × d matrix in [0,1]^d)
+    /// * `pseudo_obs` - Pseudo-observations (n × d matrix in [0, 1]^d)
     ///
     /// # Returns
     /// Negative log-likelihood value

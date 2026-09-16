@@ -9,7 +9,7 @@ use nalgebra::DMatrix;
 /// Convert raw data to pseudo-observations (empirical copula).
 ///
 /// Pseudo-observations are the key input for copula modeling. This function
-/// transforms each marginal distribution to uniform [0,1] using empirical
+/// transforms each marginal distribution to uniform [0, 1] using empirical
 /// ranks, which removes the marginal effects and isolates the dependence structure.
 ///
 /// # Mathematical Background
@@ -425,11 +425,12 @@ pub fn validate_correlation_matrix(matrix: &DMatrix<f64>) -> Result<()> {
 /// # Examples
 ///
 /// ```rust
-/// use copula_core::random_correlation_matrix;
-/// use rand::thread_rng;
+/// use copula_core::utils::random_correlation_matrix;
 ///
-/// let mut rng = thread_rng();
-/// let corr = random_correlation_matrix(3, &mut rng).unwrap();
+/// let mut rng = rand::thread_rng();
+/// let corr = random_correlation_matrix(3, &mut rng)?;
+/// assert_eq!(corr.shape(), (3, 3));
+/// # Ok::<(), copula_core::CopulaError>(())
 /// ```
 pub fn random_correlation_matrix<R: rand::Rng + ?Sized>(
     dimension: usize,
@@ -486,12 +487,14 @@ pub fn random_correlation_matrix<R: rand::Rng + ?Sized>(
 /// # Examples
 ///
 /// ```rust
-/// use copula_core::{empirical_copula_cdf, to_pseudo_observations};
+/// use copula_core::utils::{empirical_copula_cdf, to_pseudo_observations};
 /// use nalgebra::DMatrix;
 ///
-/// let data = DMatrix::from_row_slice(100, 2, &[/* your data */]);
-/// let pseudo_obs = to_pseudo_observations(&data).unwrap();
-/// let cdf_val = empirical_copula_cdf(&pseudo_obs, &[0.5, 0.5]).unwrap();
+/// let data = DMatrix::from_row_slice(4, 2, &[1.2, 0.3, 0.7, 0.9, 2.5, 1.1, 1.9, 2.0]);
+/// let pseudo_obs = to_pseudo_observations(&data)?;
+/// let cdf_val = empirical_copula_cdf(&pseudo_obs, &[0.5, 0.5])?;
+/// assert!((0.0..=1.0).contains(&cdf_val));
+/// # Ok::<(), copula_core::CopulaError>(())
 /// ```
 pub fn empirical_copula_cdf(pseudo_obs: &DMatrix<f64>, u: &[f64]) -> Result<f64> {
     let (n_rows, n_cols) = pseudo_obs.shape();
