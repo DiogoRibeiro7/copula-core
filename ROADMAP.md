@@ -1,227 +1,145 @@
-# copula-core Development Roadmap
+# copula-core roadmap
 
-## Version 0.1.0 - Foundation (Q3 2025)
+This roadmap is intentionally capability-based rather than release-number-driven.
+The project already contains a broad set of copula families and experimental
+constructions; the priority is now to make the existing statistical surface
+numerically defensible before expanding breadth again.
 
-### Core Infrastructure ✅
-- [x] Base trait system (`Copula`, `FittableCopula`, `ArchimedeanCopula`)
-- [x] Error handling with `CopulaError`
-- [x] Pseudo-observations conversion utilities
-- [x] Basic testing framework
-- [x] Documentation structure
+## Completed foundation
 
-### Basic Copula Implementations
-- [x] **Clayton Copula** - CDF, PDF, sampling, tail dependence
-- [x] **Gumbel Copula** - CDF implementation
-- [x] **Frank Copula** - CDF implementation
-- [x] **Marshall-Olkin Copula** - CDF implementation
-- [x] **Gaussian Copula** - Complete multivariate normal CDF implementation
-- [x] **Student's t Copula** - Full implementation
+- core `Copula` trait and typed error model
+- principal elliptical and Archimedean families
+- Marshall-Olkin and empirical copulas
+- pseudo-observations and rank-based dependence measures
+- parameter-estimation infrastructure behind the `estimation` feature
+- goodness-of-fit statistics and model-selection utilities
+- property-based tests for major copula invariants
+- cross-platform Rust CI, formatting, Clippy, docs, audit, coverage and benchmarks
+- input validation hardened across public APIs
 
-### Essential Utilities
-- [x] Empirical rank computation
-- [x] Kendall's tau and Spearman's rho computation
-- [x] Basic parameter estimation (method of moments)
+## Active priority: numerical contract
 
-## Version 0.2.0 - Statistical Foundation (Q4 2025)
+The next work should concentrate on the numerical behaviour of the existing
+families rather than on adding more named copulas.
 
-### Advanced Statistical Methods
-- [x] **Maximum Likelihood Estimation**
-  - [x] Numerical optimization with `argmin` crate
-  - [x] Standard errors and confidence intervals
-  - [x] Constraint handling for parameter bounds
+### M1. Parameter domains and boundary semantics
 
-- [ ] **Goodness-of-Fit Testing**
-- [x] Cramér-von Mises test
-  - [x] Kolmogorov-Smirnov test
-  - [x] Anderson-Darling test
-  - [x] Multiplier bootstrap methods
+- define the exact admissible parameter domain for every public family
+- test limiting cases such as independence parameters
+- define behaviour at `u = 0` and `u = 1`
+- reject non-finite probabilities and parameters consistently
+- add regression tests for values close to numerical boundaries
 
-- [ ] **Model Selection**
-  - [x] AIC/BIC computation
-  - [x] Cross-validation for copula selection
-  - [ ] Vuong test for non-nested models
+### M2. Stable density and log-density evaluation
 
-### Numerical Robustness
-- [ ] **Multivariate Normal Integration**
-  - [ ] Genz algorithms implementation
-  - [ ] Quasi-Monte Carlo methods
-  - [ ] Adaptive quadrature for low dimensions
+- introduce stable log-density paths where likelihood-based estimation needs them
+- avoid avoidable underflow/overflow in Archimedean generators and densities
+- audit cancellation near independence limits
+- audit Cholesky/correlation handling for elliptical families
+- test density non-negativity without masking invalid negative values by clipping
 
-- [ ] **Numerical Stability**
-  - [ ] Log-space computations
-  - [ ] Improved Cholesky handling
-  - [ ] Better parameter constraint enforcement
+The key contract is
 
-## Version 0.3.0 - Extended Copula Families (Q1 2026)
+```text
+valid parameter + valid u
+-> finite, mathematically admissible result
+```
 
-### Complete Archimedean Family
-- [ ] **Joe Copula** - Full implementation
-- [ ] **Ali-Mikhail-Haq Copula** - Full implementation
-- [ ] **Nested Archimedean Copulas** - Hierarchical structures
+or a typed error when that contract cannot be satisfied.
 
-### Extreme Value Copulas
-- [ ] **Galambos Copula**
-- [ ] **Hüsler-Reiss Copula**  
-- [ ] **Tawn Family** (Type I, Type II)
-- [ ] **Pickands Dependence Function** estimation
+### M3. Verified estimation
 
-### Specialized Copulas
-- [ ] **Farlie-Gumbel-Morgenstern** family
-- [ ] **Plackett Copula**
-- [ ] **Two-parameter families** (BB1, BB6, BB7, BB8)
+- test estimator recovery on synthetic data with known parameters
+- study bias and failure behaviour across sample sizes and dependence strengths
+- separate optimization failure from invalid-model failure
+- record convergence diagnostics explicitly
+- verify standard-error and interval calculations before presenting them as
+  inferential output
 
-## Version 0.4.0 - High-Dimensional Methods (Q2 2026)
+### M4. Model comparison and goodness-of-fit validation
 
-### Vine Copulas
-- [ ] **Pair-Copula Decomposition**
-  - [ ] Regular vine structures (R-vines)
-  - [ ] Canonical vines (C-vines)  
-  - [ ] Drawable vines (D-vines)
+- verify AIC/BIC parameter counting and likelihood conventions
+- verify cross-validation splits and scoring semantics
+- validate goodness-of-fit statistics against analytically or externally checked
+  fixtures
+- define the interpretation and limitations of multiplier-bootstrap results
 
-- [ ] **Vine Construction Algorithms**
-  - [ ] Sequential estimation
-  - [ ] Tree structure selection
-  - [ ] Truncated vines
+### M5. Elliptical numerical integration
 
-- [ ] **Conditional Copulas**
-  - [ ] h-functions implementation
-  - [ ] Inverse h-functions
-  - [ ] Numerical derivatives
+- replace simplified or Monte Carlo integration paths where stronger algorithms
+  are required
+- evaluate Genz-style multivariate normal integration
+- compare deterministic, quasi-Monte Carlo and Monte Carlo approaches
+- report approximation error separately from sampling error
 
-### Factor Copulas
-- [ ] **One-Factor Models**
-  - [ ] Gaussian factor copula
-  - [ ] t-factor copula
-  - [ ] Archimedean factor models
+## Experimental modules
 
-- [ ] **Multi-Factor Extensions**
-  - [ ] Hierarchical factor structures
-  - [ ] Factor loading estimation
+The following modules exist but should remain explicitly experimental until their
+mathematical and numerical contracts have dedicated validation:
 
-## Version 0.5.0 - Advanced Features (Q3 2026)
+- extreme-value copulas
+- factor copulas
+- C-vine and D-vine constructions
+- low-discrepancy and auxiliary sampling utilities
 
-### Time-Varying Copulas
-- [ ] **Dynamic Conditional Correlation** (DCC)
-- [ ] **Regime-Switching Copulas**
-- [ ] **Time-Varying Parameter** estimation
+For these modules, "implemented" means code exists and can be exercised. It does
+not by itself mean the method is statistically validated or API-stable.
 
-### Meta-Copulas
-- [ ] **Meta-Elliptical Copulas**
-- [ ] **Skew Copulas**
-- [ ] **Mixed Copulas** (discrete-continuous)
+## Deferred breadth
 
-### Performance Optimization
-- [ ] **SIMD Optimizations**
-  - [ ] Vectorized CDF/PDF evaluation
-  - [ ] Batch sampling methods
-  - [ ] Parallel parameter estimation
+Do not prioritize these until M1-M5 are materially complete:
 
-- [ ] **GPU Acceleration** (optional feature)
-  - [ ] CUDA kernels for sampling
-  - [ ] GPU-accelerated MLE
+- more Archimedean families
+- more extreme-value families
+- BB families
+- dynamic/regime-switching copulas
+- GPU acceleration
+- machine-learning wrappers
+- finance-specific VaR/ES APIs
+- survival-analysis applications
+- Python/R/WebAssembly bindings
 
-## Version 0.6.0 - Specialized Applications (Q4 2026)
+These may become useful later, but they should not dilute the numerical core.
 
-### Financial Risk Applications
-- [ ] **Value-at-Risk** and **Expected Shortfall** computation
-- [ ] **Stressed copulas** for scenario analysis
-- [ ] **Portfolio optimization** with copula constraints
+## Performance policy
 
-### Survival Analysis
-- [ ] **Survival copulas**
-- [ ] **Competing risks** models
-- [ ] **Cure models** with copulas
+Criterion benchmarks are useful for regression tracking, but the repository
+should not publish fixed speed claims without a reproducible benchmark record.
+Any performance result should state at least:
 
-### Machine Learning Integration
-- [ ] **Copula-based clustering**
-- [ ] **Density estimation** with copulas
-- [ ] **Feature selection** using copula measures
+- CPU and operating system
+- Rust version
+- compilation profile and feature set
+- dimensionality and sample size
+- benchmark version/commit
+- repeated measurement summary
 
-## Version 1.0.0 - Production Ready (Q1 2027)
+CI must not fail because a wall-clock speedup target was missed on shared runners.
 
-### API Stabilization
-- [ ] **Stable public API** - no breaking changes
-- [ ] **Comprehensive documentation**
-- [ ] **Tutorial and cookbook**
+## Release-readiness criteria
 
-### Quality Assurance
-- [ ] **100% test coverage**
-- [ ] **Benchmarks** against R `copula` package
-- [ ] **Memory safety** validation
-- [ ] **Performance profiling**
+A future stable release should require evidence rather than a feature count:
 
-### Ecosystem Integration
-- [ ] **Python bindings** via PyO3
-- [ ] **R package** interface
-- [ ] **WebAssembly** support for browser usage
+- documented parameter domains for all stable families
+- boundary tests
+- property-based invariants
+- no panic-prone public code paths for ordinary invalid input
+- validated log-likelihood paths for fitted models
+- synthetic recovery tests for estimators
+- explicit status labels for experimental modules
+- reproducible benchmarks without unsupported performance claims
+- public API documentation that matches actual Cargo features
 
-## Long-term Vision (Beyond 1.0)
+## Current direction
 
-### Research Extensions
-- [ ] **Copula process models**
-- [ ] **Infinite-dimensional copulas**
-- [ ] **Quantum copulas** for quantum finance
+The repository should tell this story:
 
-### Advanced Algorithms
-- [ ] **Machine learning** parameter estimation
-- [ ] **Bayesian copula** estimation
-- [ ] **Copula neural networks**
+```text
+broad prototype
+-> explicit capability contract
+-> numerical robustness
+-> verified statistical inference
+-> stable scientific library
+```
 
-### Specialized Domains
-- [ ] **Spatial copulas** for geostatistics
-- [ ] **Network copulas** for graph analysis
-- [ ] **Functional copulas** for curve data
-
-## Performance Targets
-
-| Feature | Target Performance |
-|---------|-------------------|
-| Bivariate CDF | < 100ns per evaluation |
-| 1000 samples | < 5ms |
-| MLE (1000 obs) | < 50ms |
-| Vine copula (5D) | < 500ms fitting |
-
-## Contribution Guidelines
-
-### Priority Areas (Help Wanted!)
-1. **Multivariate Normal CDF** - Critical for Gaussian copula
-2. **Numerical optimization** - For robust MLE
-3. **Statistical tests** - Goodness-of-fit implementations
-4. **Documentation** - Examples and tutorials
-5. **Benchmarking** - Performance comparison with existing libraries
-
-### Code Quality Standards
-- [ ] All public APIs must have documentation
-- [ ] 95%+ test coverage for new features
-- [ ] Performance regression tests
-- [ ] Integration tests with real datasets
-
-### Release Criteria
-
-Each version requires:
-- [ ] All planned features implemented
-- [ ] Performance benchmarks meet targets  
-- [ ] Documentation updated
-- [ ] Breaking changes documented
-- [ ] Migration guide (if needed)
-
-## Dependencies Evolution
-
-| Version | New Dependencies | Rationale |
-|---------|-----------------|-----------|
-| 0.2.0 | `argmin`, `linfa` | Optimization and ML |
-| 0.4.0 | `rayon` | Parallel computation |
-| 0.5.0 | `wgpu` (optional) | GPU acceleration |
-| 0.6.0 | `polars` | Data processing |
-
-## Community Milestones
-
-- [ ] 100 GitHub stars
-- [ ] 10 contributors
-- [ ] First academic paper using the library
-- [ ] Integration in a major Rust data science project
-- [ ] 1000 downloads per month on crates.io
-
----
-
-*This roadmap is living document and will be updated based on community feedback and emerging research in copula theory.*
+That is a stronger goal than maximizing the number of implemented copula names.
