@@ -430,12 +430,14 @@ fn student_t_new_identity_rejects_dim_below_2() {
     assert!(StudentTCopula::new_identity(2, 5.0).is_ok());
 }
 
+#[cfg(feature = "estimation")]
 #[test]
 fn empirical_cdf_rejects_empty_data() {
     use copula_core::estimation::EmpiricalCdf;
     assert!(EmpiricalCdf::new(vec![]).is_err());
 }
 
+#[cfg(feature = "estimation")]
 #[test]
 fn estimation_to_pseudo_observations_rejects_empty() {
     use copula_core::estimation;
