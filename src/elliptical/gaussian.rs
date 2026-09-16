@@ -73,7 +73,7 @@ impl Copula for GaussianCopula {
             let x = normal.inverse_cdf(u[0]);
             let y = normal.inverse_cdf(u[1]);
             let r = self.correlation[(0, 1)];
-            return Ok(bvnd(-x, -y, r));
+            return Ok(crate::utils::clamp_to_frechet_bounds(u, bvnd(-x, -y, r)));
         }
 
         // Monte Carlo approximation for higher dimensions
@@ -98,7 +98,10 @@ impl Copula for GaussianCopula {
             }
         }
 
-        Ok(count as f64 / n_samples as f64)
+        Ok(crate::utils::clamp_to_frechet_bounds(
+            u,
+            count as f64 / n_samples as f64,
+        ))
     }
 
     fn pdf(&self, u: &[f64]) -> Result<f64> {

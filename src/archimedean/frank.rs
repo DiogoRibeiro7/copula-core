@@ -38,11 +38,22 @@ impl Copula for FrankCopula {
         }
         crate::error::validate_unit_range(u)?;
 
+        // C(u, v) = -ln(1 + a) / theta with
+        // a = (e^{-theta u} - 1)(e^{-theta v} - 1) / (e^{-theta} - 1).
+        // For large theta and u, v near 1, a approaches -1 and 1 + a cancels
+        // (an error of 1.6e-3 at theta = 35, and NaN at theta = 60). In that
+        // regime use the expanded form
+        // 1 + a = (e^{-theta} - e^{-theta u} - e^{-theta v} + e^{-theta (u + v)}) / (e^{-theta} - 1).
         let theta = self.theta;
-        let num = ((-theta * u[0]).exp() - 1.0) * ((-theta * u[1]).exp() - 1.0);
-        let denom = (-theta).exp() - 1.0;
-        let inner = 1.0 + num / denom;
-        Ok(-(1.0 / theta) * inner.ln())
+        let a = (-theta * u[0]).exp_m1() * (-theta * u[1]).exp_m1() / (-theta).exp_m1();
+        let value = if a > -0.5 {
+            -a.ln_1p() / theta
+        } else {
+            let expanded = (-theta).exp() - (-theta * u[0]).exp() - (-theta * u[1]).exp()
+                + (-theta * (u[0] + u[1])).exp();
+            -(expanded / (-theta).exp_m1()).ln() / theta
+        };
+        Ok(crate::utils::clamp_to_frechet_bounds(u, value))
     }
 
     fn pdf(&self, u: &[f64]) -> Result<f64> {

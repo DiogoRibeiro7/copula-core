@@ -359,6 +359,22 @@ pub(crate) fn copula_boundary_value(u: &[f64]) -> Option<f64> {
     }
 }
 
+/// Clamp a computed copula CDF value to the Fréchet–Hoeffding bounds
+/// max(u_1 + ... + u_d - d + 1, 0) <= C(u) <= min(u_1, ..., u_d).
+///
+/// Every copula satisfies these bounds. Finite-precision evaluation can land
+/// slightly outside them, for example a value of -3e-19 where the true CDF is
+/// essentially 0; clamping keeps results valid, including within [0, 1].
+/// `u` must already be validated to lie in [0, 1].
+pub(crate) fn clamp_to_frechet_bounds(u: &[f64], value: f64) -> f64 {
+    let d = u.len() as f64;
+    let upper = u.iter().copied().fold(1.0, f64::min);
+    // Rounding in the sum can put the lower bound above the upper bound, for
+    // example at u = (0.01, 1.0); `f64::clamp` panics if min > max.
+    let lower = (u.iter().sum::<f64>() - d + 1.0).max(0.0).min(upper);
+    value.clamp(lower, upper)
+}
+
 /// Check if a matrix is a valid correlation matrix.
 ///
 /// A valid correlation matrix must be:

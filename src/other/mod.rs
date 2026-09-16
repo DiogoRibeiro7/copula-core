@@ -44,7 +44,7 @@ impl Copula for MarshallOlkinCopula {
         let u2 = u[1];
         let term1 = u1.powf(1.0 - self.alpha) * u2;
         let term2 = u1 * u2.powf(1.0 - self.beta);
-        Ok(term1.min(term2))
+        Ok(crate::utils::clamp_to_frechet_bounds(u, term1.min(term2)))
     }
 
     fn pdf(&self, u: &[f64]) -> Result<f64> {
