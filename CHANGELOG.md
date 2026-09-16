@@ -42,9 +42,10 @@ Before 1.0, breaking changes increment the minor version.
 - Doctests were disabled and four of them failed. All doctests now run.
 - Broken intra-doc links wherever documentation wrote the unit interval as `[0,1]`.
 
-## [0.1.0] - 2026-09-16
+## [0.1.0] - 2026-09-16 [YANKED]
 
-Initial experimental release.
+Initial experimental release. Yanked because it was published before the
+crate was ready; use 0.2.0 or later.
 
 [Unreleased]: https://github.com/DiogoRibeiro7/copula-core/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/DiogoRibeiro7/copula-core/releases/tag/v0.1.0
