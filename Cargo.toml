@@ -1,82 +1,59 @@
-# Cargo.toml
-
 [package]
 name = "copula-core"
 version = "0.1.0"
-edition = "2021"  # Fixed: was "2025"
+edition = "2021"
+rust-version = "1.89"
 authors = ["Diogo Ribeiro <dfr@esmad.ipp.pt>"]
 license = "MIT OR Apache-2.0"
-description = "A comprehensive Rust library for copula modeling, estimation, and simulation"
+description = "Copula modelling, simulation, and dependence analysis (experimental, pre-1.0)"
 homepage = "https://github.com/DiogoRibeiro7/copula-core"
 repository = "https://github.com/DiogoRibeiro7/copula-core"
 documentation = "https://docs.rs/copula-core"
 readme = "README.md"
-keywords = ["statistics", "copula", "finance", "risk", "mathematics"]
+keywords = ["statistics", "copula", "dependence", "risk", "simulation"]
 categories = ["science", "mathematics", "algorithms"]
-exclude = [
-    "docs/*",
-    "scripts/*",
-    ".github/*",
-    "*.py",
-    "*.R",
+include = [
+    "/src",
+    "/examples",
+    "/tests",
+    "/benches",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/LICENSE-MIT",
+    "/LICENSE-APACHE",
 ]
 
 [dependencies]
-# Core mathematical operations
-nalgebra = { version = "0.32", features = ["serde-serialize"] }
+nalgebra = "0.32"
 statrs = "0.16"
 mv-norm = "0.1.6"
-
-# Random number generation
 rand = "0.8"
 rand_distr = "0.4"
-
-# Error handling
 thiserror = "1.0"
 
-# Optimization (for parameter estimation)
+# Optional: parameter estimation
 argmin = { version = "0.8", optional = true }
 
-# Parallel processing
-rayon = { version = "1.7", optional = true }
-
-# Serialization support
+# Optional: serialization
 serde = { version = "1.0", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
 
-# Special functions and numerical methods
-libm = "0.2"
-
 [dev-dependencies]
-# Testing and benchmarking
 approx = "0.5"
 criterion = { version = "0.5", features = ["html_reports"] }
 proptest = "1.0"
 
-# Additional test utilities
-tempfile = "3.0"
-csv = "1.2"
-
 [features]
-default = ["std"]
+default = []
 
-# Standard library support
-std = []
+## Parameter estimation and model selection.
+estimation = ["dep:argmin"]
 
-# Parameter estimation capabilities
-estimation = ["argmin"]
-
-# Parallel processing
-parallel = ["rayon"]
-
-# Serialization support
+## Serialization support (`SerializableCopula`, nalgebra serde impls).
 serde = ["dep:serde", "dep:serde_json", "nalgebra/serde-serialize"]
 
-# All features for comprehensive testing
-full = ["estimation", "parallel", "serde"]
-
-# Experimental features (unstable API)
-experimental = []
+## All optional features.
+full = ["estimation", "serde"]
 
 [[bench]]
 name = "copula_evaluation"
@@ -92,28 +69,12 @@ name = "sampling_performance"
 harness = false
 
 [[example]]
-name = "basic_usage"
-path = "examples/basic_usage.rs"
-required-features = ["std"]
-
-[[example]]
 name = "parameter_estimation"
-path = "examples/parameter_estimation.rs"
 required-features = ["estimation"]
 
-[[example]]
-name = "risk_management"
-path = "examples/risk_management.rs"
-required-features = ["std"]
-
 [package.metadata.docs.rs]
-features = ["full"]
+all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
-
-[profile.release]
-lto = true
-codegen-units = 1
-panic = "abort"
 
 [profile.bench]
 debug = true

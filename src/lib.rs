@@ -62,11 +62,18 @@
 //!
 //! ## Feature flags
 //!
-//! - `estimation` enables estimation and model-selection modules.
-//! - `parallel` enables Rayon-backed parallel support where used.
-//! - `serde` enables serialization support.
-//! - `full` enables the optional features above together.
-//! - `experimental` is reserved for unstable experimental surface.
+//! No features are enabled by default.
+//!
+//! - `estimation` enables the `estimation` and `model_selection` modules and
+//!   the `FittableCopula` trait.
+//! - `serde` enables the `SerializableCopula` trait and `serde` support for
+//!   `nalgebra` types.
+//! - `full` enables all of the above.
+//!
+//! ## Minimum supported Rust version
+//!
+//! Rust 1.89. Raising it is not considered a breaking change before 1.0, but
+//! is always listed in the changelog.
 //!
 //! ## Maturity
 //!
