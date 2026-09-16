@@ -17,6 +17,8 @@ pub struct FrankCopula {
     theta: f64,
 }
 
+validated_serde!("FrankCopula", FrankCopula { theta: f64 } => FrankCopula::new(theta));
+
 impl FrankCopula {
     /// Create a new Frank copula with parameter `theta`.
     pub fn new(theta: f64) -> Result<Self> {

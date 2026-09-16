@@ -535,9 +535,29 @@ pub trait BoundedParameters {
     fn check_bounds(&self) -> Result<()>;
 }
 
-/// Trait for serializable copulas.
+/// JSON serialization for copula models.
 ///
-/// This enables saving and loading copula models.
+/// Implemented by the core copula types when the `serde` feature is enabled.
+/// A copula serializes to its parameters, and deserialization validates them
+/// through the type's constructor, so invalid parameters are rejected.
+///
+/// # Examples
+///
+/// ```rust
+/// use copula_core::traits::SerializableCopula;
+/// use copula_core::ClaytonCopula;
+///
+/// let copula = ClaytonCopula::new(2.0)?;
+/// let json = copula.to_json()?;
+/// assert_eq!(json, r#"{"theta":2.0}"#);
+///
+/// let restored = ClaytonCopula::from_json(&json)?;
+/// assert_eq!(restored.to_json()?, json);
+///
+/// // Deserialization applies the same validation as `ClaytonCopula::new`.
+/// assert!(ClaytonCopula::from_json(r#"{"theta":-1.0}"#).is_err());
+/// # Ok::<(), copula_core::CopulaError>(())
+/// ```
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 pub trait SerializableCopula: Copula + Serialize + for<'de> Deserialize<'de> {

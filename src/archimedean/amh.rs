@@ -17,6 +17,8 @@ pub struct AMHCopula {
     theta: f64,
 }
 
+validated_serde!("AMHCopula", AMHCopula { theta: f64 } => AMHCopula::new(theta));
+
 impl AMHCopula {
     /// Create a new AMH copula with parameter `theta`.
     pub fn new(theta: f64) -> Result<Self> {

@@ -25,6 +25,8 @@ pub struct GaussianCopula {
     correlation: DMatrix<f64>,
 }
 
+validated_serde!("GaussianCopula", GaussianCopula { correlation: DMatrix<f64> } => GaussianCopula::new(correlation));
+
 impl GaussianCopula {
     /// Create a Gaussian copula from a correlation matrix.
     pub fn new(correlation: DMatrix<f64>) -> Result<Self> {

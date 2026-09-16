@@ -28,7 +28,7 @@ No features are enabled by default.
 | Feature      | Enables                                                                  |
 | ------------ | ------------------------------------------------------------------------ |
 | `estimation` | `FittableCopula`, the `estimation` and `model_selection` modules         |
-| `serde`      | `SerializableCopula` trait and `serde` support for `nalgebra` types      |
+| `serde`      | `Serialize`/`Deserialize` for the core copula types (validated on load)  |
 | `full`       | All of the above                                                         |
 
 ## Quick start

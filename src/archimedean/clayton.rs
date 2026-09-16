@@ -25,6 +25,8 @@ pub struct ClaytonCopula {
     theta: f64,
 }
 
+validated_serde!("ClaytonCopula", ClaytonCopula { theta: f64 } => ClaytonCopula::new(theta));
+
 impl ClaytonCopula {
     /// Create a new Clayton copula with parameter `theta`.
     pub fn new(theta: f64) -> Result<Self> {

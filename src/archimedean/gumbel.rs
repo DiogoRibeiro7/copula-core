@@ -21,6 +21,8 @@ pub struct GumbelCopula {
     theta: f64,
 }
 
+validated_serde!("GumbelCopula", GumbelCopula { theta: f64 } => GumbelCopula::new(theta));
+
 impl GumbelCopula {
     /// Create a new Gumbel copula with parameter `theta`.
     pub fn new(theta: f64) -> Result<Self> {
