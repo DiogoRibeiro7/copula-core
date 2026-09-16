@@ -27,7 +27,7 @@ include = [
 nalgebra = "0.32"
 statrs = "0.16"
 mv-norm = "0.1.6"
-rand = "0.8"
+rand = "0.10"
 rand_distr = "0.4"
 thiserror = "1.0"
 
