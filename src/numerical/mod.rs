@@ -40,9 +40,8 @@ where
     F: Fn(f64) -> f64,
 {
     let mut fa = f(a);
-    let mut fb = f(b);
 
-    if fa * fb > 0.0 {
+    if fa * f(b) > 0.0 {
         return Err(CopulaError::numerical(
             "bisection: f(a) and f(b) must have opposite signs",
         ));
@@ -58,7 +57,6 @@ where
 
         if fa * fc < 0.0 {
             b = c;
-            fb = fc;
         } else {
             a = c;
             fa = fc;
@@ -111,7 +109,7 @@ pub fn simpson_integrate<F>(f: F, a: f64, b: f64, n: usize) -> f64
 where
     F: Fn(f64) -> f64,
 {
-    assert!(n % 2 == 0, "n must be even for Simpson's rule");
+    assert!(n.is_multiple_of(2), "n must be even for Simpson's rule");
 
     let h = (b - a) / n as f64;
     let mut sum = f(a) + f(b);

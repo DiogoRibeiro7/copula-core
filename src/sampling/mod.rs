@@ -135,21 +135,6 @@ impl HaltonSequence {
         }
     }
 
-    /// Generate the next point in the sequence.
-    ///
-    /// # Returns
-    /// Vector of length dimension with values in [0, 1]
-    pub fn next(&mut self) -> Vec<f64> {
-        let mut point = Vec::with_capacity(self.dimension);
-
-        for &base in &self.bases {
-            point.push(van_der_corput(self.index, base));
-        }
-
-        self.index += 1;
-        point
-    }
-
     /// Generate n points from the sequence.
     ///
     /// # Arguments
@@ -160,14 +145,30 @@ impl HaltonSequence {
     pub fn generate(&mut self, n: usize) -> DMatrix<f64> {
         let mut samples = DMatrix::<f64>::zeros(n, self.dimension);
 
-        for i in 0..n {
-            let point = self.next();
-            for j in 0..self.dimension {
-                samples[(i, j)] = point[j];
+        for (i, point) in self.by_ref().take(n).enumerate() {
+            for (j, value) in point.into_iter().enumerate() {
+                samples[(i, j)] = value;
             }
         }
 
         samples
+    }
+}
+
+/// An unbounded iterator over successive points of the sequence.
+///
+/// Each point is a vector of length `dimension` with values in [0, 1).
+impl Iterator for HaltonSequence {
+    type Item = Vec<f64>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let point = self
+            .bases
+            .iter()
+            .map(|&base| van_der_corput(self.index, base))
+            .collect();
+        self.index += 1;
+        Some(point)
     }
 }
 
@@ -251,7 +252,7 @@ mod tests {
 
         // Sample from a truncated normal using uniform proposal
         let target = |x: f64| {
-            if x >= 0.0 && x <= 1.0 {
+            if (0.0..=1.0).contains(&x) {
                 (-x * x / 2.0).exp()
             } else {
                 0.0
@@ -265,7 +266,7 @@ mod tests {
 
         assert_eq!(samples.len(), 100);
         for &s in &samples {
-            assert!(s >= 0.0 && s <= 1.0);
+            assert!((0.0..=1.0).contains(&s));
         }
     }
 
@@ -295,6 +296,18 @@ mod tests {
         assert_eq!(samples.ncols(), 2);
         assert!(samples[(0, 0)] >= 0.0 && samples[(0, 0)] <= 1.0);
         assert!(samples[(0, 1)] >= 0.0 && samples[(0, 1)] <= 1.0);
+    }
+
+    #[test]
+    fn test_halton_iterator_matches_generate() {
+        let from_iter: Vec<Vec<f64>> = HaltonSequence::new(2).take(5).collect();
+        let generated = HaltonSequence::new(2).generate(5);
+        for (i, point) in from_iter.iter().enumerate() {
+            assert_eq!(point.len(), 2);
+            for (j, &value) in point.iter().enumerate() {
+                assert_eq!(value, generated[(i, j)]);
+            }
+        }
     }
 
     #[test]
@@ -336,7 +349,7 @@ mod tests {
         // Second should be 0.5
         assert!((seq[1] - 0.5).abs() < 1e-15);
         for &v in &seq {
-            assert!(v >= 0.0 && v <= 1.0);
+            assert!((0.0..=1.0).contains(&v));
         }
     }
 

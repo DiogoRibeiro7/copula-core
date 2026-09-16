@@ -49,9 +49,7 @@ fn pseudo_observations_benchmark(c: &mut Criterion) {
         let matrix = DMatrix::from_row_slice(*n, 2, &data);
 
         group.bench_with_input(BenchmarkId::from_parameter(n), n, |b, _| {
-            b.iter(|| {
-                black_box(to_pseudo_observations(&matrix));
-            });
+            b.iter(|| to_pseudo_observations(black_box(&matrix)));
         });
     }
 

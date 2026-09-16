@@ -349,13 +349,13 @@ fn tail_dependence_in_valid_range() {
     fn check(cop: &impl Copula, label: &str) {
         let (lower, upper) = cop.tail_dependence().unwrap();
         assert!(
-            lower >= 0.0 && lower <= 1.0,
+            (0.0..=1.0).contains(&lower),
             "{}: lower tail {} out of [0,1]",
             label,
             lower
         );
         assert!(
-            upper >= 0.0 && upper <= 1.0,
+            (0.0..=1.0).contains(&upper),
             "{}: upper tail {} out of [0,1]",
             label,
             upper

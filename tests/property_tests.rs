@@ -9,7 +9,7 @@ use proptest::prelude::*;
 
 // Strategy to generate valid copula inputs (values in [0,1])
 fn unit_interval() -> impl Strategy<Value = f64> {
-    (0.01f64..=0.99f64) // Avoid exact 0 and 1 for numerical stability
+    0.01f64..=0.99f64 // Avoid exact 0 and 1 for numerical stability
 }
 
 fn unit_pair() -> impl Strategy<Value = (f64, f64)> {
@@ -26,7 +26,7 @@ proptest! {
     fn clayton_cdf_in_unit_interval(theta in 0.1f64..10.0f64, (u, v) in unit_pair()) {
         let copula = ClaytonCopula::new(theta).unwrap();
         let c = copula.cdf(&[u, v]).unwrap();
-        prop_assert!(c >= 0.0 && c <= 1.0, "CDF {} not in [0,1]", c);
+        prop_assert!((0.0..=1.0).contains(&c), "CDF {} not in [0,1]", c);
     }
 
     /// Clayton copula PDF should be non-negative
@@ -102,7 +102,7 @@ proptest! {
     fn gumbel_cdf_in_unit_interval(theta in 1.0f64..10.0f64, (u, v) in unit_pair()) {
         let copula = GumbelCopula::new(theta).unwrap();
         let c = copula.cdf(&[u, v]).unwrap();
-        prop_assert!(c >= 0.0 && c <= 1.0, "CDF {} not in [0,1]", c);
+        prop_assert!((0.0..=1.0).contains(&c), "CDF {} not in [0,1]", c);
     }
 
     /// Gumbel copula PDF should be non-negative
@@ -145,7 +145,7 @@ proptest! {
     fn frank_cdf_in_unit_interval(theta in 0.1f64..10.0f64, (u, v) in unit_pair()) {
         let copula = FrankCopula::new(theta).unwrap();
         let c = copula.cdf(&[u, v]).unwrap();
-        prop_assert!(c >= 0.0 && c <= 1.0, "CDF {} not in [0,1]", c);
+        prop_assert!((0.0..=1.0).contains(&c), "CDF {} not in [0,1]", c);
     }
 
     /// Frank copula PDF should be non-negative
@@ -179,7 +179,7 @@ proptest! {
         let corr = DMatrix::from_row_slice(2, 2, &[1.0, rho, rho, 1.0]);
         let copula = GaussianCopula::new(corr).unwrap();
         let c = copula.cdf(&[u, v]).unwrap();
-        prop_assert!(c >= 0.0 && c <= 1.0, "CDF {} not in [0,1]", c);
+        prop_assert!((0.0..=1.0).contains(&c), "CDF {} not in [0,1]", c);
     }
 
     /// Gaussian copula PDF should be non-negative
@@ -230,7 +230,7 @@ proptest! {
         let corr = DMatrix::from_row_slice(2, 2, &[1.0, rho, rho, 1.0]);
         let copula = StudentTCopula::new(corr, df).unwrap();
         let c = copula.cdf(&[u, v]).unwrap();
-        prop_assert!(c >= 0.0 && c <= 1.0, "CDF {} not in [0,1]", c);
+        prop_assert!((0.0..=1.0).contains(&c), "CDF {} not in [0,1]", c);
     }
 
     /// Student-t copula PDF should be non-negative
@@ -257,7 +257,7 @@ proptest! {
     fn joe_cdf_in_unit_interval(theta in 1.0f64..10.0f64, (u, v) in unit_pair()) {
         let copula = JoeCopula::new(theta).unwrap();
         let c = copula.cdf(&[u, v]).unwrap();
-        prop_assert!(c >= 0.0 && c <= 1.0, "CDF {} not in [0,1]", c);
+        prop_assert!((0.0..=1.0).contains(&c), "CDF {} not in [0,1]", c);
     }
 
     /// Joe copula PDF should be non-negative
@@ -290,7 +290,7 @@ proptest! {
     fn amh_cdf_in_unit_interval(theta in -0.9f64..0.9f64, (u, v) in unit_pair()) {
         let copula = AMHCopula::new(theta).unwrap();
         let c = copula.cdf(&[u, v]).unwrap();
-        prop_assert!(c >= 0.0 && c <= 1.0, "CDF {} not in [0,1]", c);
+        prop_assert!((0.0..=1.0).contains(&c), "CDF {} not in [0,1]", c);
     }
 
     /// AMH copula PDF should be non-negative
@@ -318,7 +318,7 @@ proptest! {
         for i in 0..n {
             for j in 0..2 {
                 let val = samples[(i, j)];
-                prop_assert!(val >= 0.0 && val <= 1.0,
+                prop_assert!((0.0..=1.0).contains(&val),
                            "Sample[{},{}] = {} not in [0,1]", i, j, val);
             }
         }
@@ -336,7 +336,7 @@ proptest! {
         for i in 0..n {
             for j in 0..2 {
                 let val = samples[(i, j)];
-                prop_assert!(val >= 0.0 && val <= 1.0,
+                prop_assert!((0.0..=1.0).contains(&val),
                            "Sample[{},{}] = {} not in [0,1]", i, j, val);
             }
         }

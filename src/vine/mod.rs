@@ -61,19 +61,6 @@ impl CopulaType {
             CopulaType::StudentT(c) => c.cdf(u),
         }
     }
-
-    /// Evaluate the PDF.
-    fn pdf(&self, u: &[f64]) -> Result<f64> {
-        match self {
-            CopulaType::Clayton(c) => c.pdf(u),
-            CopulaType::Gumbel(c) => c.pdf(u),
-            CopulaType::Frank(c) => c.pdf(u),
-            CopulaType::Joe(c) => c.pdf(u),
-            CopulaType::AMH(c) => c.pdf(u),
-            CopulaType::Gaussian(c) => c.pdf(u),
-            CopulaType::StudentT(c) => c.pdf(u),
-        }
-    }
 }
 
 /// A pair-copula element in the vine structure.
@@ -100,6 +87,21 @@ impl PairCopula {
             var2,
             conditioning_set,
         }
+    }
+
+    /// Index of the first variable coupled by this pair-copula.
+    pub fn var1(&self) -> usize {
+        self.var1
+    }
+
+    /// Index of the second variable coupled by this pair-copula.
+    pub fn var2(&self) -> usize {
+        self.var2
+    }
+
+    /// Indices of the conditioning variables.
+    pub fn conditioning_set(&self) -> &[usize] {
+        &self.conditioning_set
     }
 
     /// Get the conditional CDF: h(u|v) = ∂C(u,v)/∂v
@@ -172,7 +174,7 @@ impl CVineCopula {
 
         // Validate structure: should have (dimension - 1) trees
         if trees.len() != dimension - 1 {
-            return Err(CopulaError::invalid_parameter(&format!(
+            return Err(CopulaError::invalid_parameter(format!(
                 "C-vine with dimension {} should have {} trees, got {}",
                 dimension,
                 dimension - 1,
@@ -184,7 +186,7 @@ impl CVineCopula {
         for (level, tree) in trees.iter().enumerate() {
             let expected_pairs = dimension - level - 1;
             if tree.len() != expected_pairs {
-                return Err(CopulaError::invalid_parameter(&format!(
+                return Err(CopulaError::invalid_parameter(format!(
                     "Tree {} should have {} pair-copulas, got {}",
                     level + 1,
                     expected_pairs,
@@ -194,29 +196,6 @@ impl CVineCopula {
         }
 
         Ok(Self { dimension, trees })
-    }
-
-    /// Compute conditional distributions for sampling.
-    fn compute_conditionals(&self, u: &[f64]) -> Result<Vec<Vec<f64>>> {
-        let d = self.dimension;
-        let mut v = vec![vec![0.0; d]; d];
-
-        // Initialize first row with uniform samples
-        for j in 0..d {
-            v[0][j] = u[j];
-        }
-
-        // Compute conditional distributions tree by tree
-        for level in 0..self.trees.len() {
-            for (j, pair_cop) in self.trees[level].iter().enumerate() {
-                let idx = level + j + 1;
-                if idx < d {
-                    v[level + 1][idx] = pair_cop.h_function(v[level][idx], v[level][level])?;
-                }
-            }
-        }
-
-        Ok(v)
     }
 }
 
@@ -255,7 +234,7 @@ impl Copula for CVineCopula {
 
         for i in 0..n {
             // Sample d independent uniforms
-            let mut w: Vec<f64> = (0..d).map(|_| uniform.sample(rng)).collect();
+            let w: Vec<f64> = (0..d).map(|_| uniform.sample(rng)).collect();
 
             // Transform using vine structure
             let mut v = vec![vec![0.0; d]; d];
@@ -328,7 +307,7 @@ impl DVineCopula {
 
         // Validate structure
         if trees.len() != dimension - 1 {
-            return Err(CopulaError::invalid_parameter(&format!(
+            return Err(CopulaError::invalid_parameter(format!(
                 "D-vine with dimension {} should have {} trees, got {}",
                 dimension,
                 dimension - 1,
@@ -339,7 +318,7 @@ impl DVineCopula {
         for (level, tree) in trees.iter().enumerate() {
             let expected_pairs = dimension - level - 1;
             if tree.len() != expected_pairs {
-                return Err(CopulaError::invalid_parameter(&format!(
+                return Err(CopulaError::invalid_parameter(format!(
                     "Tree {} should have {} pair-copulas, got {}",
                     level + 1,
                     expected_pairs,
@@ -384,7 +363,7 @@ impl Copula for DVineCopula {
 
         for i in 0..n {
             // Sample d independent uniforms
-            let mut w: Vec<f64> = (0..d).map(|_| uniform.sample(rng)).collect();
+            let w: Vec<f64> = (0..d).map(|_| uniform.sample(rng)).collect();
 
             // Initialize first two variables
             let mut v = vec![vec![0.0; d]; d];
@@ -429,8 +408,9 @@ mod tests {
         let clayton = CopulaType::Clayton(ClaytonCopula::new(2.0).unwrap());
         let pair = PairCopula::new(clayton, 0, 1, vec![]);
 
-        assert_eq!(pair.var1, 0);
-        assert_eq!(pair.var2, 1);
+        assert_eq!(pair.var1(), 0);
+        assert_eq!(pair.var2(), 1);
+        assert!(pair.conditioning_set().is_empty());
     }
 
     #[test]

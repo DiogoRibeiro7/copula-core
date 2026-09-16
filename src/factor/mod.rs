@@ -48,7 +48,7 @@ impl OneFactorGaussianCopula {
 
         for (i, &loading) in loadings.iter().enumerate() {
             if loading < 0.0 || loading > 1.0 {
-                return Err(CopulaError::invalid_parameter(&format!(
+                return Err(CopulaError::invalid_parameter(format!(
                     "loading[{}] = {} must be in [0, 1]",
                     i, loading
                 )));
@@ -133,9 +133,8 @@ impl Copula for OneFactorGaussianCopula {
 
             // Compute conditional probability given Z=z
             let mut cond_prob = 1.0;
-            for i in 0..self.dimension {
-                let x_i = Self::phi_inv(u[i]);
-                let loading = self.loadings[i];
+            for (&u_i, &loading) in u.iter().zip(&self.loadings) {
+                let x_i = Self::phi_inv(u_i);
                 let idio_std = (1.0 - loading * loading).sqrt();
 
                 // P(X_i <= x_i | Z = z) = Φ((x_i - β_i*z) / sqrt(1-β_i^2))
@@ -249,7 +248,7 @@ impl MultiFactorGaussianCopula {
                 sum_sq += loadings[(i, k)].powi(2);
             }
             if sum_sq > 1.0 + 1e-10 {
-                return Err(CopulaError::invalid_parameter(&format!(
+                return Err(CopulaError::invalid_parameter(format!(
                     "row {} has sum of squared loadings > 1",
                     i
                 )));
@@ -283,14 +282,6 @@ impl MultiFactorGaussianCopula {
         Normal::new(0.0, 1.0)
             .expect("standard normal parameters are always valid")
             .cdf(x)
-    }
-
-    /// Inverse standard normal CDF.
-    fn phi_inv(p: f64) -> f64 {
-        use statrs::distribution::{ContinuousCDF, Normal};
-        Normal::new(0.0, 1.0)
-            .expect("standard normal parameters are always valid")
-            .inverse_cdf(p)
     }
 }
 

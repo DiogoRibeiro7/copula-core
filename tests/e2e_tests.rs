@@ -54,7 +54,7 @@ fn e2e_archimedean_copula_workflow() {
 
     // 5. Compute empirical copula CDF
     let emp_cdf = empirical_copula_cdf(&pseudo, &[0.5, 0.5]).unwrap();
-    assert!(emp_cdf >= 0.0 && emp_cdf <= 1.0);
+    assert!((0.0..=1.0).contains(&emp_cdf));
 }
 
 #[test]
@@ -133,7 +133,7 @@ fn e2e_multi_copula_comparison() {
 
     // All CDFs should be valid probabilities
     for &c in &[c_clayton, c_gumbel, c_frank, c_gaussian] {
-        assert!(c >= 0.0 && c <= 1.0);
+        assert!((0.0..=1.0).contains(&c));
     }
 
     // Independence copula CDF should equal u*v
@@ -142,7 +142,7 @@ fn e2e_multi_copula_comparison() {
     // Empirical copula for reference
     let pseudo = to_pseudo_observations(&data).unwrap();
     let emp = empirical_copula_cdf(&pseudo, &test_point).unwrap();
-    assert!(emp >= 0.0 && emp <= 1.0);
+    assert!((0.0..=1.0).contains(&emp));
 }
 
 #[test]
