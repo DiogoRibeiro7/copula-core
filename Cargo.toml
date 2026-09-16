@@ -32,7 +32,7 @@ rand_distr = "0.4"
 thiserror = "1.0"
 
 # Optional: parameter estimation
-argmin = { version = "0.8", optional = true }
+argmin = { version = "0.11", optional = true }
 
 # Optional: serialization
 serde = { version = "1.0", features = ["derive"], optional = true }
