@@ -24,7 +24,7 @@ include = [
 ]
 
 [dependencies]
-nalgebra = "0.32"
+nalgebra = "0.35"
 statrs = "0.16"
 mv-norm = "0.1.6"
 rand = "0.8"
