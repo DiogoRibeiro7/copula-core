@@ -10,6 +10,12 @@ Before 1.0, breaking changes increment the minor version.
 
 ### Added
 
+- With the `serde` feature, `Serialize` and `Deserialize` for the Gaussian,
+  Student-t, Clayton, Gumbel, Frank, Joe, Ali-Mikhail-Haq, Marshall-Olkin, and
+  empirical copulas, which also implement `SerializableCopula`. A copula
+  serializes to its parameters; deserialization validates them through the
+  constructor and rejects unknown fields. Previously no type implemented
+  `SerializableCopula`.
 - `GaussianCopula::correlation`, `StudentTCopula::correlation`, and
   `StudentTCopula::df` accessors.
 - `vine::PairCopula::var1`, `var2`, and `conditioning_set` accessors.

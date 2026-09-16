@@ -18,6 +18,8 @@ pub struct JoeCopula {
     theta: f64,
 }
 
+validated_serde!("JoeCopula", JoeCopula { theta: f64 } => JoeCopula::new(theta));
+
 impl JoeCopula {
     /// Create a new Joe copula with parameter `theta`.
     pub fn new(theta: f64) -> Result<Self> {
