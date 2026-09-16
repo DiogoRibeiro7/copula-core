@@ -20,6 +20,8 @@ pub struct MarshallOlkinCopula {
     beta: f64,
 }
 
+validated_serde!("MarshallOlkinCopula", MarshallOlkinCopula { alpha: f64, beta: f64 } => MarshallOlkinCopula::new(alpha, beta));
+
 impl MarshallOlkinCopula {
     /// Create a new Marshall-Olkin copula.
     pub fn new(alpha: f64, beta: f64) -> Result<Self> {
@@ -116,6 +118,8 @@ impl Copula for MarshallOlkinCopula {
 pub struct EmpiricalCopula {
     data: DMatrix<f64>,
 }
+
+validated_serde!("EmpiricalCopula", EmpiricalCopula { data: DMatrix<f64> } => EmpiricalCopula::new(data));
 
 impl EmpiricalCopula {
     /// Create an empirical copula from pseudo-observations.

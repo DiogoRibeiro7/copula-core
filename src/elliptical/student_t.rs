@@ -24,6 +24,8 @@ pub struct StudentTCopula {
     df: f64,
 }
 
+validated_serde!("StudentTCopula", StudentTCopula { correlation: DMatrix<f64>, df: f64 } => StudentTCopula::new(correlation, df));
+
 impl StudentTCopula {
     /// Create a Student's t copula from a correlation matrix and degrees of freedom.
     pub fn new(correlation: DMatrix<f64>, df: f64) -> Result<Self> {

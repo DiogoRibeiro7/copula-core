@@ -66,8 +66,9 @@
 //!
 //! - `estimation` enables the `estimation` and `model_selection` modules and
 //!   the `FittableCopula` trait.
-//! - `serde` enables the `SerializableCopula` trait and `serde` support for
-//!   `nalgebra` types.
+//! - `serde` implements `Serialize` and `Deserialize` for the core copula
+//!   types, with parameters validated on deserialization, and the
+//!   `SerializableCopula` JSON helpers.
 //! - `full` enables all of the above.
 //!
 //! ## Minimum supported Rust version
@@ -85,6 +86,9 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs, rust_2018_idioms)]
 #![allow(clippy::many_single_char_names)] // Mathematical notation uses single chars
+
+#[macro_use]
+mod macros;
 
 // Core modules
 pub mod error;
