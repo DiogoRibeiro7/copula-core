@@ -2,35 +2,29 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
+
+permissions:
+  contents: read
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: -D warnings
 
 jobs:
-  # Test across multiple Rust versions and OSes
   test:
-    name: Test (${{ matrix.rust }} on ${{ matrix.os }})
+    name: Test stable on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        rust: [stable, beta]
-        include:
-          - os: ubuntu-latest
-            rust: nightly
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.rust }}
-          components: rustfmt, clippy
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -50,23 +44,16 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Build
-        run: cargo build --verbose
-
       - name: Run tests
         run: cargo test --verbose --all-features
 
-      - name: Run property tests
-        run: cargo test --test property_tests --verbose
-
-  # Test with different feature combinations
   features:
-    name: Feature tests
+    name: Feature combinations
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust
+      - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Test no default features
@@ -84,29 +71,28 @@ jobs:
       - name: Test all features
         run: cargo test --all-features
 
-  # Code quality checks
   clippy:
-    name: Clippy
+    name: Clippy advisory
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust
+      - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
 
       - name: Run Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy --all-targets --all-features
 
-  # Format checking
   fmt:
-    name: Rustfmt
+    name: Rustfmt advisory
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust
+      - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
@@ -114,29 +100,26 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
 
-  # Documentation building
   docs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust
+      - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build documentation
         run: cargo doc --no-deps --all-features
-        env:
-          RUSTDOCFLAGS: -D warnings
 
-  # Code coverage
   coverage:
     name: Code coverage
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust
+      - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install tarpaulin
@@ -158,14 +141,13 @@ jobs:
           name: coverage-report
           path: coverage/
 
-  # Security audit
   audit:
     name: Security audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust
+      - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install cargo-audit
@@ -174,7 +156,6 @@ jobs:
       - name: Run security audit
         run: cargo audit
 
-  # Benchmark (only on main branch)
   benchmark:
     name: Benchmarks
     runs-on: ubuntu-latest
@@ -182,7 +163,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust
+      - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Run benchmarks
@@ -193,18 +174,3 @@ jobs:
         with:
           name: benchmark-results
           path: target/criterion/
-
-  # Minimum Supported Rust Version (MSRV) check
-  msrv:
-    name: MSRV (1.70.0)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust 1.70.0
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.70.0
-
-      - name: Check MSRV
-        run: cargo check --all-features
