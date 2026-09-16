@@ -10,17 +10,15 @@
 //! ## Example
 //! ```
 //! use copula_core::sampling::latin_hypercube;
-//! use rand::thread_rng;
 //!
-//! let mut rng = thread_rng();
+//! let mut rng = rand::rng();
 //! let samples = latin_hypercube(100, 2, &mut rng);
 //! assert_eq!(samples.nrows(), 100);
 //! assert_eq!(samples.ncols(), 2);
 //! ```
 
 use nalgebra::DMatrix;
-use rand::Rng;
-use rand_distr::{Distribution, Uniform};
+use rand::{Rng, RngExt};
 
 /// Generate Latin hypercube samples.
 ///
@@ -36,7 +34,6 @@ use rand_distr::{Distribution, Uniform};
 /// Matrix of shape (n, d) with samples in [0, 1]^d
 pub fn latin_hypercube<R: Rng + ?Sized>(n: usize, d: usize, rng: &mut R) -> DMatrix<f64> {
     assert!(n > 0 && d > 0, "latin_hypercube requires n > 0 and d > 0");
-    let uniform = Uniform::new(0.0, 1.0);
     let mut samples = DMatrix::<f64>::zeros(n, d);
 
     for j in 0..d {
@@ -44,7 +41,7 @@ pub fn latin_hypercube<R: Rng + ?Sized>(n: usize, d: usize, rng: &mut R) -> DMat
         let mut perm: Vec<usize> = (0..n).collect();
         // Shuffle the permutation
         for i in (1..n).rev() {
-            let swap_idx = rng.gen_range(0..=i);
+            let swap_idx = rng.random_range(0..=i);
             perm.swap(i, swap_idx);
         }
 
@@ -52,7 +49,7 @@ pub fn latin_hypercube<R: Rng + ?Sized>(n: usize, d: usize, rng: &mut R) -> DMat
         for i in 0..n {
             let strata_start = perm[i] as f64 / n as f64;
             let strata_end = (perm[i] + 1) as f64 / n as f64;
-            samples[(i, j)] = strata_start + (strata_end - strata_start) * uniform.sample(rng);
+            samples[(i, j)] = strata_start + (strata_end - strata_start) * rng.random::<f64>();
         }
     }
 
@@ -85,12 +82,11 @@ where
     T: Fn(f64) -> f64,
     D: Fn(f64) -> f64,
 {
-    let uniform = Uniform::new(0.0, 1.0);
     let mut accepted = Vec::with_capacity(n);
 
     while accepted.len() < n {
         let x = proposal(rng);
-        let u = uniform.sample(rng);
+        let u = rng.random::<f64>();
         let acceptance_prob = target(x) / (m * proposal_density(x));
 
         if u < acceptance_prob {
@@ -135,21 +131,6 @@ impl HaltonSequence {
         }
     }
 
-    /// Generate the next point in the sequence.
-    ///
-    /// # Returns
-    /// Vector of length dimension with values in [0, 1]
-    pub fn next(&mut self) -> Vec<f64> {
-        let mut point = Vec::with_capacity(self.dimension);
-
-        for &base in &self.bases {
-            point.push(van_der_corput(self.index, base));
-        }
-
-        self.index += 1;
-        point
-    }
-
     /// Generate n points from the sequence.
     ///
     /// # Arguments
@@ -160,14 +141,30 @@ impl HaltonSequence {
     pub fn generate(&mut self, n: usize) -> DMatrix<f64> {
         let mut samples = DMatrix::<f64>::zeros(n, self.dimension);
 
-        for i in 0..n {
-            let point = self.next();
-            for j in 0..self.dimension {
-                samples[(i, j)] = point[j];
+        for (i, point) in self.by_ref().take(n).enumerate() {
+            for (j, value) in point.into_iter().enumerate() {
+                samples[(i, j)] = value;
             }
         }
 
         samples
+    }
+}
+
+/// An unbounded iterator over successive points of the sequence.
+///
+/// Each point is a vector of length `dimension` with values in [0, 1).
+impl Iterator for HaltonSequence {
+    type Item = Vec<f64>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let point = self
+            .bases
+            .iter()
+            .map(|&base| van_der_corput(self.index, base))
+            .collect();
+        self.index += 1;
+        Some(point)
     }
 }
 
@@ -200,11 +197,10 @@ pub fn sobol_1d(n: usize) -> Vec<f64> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::thread_rng;
 
     #[test]
     fn test_latin_hypercube() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let samples = latin_hypercube(50, 3, &mut rng);
 
         // Check dimensions
@@ -247,11 +243,17 @@ mod tests {
 
     #[test]
     fn test_rejection_sampling() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
 
         // Sample from a truncated normal using uniform proposal
-        let target = |x: f64| if x >= 0.0 && x <= 1.0 { (-x * x / 2.0).exp() } else { 0.0 };
-        let proposal = |rng: &mut rand::rngs::ThreadRng| Uniform::new(0.0, 1.0).sample(rng);
+        let target = |x: f64| {
+            if (0.0..=1.0).contains(&x) {
+                (-x * x / 2.0).exp()
+            } else {
+                0.0
+            }
+        };
+        let proposal = |rng: &mut rand::rngs::ThreadRng| rng.random::<f64>();
         let proposal_density = |_x: f64| 1.0;
         let m = 1.5; // M such that target(x) <= M * proposal_density(x)
 
@@ -259,13 +261,13 @@ mod tests {
 
         assert_eq!(samples.len(), 100);
         for &s in &samples {
-            assert!(s >= 0.0 && s <= 1.0);
+            assert!((0.0..=1.0).contains(&s));
         }
     }
 
     #[test]
     fn test_latin_hypercube_stratification() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let n = 100;
         let samples = latin_hypercube(n, 1, &mut rng);
 
@@ -283,12 +285,24 @@ mod tests {
 
     #[test]
     fn test_latin_hypercube_single_sample() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let samples = latin_hypercube(1, 2, &mut rng);
         assert_eq!(samples.nrows(), 1);
         assert_eq!(samples.ncols(), 2);
         assert!(samples[(0, 0)] >= 0.0 && samples[(0, 0)] <= 1.0);
         assert!(samples[(0, 1)] >= 0.0 && samples[(0, 1)] <= 1.0);
+    }
+
+    #[test]
+    fn test_halton_iterator_matches_generate() {
+        let from_iter: Vec<Vec<f64>> = HaltonSequence::new(2).take(5).collect();
+        let generated = HaltonSequence::new(2).generate(5);
+        for (i, point) in from_iter.iter().enumerate() {
+            assert_eq!(point.len(), 2);
+            for (j, &value) in point.iter().enumerate() {
+                assert_eq!(value, generated[(i, j)]);
+            }
+        }
     }
 
     #[test]
@@ -330,7 +344,7 @@ mod tests {
         // Second should be 0.5
         assert!((seq[1] - 0.5).abs() < 1e-15);
         for &v in &seq {
-            assert!(v >= 0.0 && v <= 1.0);
+            assert!((0.0..=1.0).contains(&v));
         }
     }
 
@@ -340,7 +354,13 @@ mod tests {
         let expected = [0.0, 1.0 / 3.0, 2.0 / 3.0, 1.0 / 9.0];
         for (i, &exp) in expected.iter().enumerate() {
             let val = van_der_corput(i as u64, 3);
-            assert!((val - exp).abs() < 1e-10, "vdc({}, 3) = {} expected {}", i, val, exp);
+            assert!(
+                (val - exp).abs() < 1e-10,
+                "vdc({}, 3) = {} expected {}",
+                i,
+                val,
+                exp
+            );
         }
     }
 }

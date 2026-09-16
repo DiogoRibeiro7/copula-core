@@ -1,5 +1,3 @@
-// src/archimedean/mod.rs
-
 //! Archimedean copulas module.
 
 pub mod amh;

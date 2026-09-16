@@ -1,5 +1,3 @@
-// src/elliptical/gaussian.rs
-
 //! Gaussian (Normal) copula implementation.
 //!
 //! ## Bibliography
@@ -27,6 +25,8 @@ pub struct GaussianCopula {
     correlation: DMatrix<f64>,
 }
 
+validated_serde!("GaussianCopula", GaussianCopula { correlation: DMatrix<f64> } => GaussianCopula::new(correlation));
+
 impl GaussianCopula {
     /// Create a Gaussian copula from a correlation matrix.
     pub fn new(correlation: DMatrix<f64>) -> Result<Self> {
@@ -46,6 +46,11 @@ impl GaussianCopula {
         })
     }
 
+    /// The correlation matrix.
+    pub fn correlation(&self) -> &DMatrix<f64> {
+        &self.correlation
+    }
+
     fn dim(&self) -> usize {
         self.correlation.ncols()
     }
@@ -57,6 +62,11 @@ impl Copula for GaussianCopula {
             return Err(CopulaError::dimension_mismatch(self.dim(), u.len()));
         }
         crate::error::validate_unit_range(u)?;
+        // Quantile transforms are infinite on the boundary; the copula axioms
+        // give the exact value there.
+        if let Some(value) = crate::utils::copula_boundary_value(u) {
+            return Ok(value);
+        }
         let normal = Normal::new(0.0, 1.0)
             .map_err(|_| CopulaError::computation("failed to create Normal(0,1)"))?;
         if self.dim() == 2 {
@@ -74,7 +84,7 @@ impl Copula for GaussianCopula {
             .clone()
             .cholesky()
             .ok_or_else(|| CopulaError::invalid_parameter("correlation not PD"))?;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let normal = StandardNormal;
 
         let mut count = 0usize;
@@ -152,8 +162,9 @@ impl FittableCopula for GaussianCopula {
         crate::utils::validate_pseudo_observations(pseudo_obs)?;
         let n = pseudo_obs.nrows();
         let dim = pseudo_obs.ncols();
-        let normal = Normal::new(0.0, 1.0)
-            .map_err(|_| CopulaError::computation("failed to create standard normal distribution"))?;
+        let normal = Normal::new(0.0, 1.0).map_err(|_| {
+            CopulaError::computation("failed to create standard normal distribution")
+        })?;
         let mut z = DMatrix::<f64>::zeros(n, dim);
         for i in 0..n {
             for j in 0..dim {
@@ -198,11 +209,15 @@ impl FittableCopula for GaussianCopula {
     fn log_likelihood(&self, pseudo_obs: &DMatrix<f64>) -> Result<f64> {
         crate::utils::validate_pseudo_observations(pseudo_obs)?;
         if pseudo_obs.ncols() != self.dim() {
-            return Err(CopulaError::dimension_mismatch(self.dim(), pseudo_obs.ncols()));
+            return Err(CopulaError::dimension_mismatch(
+                self.dim(),
+                pseudo_obs.ncols(),
+            ));
         }
         let n = pseudo_obs.nrows();
-        let normal = Normal::new(0.0, 1.0)
-            .map_err(|_| CopulaError::computation("failed to create standard normal distribution"))?;
+        let normal = Normal::new(0.0, 1.0).map_err(|_| {
+            CopulaError::computation("failed to create standard normal distribution")
+        })?;
         let mut ll = 0.0;
         let inv = self
             .correlation
@@ -295,7 +310,7 @@ mod tests {
 
     #[test]
     fn sample_dimensions() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let cop = GaussianCopula::new_identity(2).unwrap();
         let samples = cop.sample(5, &mut rng).unwrap();
         assert_eq!(samples.nrows(), 5);

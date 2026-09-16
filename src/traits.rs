@@ -1,5 +1,3 @@
-// src/traits.rs
-
 //! Core traits that define the interface for all copula types.
 //!
 //! This module defines the fundamental traits that all copulas must implement,
@@ -20,18 +18,17 @@ use serde::{Deserialize, Serialize};
 ///
 /// # Mathematical Background
 ///
-/// A copula C: [0,1]ⁿ → [0,1] is a multivariate distribution function whose
-/// univariate margins are uniform on [0,1]. For any n-dimensional copula:
+/// A copula C: [0, 1]ⁿ → [0, 1] is a multivariate distribution function whose
+/// univariate margins are uniform on [0, 1]. For any n-dimensional copula:
 ///
 /// 1. **Grounding**: C(u₁, ..., uᵢ₋₁, 0, uᵢ₊₁, ..., uₙ) = 0
 /// 2. **Marginality**: C(1, ..., 1, uᵢ, 1, ..., 1) = uᵢ
-/// 3. **2-increasing**: For all rectangles in [0,1]ⁿ, the C-volume is non-negative
+/// 3. **2-increasing**: For all rectangles in [0, 1]ⁿ, the C-volume is non-negative
 ///
 /// # Examples
 ///
 /// ```rust
 /// use copula_core::{Copula, ClaytonCopula};
-/// use rand::thread_rng;
 ///
 /// let copula = ClaytonCopula::new(2.0)?;
 ///
@@ -42,7 +39,7 @@ use serde::{Deserialize, Serialize};
 /// let pdf = copula.pdf(&[0.5, 0.7])?;
 ///
 /// // Generate samples
-/// let mut rng = thread_rng();
+/// let mut rng = rand::rng();
 /// let samples = copula.sample(100, &mut rng)?;
 /// # Ok::<(), copula_core::CopulaError>(())
 /// ```
@@ -54,15 +51,15 @@ pub trait Copula {
     ///
     /// # Arguments
     ///
-    /// * `u` - Point at which to evaluate the CDF. All values must be in [0,1].
+    /// * `u` - Point at which to evaluate the CDF. All values must be in [0, 1].
     ///
     /// # Returns
     ///
-    /// The CDF value C(u), which is in [0,1].
+    /// The CDF value C(u), which is in [0, 1].
     ///
     /// # Errors
     ///
-    /// Returns [`CopulaError::InvalidRange`] if any value in `u` is outside [0,1].
+    /// Returns [`CopulaError::InvalidRange`] if any value in `u` is outside [0, 1].
     /// Returns [`CopulaError::DimensionMismatch`] if the length of `u` doesn't match
     /// the copula's dimension.
     fn cdf(&self, u: &[f64]) -> Result<f64>;
@@ -73,7 +70,7 @@ pub trait Copula {
     ///
     /// # Arguments
     ///
-    /// * `u` - Point at which to evaluate the PDF. All values must be in [0,1].
+    /// * `u` - Point at which to evaluate the PDF. All values must be in [0, 1].
     ///
     /// # Returns
     ///
@@ -81,7 +78,7 @@ pub trait Copula {
     ///
     /// # Errors
     ///
-    /// Returns [`CopulaError::InvalidRange`] if any value in `u` is outside [0,1].
+    /// Returns [`CopulaError::InvalidRange`] if any value in `u` is outside [0, 1].
     /// Returns [`CopulaError::DimensionMismatch`] if the length of `u` doesn't match
     /// the copula's dimension.
     fn pdf(&self, u: &[f64]) -> Result<f64>;
@@ -144,7 +141,7 @@ pub trait Copula {
     /// # Returns
     ///
     /// A tuple (λₗ, λᵤ) of lower and upper tail dependence coefficients,
-    /// each in [0,1]. A value of 0 indicates no tail dependence.
+    /// each in [0, 1]. A value of 0 indicates no tail dependence.
     ///
     /// # Errors
     ///
@@ -218,14 +215,15 @@ pub trait Copula {
 /// # Examples
 ///
 /// ```rust
-/// use copula_core::{FittableCopula, GaussianCopula, to_pseudo_observations};
-/// use nalgebra::DMatrix;
+/// use copula_core::{ClaytonCopula, Copula, FittableCopula, GaussianCopula, to_pseudo_observations};
+/// use rand::{rngs::StdRng, SeedableRng};
 ///
-/// // Create copula and fit to data
+/// // Simulate dependent data, then fit a Gaussian copula to it.
+/// let mut rng = StdRng::seed_from_u64(7);
+/// let data = ClaytonCopula::new(2.0)?.sample(500, &mut rng)?;
+/// let pseudo_obs = to_pseudo_observations(&data)?;
+///
 /// let mut copula = GaussianCopula::new_identity(2)?;
-/// let data = DMatrix::from_row_slice(100, 2, &[/* your data */]);
-/// let pseudo_obs = to_pseudo_observations(&data);
-///
 /// let params = copula.fit(&pseudo_obs)?;
 /// println!("Fitted parameters: {:?}", params);
 /// # Ok::<(), copula_core::CopulaError>(())
@@ -336,7 +334,7 @@ pub trait FittableCopula: Copula {
 
 /// Trait for Archimedean copulas.
 ///
-/// Archimedean copulas are defined by a generator function φ: [0,1] → [0,∞]
+/// Archimedean copulas are defined by a generator function φ: [0, 1] → [0,∞]
 /// such that C(u₁, ..., uₙ) = φ⁻¹(φ(u₁) + ... + φ(uₙ)).
 ///
 /// This trait provides access to the generator function and its properties.
@@ -367,7 +365,7 @@ pub trait ArchimedeanCopula: Copula {
     ///
     /// # Arguments
     ///
-    /// * `t` - Value in [0,1] at which to evaluate φ
+    /// * `t` - Value in [0, 1] at which to evaluate φ
     ///
     /// # Returns
     ///
@@ -382,7 +380,7 @@ pub trait ArchimedeanCopula: Copula {
     ///
     /// # Returns
     ///
-    /// φ⁻¹(s) ∈ [0,1]
+    /// φ⁻¹(s) ∈ [0, 1]
     fn phi_inv(&self, s: f64) -> Result<f64>;
 
     /// Evaluate the k-th derivative of the inverse generator φ⁻¹.
@@ -439,12 +437,12 @@ pub trait ExtremeValueCopula: Copula {
     ///
     /// The Pickands function satisfies:
     /// 1. A(0) = A(1) = 1
-    /// 2. max(t, 1-t) ≤ A(t) ≤ 1 for t ∈ [0,1]
+    /// 2. max(t, 1-t) ≤ A(t) ≤ 1 for t ∈ [0, 1]
     /// 3. A is convex
     ///
     /// # Arguments
     ///
-    /// * `t` - Value in [0,1]
+    /// * `t` - Value in [0, 1]
     ///
     /// # Returns
     ///
@@ -493,7 +491,7 @@ pub trait VineCopula: Copula {
     ///
     /// # Arguments
     ///
-    /// * `p` - Probability value in [0,1]
+    /// * `p` - Probability value in [0, 1]
     /// * `v` - Conditioning variable
     ///
     /// # Returns
@@ -537,9 +535,29 @@ pub trait BoundedParameters {
     fn check_bounds(&self) -> Result<()>;
 }
 
-/// Trait for serializable copulas.
+/// JSON serialization for copula models.
 ///
-/// This enables saving and loading copula models.
+/// Implemented by the core copula types when the `serde` feature is enabled.
+/// A copula serializes to its parameters, and deserialization validates them
+/// through the type's constructor, so invalid parameters are rejected.
+///
+/// # Examples
+///
+/// ```rust
+/// use copula_core::traits::SerializableCopula;
+/// use copula_core::ClaytonCopula;
+///
+/// let copula = ClaytonCopula::new(2.0)?;
+/// let json = copula.to_json()?;
+/// assert_eq!(json, r#"{"theta":2.0}"#);
+///
+/// let restored = ClaytonCopula::from_json(&json)?;
+/// assert_eq!(restored.to_json()?, json);
+///
+/// // Deserialization applies the same validation as `ClaytonCopula::new`.
+/// assert!(ClaytonCopula::from_json(r#"{"theta":-1.0}"#).is_err());
+/// # Ok::<(), copula_core::CopulaError>(())
+/// ```
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 pub trait SerializableCopula: Copula + Serialize + for<'de> Deserialize<'de> {
@@ -601,14 +619,13 @@ mod tests {
         }
 
         fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
-            use rand_distr::{Distribution, Uniform};
+            use rand::RngExt;
 
-            let uniform = Uniform::new(0.0, 1.0);
             let mut samples = DMatrix::<f64>::zeros(n, self.dimension);
 
             for i in 0..n {
                 for j in 0..self.dimension {
-                    samples[(i, j)] = uniform.sample(rng);
+                    samples[(i, j)] = rng.random::<f64>();
                 }
             }
 

@@ -123,6 +123,7 @@ fn pseudo_observations_rejects_infinite_values() {
 
 #[test]
 fn pseudo_observations_output_strictly_in_unit_interval() {
+    #[rustfmt::skip]
     let data = DMatrix::from_row_slice(5, 2, &[
         1.0, 10.0,
         2.0, 20.0,
@@ -134,7 +135,13 @@ fn pseudo_observations_output_strictly_in_unit_interval() {
     for i in 0..pseudo.nrows() {
         for j in 0..pseudo.ncols() {
             let v = pseudo[(i, j)];
-            assert!(v > 0.0 && v < 1.0, "pseudo[{},{}] = {} not in (0,1)", i, j, v);
+            assert!(
+                v > 0.0 && v < 1.0,
+                "pseudo[{},{}] = {} not in (0,1)",
+                i,
+                j,
+                v
+            );
         }
     }
 }
@@ -209,13 +216,14 @@ fn empirical_copula_cdf_out_of_range() {
 
 #[test]
 fn sample_returns_correct_dimensions() {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let cop = ClaytonCopula::new(2.0).unwrap();
     let samples = cop.sample(50, &mut rng).unwrap();
     assert_eq!(samples.nrows(), 50);
     assert_eq!(samples.ncols(), 2);
 
+    #[rustfmt::skip]
     let corr = DMatrix::from_row_slice(3, 3, &[
         1.0, 0.3, 0.2,
         0.3, 1.0, 0.4,
@@ -229,14 +237,20 @@ fn sample_returns_correct_dimensions() {
 
 #[test]
 fn sample_values_in_unit_interval() {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     fn check(cop: &impl Copula, rng: &mut impl rand::Rng) {
         let samples = cop.sample(100, rng).unwrap();
         for i in 0..samples.nrows() {
             for j in 0..samples.ncols() {
                 let v = samples[(i, j)];
-                assert!(v > 0.0 && v < 1.0, "sample[{},{}] = {} not in (0,1)", i, j, v);
+                assert!(
+                    v > 0.0 && v < 1.0,
+                    "sample[{},{}] = {} not in (0,1)",
+                    i,
+                    j,
+                    v
+                );
             }
         }
     }
@@ -259,7 +273,10 @@ fn archimedean_phi_roundtrip() {
         let t_back = cop.phi_inv(s).unwrap();
         assert!(
             (t - t_back).abs() < 1e-10,
-            "phi_inv(phi({})) = {}, expected {}", t, t_back, t
+            "phi_inv(phi({})) = {}, expected {}",
+            t,
+            t_back,
+            t
         );
     }
 }
@@ -272,7 +289,10 @@ fn gumbel_phi_roundtrip() {
         let t_back = cop.phi_inv(s).unwrap();
         assert!(
             (t - t_back).abs() < 1e-10,
-            "phi_inv(phi({})) = {}, expected {}", t, t_back, t
+            "phi_inv(phi({})) = {}, expected {}",
+            t,
+            t_back,
+            t
         );
     }
 }
@@ -326,9 +346,18 @@ fn copula_error_categories() {
     assert_eq!(CopulaError::invalid_parameter("x").category(), "parameter");
     assert_eq!(CopulaError::data_error("x").category(), "data");
     assert_eq!(CopulaError::computation("x").category(), "computation");
-    assert_eq!(CopulaError::not_implemented("x").category(), "implementation");
-    assert_eq!(CopulaError::matrix_error("op", "reason").category(), "matrix");
-    assert_eq!(CopulaError::dimension_mismatch(2, 3).category(), "dimension");
+    assert_eq!(
+        CopulaError::not_implemented("x").category(),
+        "implementation"
+    );
+    assert_eq!(
+        CopulaError::matrix_error("op", "reason").category(),
+        "matrix"
+    );
+    assert_eq!(
+        CopulaError::dimension_mismatch(2, 3).category(),
+        "dimension"
+    );
 }
 
 #[test]
@@ -359,6 +388,7 @@ fn information_criteria_formulas() {
 
 #[test]
 fn remove_missing_values_filters_nan() {
+    #[rustfmt::skip]
     let data = DMatrix::from_row_slice(4, 2, &[
         1.0, 2.0,
         f64::NAN, 4.0,
@@ -373,7 +403,8 @@ fn remove_missing_values_filters_nan() {
 
 #[test]
 fn bootstrap_sample_preserves_dimensions() {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
+    #[rustfmt::skip]
     let data = DMatrix::from_row_slice(10, 3, &[
         0.1, 0.2, 0.3,
         0.4, 0.5, 0.6,
@@ -430,12 +461,14 @@ fn student_t_new_identity_rejects_dim_below_2() {
     assert!(StudentTCopula::new_identity(2, 5.0).is_ok());
 }
 
+#[cfg(feature = "estimation")]
 #[test]
 fn empirical_cdf_rejects_empty_data() {
     use copula_core::estimation::EmpiricalCdf;
     assert!(EmpiricalCdf::new(vec![]).is_err());
 }
 
+#[cfg(feature = "estimation")]
 #[test]
 fn estimation_to_pseudo_observations_rejects_empty() {
     use copula_core::estimation;
@@ -446,7 +479,7 @@ fn estimation_to_pseudo_observations_rejects_empty() {
 #[test]
 fn cvm_bootstrap_rejects_zero_reps() {
     use copula_core::testing::cvm_multiplier_bootstrap;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let cop = ClaytonCopula::new(2.0).unwrap();
     let data = cop.sample(20, &mut rng).unwrap();
     assert!(cvm_multiplier_bootstrap(&cop, &data, 0, &mut rng).is_err());
@@ -456,7 +489,7 @@ fn cvm_bootstrap_rejects_zero_reps() {
 #[should_panic(expected = "latin_hypercube requires n > 0 and d > 0")]
 fn latin_hypercube_rejects_zero_n() {
     use copula_core::sampling::latin_hypercube;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let _ = latin_hypercube(0, 2, &mut rng);
 }
 
@@ -472,4 +505,36 @@ fn halton_rejects_zero_dimension() {
 fn halton_rejects_dimension_above_16() {
     use copula_core::sampling::HaltonSequence;
     let _ = HaltonSequence::new(17);
+}
+
+// ============================================================================
+// Non-finite parameters
+// ============================================================================
+
+#[test]
+fn elliptical_copulas_reject_nan_correlation() {
+    let corr = DMatrix::from_row_slice(2, 2, &[1.0, f64::NAN, f64::NAN, 1.0]);
+    assert!(GaussianCopula::new(corr.clone()).is_err());
+    assert!(StudentTCopula::new(corr, 4.0).is_err());
+    assert!(
+        copula_core::utils::validate_correlation_matrix(&DMatrix::from_row_slice(
+            2,
+            2,
+            &[f64::NAN, 0.5, 0.5, 1.0]
+        ))
+        .is_err()
+    );
+}
+
+#[test]
+fn factor_copulas_reject_nan_loadings() {
+    use copula_core::factor::{MultiFactorGaussianCopula, OneFactorGaussianCopula};
+    assert!(OneFactorGaussianCopula::new(vec![f64::NAN, 0.5]).is_err());
+    assert!(
+        MultiFactorGaussianCopula::new(DMatrix::from_row_slice(2, 1, &[f64::NAN, 0.5])).is_err()
+    );
+    assert!(
+        MultiFactorGaussianCopula::new(DMatrix::from_row_slice(2, 1, &[f64::INFINITY, 0.5]))
+            .is_err()
+    );
 }

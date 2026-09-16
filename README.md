@@ -1,189 +1,164 @@
 # copula-core
 
-A comprehensive Rust library for copula modeling, estimation, and simulation. This library provides implementations of various copula families commonly used in quantitative finance, risk management, and statistical modeling.
+[![crates.io](https://img.shields.io/crates/v/copula-core.svg)](https://crates.io/crates/copula-core)
+[![docs.rs](https://img.shields.io/docsrs/copula-core)](https://docs.rs/copula-core)
+[![CI](https://github.com/DiogoRibeiro7/copula-core/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/DiogoRibeiro7/copula-core/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/DiogoRibeiro7/copula-core/branch/main/graph/badge.svg)](https://codecov.io/gh/DiogoRibeiro7/copula-core)
+[![MSRV 1.89](https://img.shields.io/badge/MSRV-1.89-blue.svg)](#minimum-supported-rust-version)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 
-## Features
+Copula modelling, simulation, and dependence analysis for Rust.
 
-### Implemented Copula Families
+> [!WARNING]
+> **Experimental, pre-1.0.** The API changes between minor releases, and parts of
+> the numerical surface are not yet validated for inferential work. Read
+> [Maturity](#maturity) before depending on this crate.
 
-- **Elliptical Copulas**
-  - Gaussian (Normal) Copula
-  - Student's t Copula
+## Installation
 
-- **Archimedean Copulas**
-  - Clayton Copula
-  - Gumbel Copula  
-  - Frank Copula
-  - Joe Copula
-  - Ali-Mikhail-Haq (AMH) Copula
-
-- **Other Copulas**
-  - Marshall-Olkin Copula
-  - Empirical Copula
-
-### Advanced Features (Planned)
-
-- **Extreme Value Copulas**
-  - Galambos
-  - Hüsler-Reiss
-  - Tawn families
-
-- **High-Dimensional Constructions**
-  - Vine Copulas (C-vine, D-vine)
-  - Factor Copulas
-  - Meta-elliptical Copulas
-
-### Core Functionality
-
-- ✅ Copula CDF and PDF evaluation
-- ✅ Random sampling from copulas
-- ✅ Tail dependence computation
-- ✅ Parameter estimation (method of moments and MLE)
-- ✅ Goodness-of-fit testing (Cramér-von Mises, Kolmogorov-Smirnov, Anderson-Darling, multiplier bootstrap)
-- ✅ Model selection criteria (AIC, BIC)
-- ✅ Cross-validation for copula selection
-- ⏳ Conditional copulas for vine constructions
-
-## Quick Start
-
-Add this to your `Cargo.toml`:
-
-```toml
-[dependencies]
-copula-core = "0.1.0"
-nalgebra = "0.32"
+```sh
+cargo add copula-core
+cargo add rand@0.10   # sampling takes a `rand` 0.10 RNG
 ```
 
-### Basic Example
+### Cargo features
+
+No features are enabled by default.
+
+| Feature      | Enables                                                                  |
+| ------------ | ------------------------------------------------------------------------ |
+| `estimation` | `FittableCopula`, the `estimation` and `model_selection` modules         |
+| `serde`      | `Serialize`/`Deserialize` for the core copula types (validated on load)  |
+| `full`       | All of the above                                                         |
+
+## Quick start
 
 ```rust
-use copula_core::{Copula, ClaytonCopula, to_pseudo_observations};
-use nalgebra::DMatrix;
+use copula_core::{ClaytonCopula, Copula};
 
-// Create a Clayton copula with parameter θ = 2.0
-let copula = ClaytonCopula::new(2.0)?;
+fn main() -> Result<(), copula_core::CopulaError> {
+    let copula = ClaytonCopula::new(2.0)?;
 
-// Evaluate CDF at point (0.5, 0.5)
-let cdf_value = copula.cdf(&[0.5, 0.5])?;
-println!("C(0.5, 0.5) = {}", cdf_value);
+    let c = copula.cdf(&[0.5, 0.5])?;
+    println!("C(0.5, 0.5) = {c}");
 
-// Generate 1000 samples
-let mut rng = rand::thread_rng();
-let samples = copula.sample(1000, &mut rng)?;
+    let mut rng = rand::rng();
+    let samples = copula.sample(1_000, &mut rng)?;
+    println!("generated {} observations", samples.nrows());
 
-// Convert your data to pseudo-observations
-let data = DMatrix::from_row_slice(100, 2, &your_data);
-let pseudo_obs = to_pseudo_observations(&data);
+    Ok(())
+}
 ```
 
-### Parameter Estimation
+More complete programs are in [`examples/`](examples):
 
-```rust
-use copula_core::{FittableCopula, GaussianCopula};
-
-// Fit a Gaussian copula to your data
-let mut copula = GaussianCopula::from_dimension(2)?;
-let params = copula.fit(&pseudo_obs)?;
-println!("Estimated correlation: {:?}", params);
+```sh
+cargo run --example basic_usage
+cargo run --example risk_management
+cargo run --example parameter_estimation --features estimation
 ```
 
-## Mathematical Background
+## What is included
 
-Copulas are functions that link univariate marginal distributions to form multivariate distributions. According to Sklar's theorem, any multivariate distribution can be written as:
+### Core surface
 
+The most mature part of the crate, with the strongest test coverage:
+
+- Gaussian and Student-t copulas
+- Clayton, Gumbel, Frank, Joe, and Ali-Mikhail-Haq copulas
+- Marshall-Olkin and empirical copulas
+- CDF/PDF evaluation where a continuous density is defined
+- random sampling
+- tail-dependence coefficients where implemented by the family
+- pseudo-observations and rank-based dependence measures (Kendall's tau, Spearman's rho)
+- goodness-of-fit statistics (Cramér-von Mises, Kolmogorov-Smirnov, Anderson-Darling)
+- AIC/BIC information criteria
+
+Property-based tests check copula axioms and numerical invariants for the main
+families: unit-interval bounds, Fréchet-Hoeffding bounds, density non-negativity,
+and sampling range.
+
+### Behind the `estimation` feature
+
+Parameter estimation (`FittableCopula`, canonical maximum likelihood, inversion
+of Kendall's tau) and k-fold cross-validation for model selection. These routines
+are still evolving; validate them for your model, parameter regime, and sample
+size before using them for inference.
+
+### Experimental modules
+
+Extreme-value, factor, and vine copulas, plus low-discrepancy and auxiliary
+sampling utilities. They are useful for research and experimentation but are not
+part of a stable API contract. Several algorithms rely on numerical
+differentiation, iterative inversion, Monte Carlo, or simplified constructions
+whose accuracy has not been validated.
+
+## Mathematical background
+
+For continuous marginals, Sklar's theorem gives
+
+```text
+F(x1, ..., xd) = C(F1(x1), ..., Fd(xd)),
 ```
-F(x₁, x₂, ..., xₙ) = C(F₁(x₁), F₂(x₂), ..., Fₙ(xₙ))
+
+where `C` is the copula and the `Fi` are the marginal distribution functions.
+
+An implementation must therefore preserve mathematical constraints, not only
+return finite numbers:
+
+- values in the unit interval
+- uniform margins
+- Fréchet-Hoeffding bounds
+- non-negative densities where a density exists
+- valid parameter domains
+- stable behaviour near parameter and probability boundaries
+
+## Maturity
+
+This is pre-1.0 statistical software, and API stability is not guaranteed. The
+current priority is numerical validation of the existing surface rather than
+adding more copula families:
+
+```text
+parameter-domain validation
+-> boundary behaviour
+-> stable log-density / likelihood evaluation
+-> verified estimation
+-> validated model comparison
+-> only then broader family coverage
 ```
 
-where `C` is a copula and `Fᵢ` are the marginal CDFs.
+See [ROADMAP.md](ROADMAP.md) for milestones and release-readiness criteria.
 
-### Key Properties
+## Minimum supported Rust version
 
-- **Grounding**: C(u₁, ..., uᵢ₋₁, 0, uᵢ₊₁, ..., uₙ) = 0
-- **Marginality**: C(1, ..., 1, uᵢ, 1, ..., 1) = uᵢ  
-- **2-increasing**: For all rectangles in [0,1]ⁿ, the C-volume is non-negative
-- **Fréchet bounds**: W(u) ≤ C(u) ≤ M(u)
+Rust **1.89**, tested in CI. Before 1.0, an MSRV increase may ship in a minor
+release and is always listed in the [changelog](CHANGELOG.md).
 
-## Performance
+## Versioning
 
-This library is designed for high performance with:
-
-- Zero-copy operations where possible
-- SIMD-optimized computations
-- Efficient memory layouts using `nalgebra`
-- Parallel sampling for large datasets
-
-### Benchmarks
-
-```
-Clayton CDF evaluation:     ~50ns per call
-Gaussian sampling (1000):   ~2ms
-Parameter estimation:       ~10ms per 1000 observations
-```
-
-## Dependencies
-
-- `nalgebra`: Linear algebra operations
-- `statrs`: Statistical distributions and functions  
-- `rand`: Random number generation
-- `thiserror`: Error handling
-- `approx`: Floating-point comparisons (dev)
+The crate follows [Semantic Versioning](https://semver.org/). Before 1.0, breaking
+changes increment the minor version (`0.x.0`). All notable changes are recorded in
+[CHANGELOG.md](CHANGELOG.md).
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-### Development Setup
-
-```bash
-git clone https://github.com/DiogoRibeiro7/copula-core
-cd copula-core
-cargo test
-cargo bench
-```
-
-### Testing
-
-The library includes comprehensive tests:
-
-```bash
-# Unit tests
-cargo test
-
-# Integration tests with R copula package comparison
-cargo test --features r_comparison
-
-# Property-based tests
-cargo test --features proptest
-
-# Benchmarks
-cargo bench
-```
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for the
+development workflow and the checks a pull request must pass. Report security
+issues privately as described in [SECURITY.md](SECURITY.md).
 
 ## License
 
 Licensed under either of
 
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
-- MIT license ([LICENSE-MIT](LICENSE-MIT))
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or <https://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or <https://opensource.org/licenses/MIT>)
 
 at your option.
 
-## Citation
-
-If you use this library in academic work, please cite:
-
-```bibtex
-@software{copula_core,
-  title = {copula-core: A Rust Library for Copula Modeling},
-  author = {Diogo Ribeiro},
-  affiliation = {ESMAD - Instituto Politécnico do Porto},
-  email = {dfr@esmad.ipp.pt},
-  orcid = {0009-0001-2022-7072},
-  year = {2025},
-  url = {https://github.com/DiogoRibeiro7/copula-core}
-}
-```
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
 
 ## References
 
@@ -191,17 +166,3 @@ If you use this library in academic work, please cite:
 2. Joe, H. (2014). *Dependence Modeling with Copulas*. CRC Press.
 3. Durante, F., & Sempi, C. (2015). *Principles of Copula Theory*. CRC Press.
 4. Aas, K., Czado, C., Frigessi, A., & Bakken, H. (2009). Pair-copula constructions of multiple dependence. *Insurance: Mathematics and Economics*, 44(2), 182-198.
-
-## Status
-
-🚧 **Under Active Development** 🚧
-
-This library is in early development. The API may change before version 1.0.0.
-
-Current version: 0.1.0-alpha
-
----
-
-## ✅ Summary
-
-This is a minimal but complete scaffold for a Rust crate ready for publication. You can fork it and extend it to fit your use case, add CI, documentation with `docs.rs`, or testing tools like `cargo tarpaulin`.

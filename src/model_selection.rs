@@ -3,9 +3,9 @@ use nalgebra::DMatrix;
 use rand::seq::SliceRandom;
 use rand::Rng;
 
-use crate::{CopulaError, Result};
 use crate::traits::FittableCopula;
 use crate::utils::validate_pseudo_observations;
+use crate::{CopulaError, Result};
 
 fn select_rows(matrix: &DMatrix<f64>, idx: &[usize]) -> DMatrix<f64> {
     let ncols = matrix.ncols();
@@ -24,12 +24,7 @@ fn select_rows(matrix: &DMatrix<f64>, idx: &[usize]) -> DMatrix<f64> {
 /// fitting the model on k-1 folds and evaluating the log-likelihood on
 /// the remaining fold. The returned value is the average log-likelihood
 /// across all folds.
-pub fn k_fold_cv<C, R>(
-    template: C,
-    pseudo_obs: &DMatrix<f64>,
-    k: usize,
-    rng: &mut R,
-) -> Result<f64>
+pub fn k_fold_cv<C, R>(template: C, pseudo_obs: &DMatrix<f64>, k: usize, rng: &mut R) -> Result<f64>
 where
     C: FittableCopula + Clone,
     R: Rng + ?Sized,
@@ -48,10 +43,14 @@ where
 
     for fold in 0..k {
         let start = fold * fold_size;
-        if start >= n { break; }
+        if start >= n {
+            break;
+        }
         let end = ((fold + 1) * fold_size).min(n);
         let test_idx = &indices[start..end];
-        if test_idx.is_empty() { continue; }
+        if test_idx.is_empty() {
+            continue;
+        }
         let train_idx: Vec<usize> = indices[..start]
             .iter()
             .chain(&indices[end..])
@@ -69,5 +68,3 @@ where
 
     Ok(total_ll / folds_used as f64)
 }
-
-

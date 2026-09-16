@@ -1,5 +1,3 @@
-// src/elliptical/student_t.rs
-
 //! Student's t copula implementation.
 //!
 //! ## Bibliography
@@ -26,6 +24,8 @@ pub struct StudentTCopula {
     df: f64,
 }
 
+validated_serde!("StudentTCopula", StudentTCopula { correlation: DMatrix<f64>, df: f64 } => StudentTCopula::new(correlation, df));
+
 impl StudentTCopula {
     /// Create a Student's t copula from a correlation matrix and degrees of freedom.
     pub fn new(correlation: DMatrix<f64>, df: f64) -> Result<Self> {
@@ -46,6 +46,16 @@ impl StudentTCopula {
         Self::new(DMatrix::identity(dim, dim), df)
     }
 
+    /// The correlation matrix.
+    pub fn correlation(&self) -> &DMatrix<f64> {
+        &self.correlation
+    }
+
+    /// The degrees of freedom.
+    pub fn df(&self) -> f64 {
+        self.df
+    }
+
     fn dim(&self) -> usize {
         self.correlation.ncols()
     }
@@ -57,6 +67,11 @@ impl Copula for StudentTCopula {
             return Err(CopulaError::dimension_mismatch(self.dim(), u.len()));
         }
         crate::error::validate_unit_range(u)?;
+        // Quantile transforms are infinite on the boundary; the copula axioms
+        // give the exact value there.
+        if let Some(value) = crate::utils::copula_boundary_value(u) {
+            return Ok(value);
+        }
         // Quantiles of univariate Student's t distribution
         let t = StudentsT::new(0.0, 1.0, self.df)
             .map_err(|_| CopulaError::computation("failed to create Student's t distribution"))?;
@@ -69,7 +84,7 @@ impl Copula for StudentTCopula {
             .clone()
             .cholesky()
             .ok_or_else(|| CopulaError::invalid_parameter("correlation not PD"))?;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let chi = ChiSquared::new(self.df)
             .map_err(|_| CopulaError::computation("failed to create Chi-squared distribution"))?;
         let normal = StandardNormal;
@@ -217,7 +232,10 @@ impl FittableCopula for StudentTCopula {
     fn log_likelihood(&self, pseudo_obs: &DMatrix<f64>) -> Result<f64> {
         crate::utils::validate_pseudo_observations(pseudo_obs)?;
         if pseudo_obs.ncols() != self.dim() {
-            return Err(CopulaError::dimension_mismatch(self.dim(), pseudo_obs.ncols()));
+            return Err(CopulaError::dimension_mismatch(
+                self.dim(),
+                pseudo_obs.ncols(),
+            ));
         }
         let n = pseudo_obs.nrows();
         let t = StudentsT::new(0.0, 1.0, self.df)
@@ -239,9 +257,8 @@ impl FittableCopula for StudentTCopula {
             use std::f64::consts::PI;
             let d = self.dim() as f64;
             let log_num = ln_gamma((self.df + d) / 2.0);
-            let log_denom = ln_gamma(self.df / 2.0)
-                + (d / 2.0) * (self.df.ln() + PI.ln())
-                + 0.5 * det.ln();
+            let log_denom =
+                ln_gamma(self.df / 2.0) + (d / 2.0) * (self.df.ln() + PI.ln()) + 0.5 * det.ln();
             let log_kernel = -((self.df + d) / 2.0) * ((1.0 + quad / self.df).ln());
             let log_joint = log_num - log_denom + log_kernel;
             let sum_log_marginals: f64 = x.iter().map(|&xi| t.pdf(xi).ln()).sum();
@@ -320,7 +337,7 @@ mod tests {
 
     #[test]
     fn sample_returns_valid_matrix() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let cop = StudentTCopula::new_identity(2, 5.0).unwrap();
         let samples = cop.sample(5, &mut rng).unwrap();
         assert_eq!(samples.nrows(), 5);

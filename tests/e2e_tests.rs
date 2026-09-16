@@ -5,7 +5,6 @@
 
 use copula_core::prelude::*;
 use nalgebra::DMatrix;
-use rand::thread_rng;
 
 // ============================================================================
 // Full workflow: data -> pseudo-obs -> fit -> evaluate -> compare
@@ -13,7 +12,7 @@ use rand::thread_rng;
 
 #[test]
 fn e2e_archimedean_copula_workflow() {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     // 1. Generate data from a known Clayton copula
     let true_copula = ClaytonCopula::new(2.0).unwrap();
@@ -36,8 +35,14 @@ fn e2e_archimedean_copula_workflow() {
     let col1: Vec<f64> = data.column(1).iter().copied().collect();
     let tau = kendall_tau(&col0, &col1).unwrap();
     let rho = spearman_rho(&col0, &col1).unwrap();
-    assert!(tau > 0.0, "expected positive Kendall's tau for Clayton(2.0)");
-    assert!(rho > 0.0, "expected positive Spearman's rho for Clayton(2.0)");
+    assert!(
+        tau > 0.0,
+        "expected positive Kendall's tau for Clayton(2.0)"
+    );
+    assert!(
+        rho > 0.0,
+        "expected positive Spearman's rho for Clayton(2.0)"
+    );
 
     // 4. Evaluate the copula at several points
     let cdf_val = true_copula.cdf(&[0.5, 0.5]).unwrap();
@@ -48,12 +53,12 @@ fn e2e_archimedean_copula_workflow() {
 
     // 5. Compute empirical copula CDF
     let emp_cdf = empirical_copula_cdf(&pseudo, &[0.5, 0.5]).unwrap();
-    assert!(emp_cdf >= 0.0 && emp_cdf <= 1.0);
+    assert!((0.0..=1.0).contains(&emp_cdf));
 }
 
 #[test]
 fn e2e_gaussian_copula_workflow() {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     // 1. Create a Gaussian copula with known correlation
     let rho = 0.7;
@@ -84,7 +89,7 @@ fn e2e_gaussian_copula_workflow() {
 
 #[test]
 fn e2e_student_t_copula_workflow() {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     let corr = DMatrix::from_row_slice(2, 2, &[1.0, 0.5, 0.5, 1.0]);
     let copula = StudentTCopula::new(corr, 5.0).unwrap();
@@ -106,7 +111,7 @@ fn e2e_student_t_copula_workflow() {
 
 #[test]
 fn e2e_multi_copula_comparison() {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     // Generate data from Clayton(2)
     let true_cop = ClaytonCopula::new(2.0).unwrap();
@@ -127,7 +132,7 @@ fn e2e_multi_copula_comparison() {
 
     // All CDFs should be valid probabilities
     for &c in &[c_clayton, c_gumbel, c_frank, c_gaussian] {
-        assert!(c >= 0.0 && c <= 1.0);
+        assert!((0.0..=1.0).contains(&c));
     }
 
     // Independence copula CDF should equal u*v
@@ -136,12 +141,12 @@ fn e2e_multi_copula_comparison() {
     // Empirical copula for reference
     let pseudo = to_pseudo_observations(&data).unwrap();
     let emp = empirical_copula_cdf(&pseudo, &test_point).unwrap();
-    assert!(emp >= 0.0 && emp <= 1.0);
+    assert!((0.0..=1.0).contains(&emp));
 }
 
 #[test]
 fn e2e_high_dimensional_gaussian() {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     // 5-dimensional Gaussian copula with identity correlation
     let dim = 5;
@@ -184,6 +189,7 @@ fn e2e_dependence_measures_consistency() {
 #[test]
 fn e2e_pseudo_observations_rank_ordering_preserved() {
     // Check that the rank order is preserved through transformation
+    #[rustfmt::skip]
     let data = DMatrix::from_row_slice(5, 2, &[
         10.0, 100.0,
         20.0, 200.0,
@@ -196,8 +202,13 @@ fn e2e_pseudo_observations_rank_ordering_preserved() {
     // Monotone data -> pseudo-observations should also be monotone
     for j in 0..2 {
         for i in 1..5 {
-            assert!(pseudo[(i, j)] > pseudo[(i - 1, j)],
-                    "rank order not preserved at column {} rows {}-{}", j, i - 1, i);
+            assert!(
+                pseudo[(i, j)] > pseudo[(i - 1, j)],
+                "rank order not preserved at column {} rows {}-{}",
+                j,
+                i - 1,
+                i
+            );
         }
     }
 }
@@ -210,10 +221,11 @@ fn e2e_pseudo_observations_rank_ordering_preserved() {
 mod estimation_e2e {
     use super::*;
     use copula_core::traits::FittableCopula;
+    use rand::{rngs::StdRng, SeedableRng};
 
     #[test]
     fn e2e_fit_evaluate_compare() {
-        let mut rng = thread_rng();
+        let mut rng = StdRng::seed_from_u64(42);
 
         // Generate from Clayton(2.5)
         let true_theta = 2.5;
@@ -223,8 +235,12 @@ mod estimation_e2e {
         // Fit via moments
         let mut fitted_moments = ClaytonCopula::new(1.0).unwrap();
         let theta_moments = fitted_moments.fit_moments(&data).unwrap();
-        assert!((theta_moments - true_theta).abs() < 0.5,
-                "moments estimate {} too far from true {}", theta_moments, true_theta);
+        assert!(
+            (theta_moments - true_theta).abs() < 0.5,
+            "moments estimate {} too far from true {}",
+            theta_moments,
+            true_theta
+        );
 
         // Fit via MLE
         let mut fitted_mle = ClaytonCopula::new(1.0).unwrap();
@@ -238,13 +254,17 @@ mod estimation_e2e {
         assert!(ll_moments.is_finite());
 
         // MLE should have equal or better log-likelihood
-        assert!(ll_mle >= ll_moments - 1.0,
-                "MLE ll {} should be >= moments ll {}", ll_mle, ll_moments);
+        assert!(
+            ll_mle >= ll_moments - 1.0,
+            "MLE ll {} should be >= moments ll {}",
+            ll_mle,
+            ll_moments
+        );
     }
 
     #[test]
     fn e2e_gaussian_fit_and_evaluate() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
 
         let true_rho = 0.6;
         let corr = DMatrix::from_row_slice(2, 2, &[1.0, true_rho, true_rho, 1.0]);
@@ -255,13 +275,17 @@ mod estimation_e2e {
         let est_corr = est.fit_moments(&data).unwrap();
         let est_rho = est_corr[(0, 1)];
 
-        assert!((est_rho - true_rho).abs() < 0.1,
-                "estimated rho {} too far from true {}", est_rho, true_rho);
+        assert!(
+            (est_rho - true_rho).abs() < 0.1,
+            "estimated rho {} too far from true {}",
+            est_rho,
+            true_rho
+        );
     }
 
     #[test]
     fn e2e_student_t_fit_and_evaluate() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
 
         let true_rho = 0.5;
         let corr = DMatrix::from_row_slice(2, 2, &[1.0, true_rho, true_rho, 1.0]);
@@ -272,8 +296,12 @@ mod estimation_e2e {
         let (est_corr, _) = est.fit_moments(&data).unwrap();
         let est_rho = est_corr[(0, 1)];
 
-        assert!((est_rho - true_rho).abs() < 0.15,
-                "estimated rho {} too far from true {}", est_rho, true_rho);
+        assert!(
+            (est_rho - true_rho).abs() < 0.15,
+            "estimated rho {} too far from true {}",
+            est_rho,
+            true_rho
+        );
     }
 }
 
@@ -285,7 +313,7 @@ mod estimation_e2e {
 fn e2e_goodness_of_fit_workflow() {
     use copula_core::testing::{anderson_darling, cramer_von_mises, kolmogorov_smirnov};
 
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     let cop = ClaytonCopula::new(2.0).unwrap();
     let data = cop.sample(100, &mut rng).unwrap();
@@ -308,6 +336,7 @@ fn e2e_goodness_of_fit_workflow() {
 #[test]
 fn e2e_data_cleaning_pipeline() {
     // Start with dirty data
+    #[rustfmt::skip]
     let dirty = DMatrix::from_row_slice(5, 2, &[
         1.0, 2.0,
         f64::NAN, 4.0,

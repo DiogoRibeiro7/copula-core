@@ -1,74 +1,94 @@
-// src/lib.rs
-
-//! # Copulas: A Comprehensive Rust Library for Copula Modeling
+//! # copula-core
 //!
-//! This library provides implementations of various copula families commonly used
-//! in quantitative finance, risk management, and statistical modeling.
+//! `copula-core` is an experimental Rust library for copula modelling,
+//! simulation, and statistical dependence analysis.
 //!
-//! ## What are Copulas?
+//! The crate is pre-1.0. The principal elliptical and Archimedean families have
+//! the strongest test coverage; advanced constructions such as extreme-value,
+//! factor, and vine copulas should be treated as experimental until their
+//! numerical contracts are validated more thoroughly.
 //!
-//! Copulas are mathematical functions that link univariate marginal distributions
-//! to form multivariate distributions. According to Sklar's theorem, any multivariate
-//! distribution can be written as:
+//! ## Mathematical setting
+//!
+//! For continuous marginals, Sklar's theorem gives
 //!
 //! ```text
-//! F(x₁, x₂, ..., xₙ) = C(F₁(x₁), F₂(x₂), ..., Fₙ(xₙ))
+//! F(x1, ..., xd) = C(F1(x1), ..., Fd(xd)),
 //! ```
 //!
-//! where `C` is a copula and `Fᵢ` are the marginal cumulative distribution functions.
+//! where `C` is a copula and the `Fi` are marginal cumulative distribution
+//! functions.
 //!
-//! ## Quick Start
+//! A statistical implementation must therefore respect mathematical invariants,
+//! not merely return finite numbers. The project tests properties such as unit
+//! interval bounds, Fréchet-Hoeffding bounds, density non-negativity, and sampling
+//! range for a subset of the main families.
+//!
+//! ## Quick start
 //!
 //! ```rust
-//! use copula_core::{Copula, ClaytonCopula};
+//! use copula_core::{ClaytonCopula, Copula};
 //!
-//! // Create a Clayton copula with parameter θ = 2.0
 //! let copula = ClaytonCopula::new(2.0)?;
+//! let c = copula.cdf(&[0.5, 0.5])?;
+//! assert!((0.0..=1.0).contains(&c));
 //!
-//! // Evaluate CDF at point (0.5, 0.5)
-//! let cdf_value = copula.cdf(&[0.5, 0.5])?;
-//! println!("C(0.5, 0.5) = {}", cdf_value);
+//! let mut rng = rand::rng();
+//! let samples = copula.sample(100, &mut rng)?;
+//! assert_eq!(samples.ncols(), 2);
 //!
-//! // Generate samples
-//! let mut rng = rand::thread_rng();
-//! let samples = copula.sample(1000, &mut rng)?;
 //! # Ok::<(), copula_core::CopulaError>(())
 //! ```
 //!
-//! ## Copula Families
+//! ## Main families
 //!
-//! ### Elliptical Copulas
-//! - [`GaussianCopula`] - Based on multivariate normal distribution
-//! - [`StudentTCopula`] - Based on multivariate t-distribution
+//! ### Elliptical
 //!
-//! ### Archimedean Copulas
-//! - [`ClaytonCopula`] - Strong lower-tail dependence
-//! - [`GumbelCopula`] - Strong upper-tail dependence
-//! - [`FrankCopula`] - Symmetric, no tail dependence
-//! - [`JoeCopula`] - Upper-tail dependence
-//! - [`AMHCopula`] - Ali-Mikhail-Haq copula
+//! - [`GaussianCopula`]
+//! - [`StudentTCopula`]
 //!
-//! ### Other Copulas
-//! - [`MarshallOlkinCopula`] - Based on exponential distributions
-//! - [`EmpiricalCopula`] - Non-parametric empirical copula
+//! ### Archimedean
 //!
-//! ## Features
+//! - [`ClaytonCopula`]
+//! - [`GumbelCopula`]
+//! - [`FrankCopula`]
+//! - [`JoeCopula`]
+//! - [`AMHCopula`]
 //!
-//! - **Fast evaluation**: Optimized CDF and PDF computation
-//! - **Flexible sampling**: Multiple sampling algorithms
-//! - **Parameter estimation**: Maximum likelihood and method of moments
-//! - **Statistical testing**: Goodness-of-fit tests
-//! - **High-dimensional**: Vine copula constructions
+//! ### Other
 //!
-//! ## Feature Flags
+//! - [`MarshallOlkinCopula`]
+//! - [`EmpiricalCopula`]
 //!
-//! - `estimation` - Enable parameter estimation capabilities
-//! - `parallel` - Enable parallel processing with rayon
-//! - `serde` - Enable serialization support
+//! ## Feature flags
+//!
+//! No features are enabled by default.
+//!
+//! - `estimation` enables the `estimation` and `model_selection` modules and
+//!   the `FittableCopula` trait.
+//! - `serde` implements `Serialize` and `Deserialize` for the core copula
+//!   types, with parameters validated on deserialization, and the
+//!   `SerializableCopula` JSON helpers.
+//! - `full` enables all of the above.
+//!
+//! ## Minimum supported Rust version
+//!
+//! Rust 1.89. Raising it is not considered a breaking change before 1.0, but
+//! is always listed in the changelog.
+//!
+//! ## Maturity
+//!
+//! The immediate project priority is numerical robustness of the existing API:
+//! parameter domains, boundary behaviour, stable likelihood evaluation, and
+//! verified estimation. See `ROADMAP.md` in the repository for the current plan.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![forbid(unsafe_code)]
 #![warn(missing_docs, rust_2018_idioms)]
 #![allow(clippy::many_single_char_names)] // Mathematical notation uses single chars
+
+#[macro_use]
+mod macros;
 
 // Core modules
 pub mod error;
@@ -90,25 +110,25 @@ pub mod vine;
 #[cfg_attr(docsrs, doc(cfg(feature = "estimation")))]
 pub mod estimation;
 
-pub mod numerical;
-pub mod sampling;
-pub mod testing;
 #[cfg(feature = "estimation")]
 #[cfg_attr(docsrs, doc(cfg(feature = "estimation")))]
 pub mod model_selection;
+pub mod numerical;
+pub mod sampling;
+pub mod testing;
 
 // Convenience module for common imports
 pub mod prelude;
 
 // Re-export core types and traits
 pub use error::{CopulaError, Result};
+#[cfg(feature = "estimation")]
+pub use model_selection::k_fold_cv;
 pub use testing::{
     anderson_darling, cramer_von_mises, cvm_multiplier_bootstrap, kolmogorov_smirnov,
 };
 #[cfg(feature = "estimation")]
 pub use traits::FittableCopula;
-#[cfg(feature = "estimation")]
-pub use model_selection::k_fold_cv;
 pub use traits::{ArchimedeanCopula, Copula};
 pub use utils::{empirical_ranks, kendall_tau, spearman_rho, to_pseudo_observations};
 

@@ -16,4 +16,3 @@ fn workflow_smoke_test() {
 
     assert!(!VERSION.is_empty());
 }
-

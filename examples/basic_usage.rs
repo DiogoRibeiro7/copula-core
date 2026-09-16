@@ -7,7 +7,6 @@
 /// - Computing dependence measures
 ///
 /// Run with: cargo run --example basic_usage
-
 use copula_core::{prelude::*, VERSION};
 use nalgebra::DMatrix;
 
@@ -32,7 +31,7 @@ fn main() -> copula_core::Result<()> {
     println!("   c(0.3, 0.7) = {:.6}", pdf_value);
 
     // Generate samples
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let samples = clayton.sample(5, &mut rng)?;
     println!("   Sample (first 5):");
     for i in 0..5 {
@@ -56,10 +55,7 @@ fn main() -> copula_core::Result<()> {
     println!("   - Models symmetric dependence");
     println!("   - Used in: portfolio risk, multivariate normal models\n");
 
-    let corr_matrix = DMatrix::from_row_slice(2, 2, &[
-        1.0, 0.7,
-        0.7, 1.0,
-    ]);
+    let corr_matrix = DMatrix::from_row_slice(2, 2, &[1.0, 0.7, 0.7, 1.0]);
     let gaussian = GaussianCopula::new(corr_matrix)?;
     let u = [0.5, 0.5];
     println!("   C(0.5, 0.5) = {:.6}", gaussian.cdf(&u)?);
@@ -94,14 +90,26 @@ fn main() -> copula_core::Result<()> {
 
     let test_point = [0.5, 0.5];
 
-    println!("   Clayton(2.0)    {:.4}   {:.4}",
-             clayton.cdf(&test_point)?, clayton.pdf(&test_point)?);
-    println!("   Gumbel(2.5)     {:.4}   {:.4}",
-             gumbel.cdf(&test_point)?, gumbel.pdf(&test_point)?);
-    println!("   Gaussian(0.7)   {:.4}   {:.4}",
-             gaussian.cdf(&test_point)?, gaussian.pdf(&test_point)?);
-    println!("   Frank(5.0)      {:.4}   {:.4}",
-             frank.cdf(&test_point)?, frank.pdf(&test_point)?);
+    println!(
+        "   Clayton(2.0)    {:.4}   {:.4}",
+        clayton.cdf(&test_point)?,
+        clayton.pdf(&test_point)?
+    );
+    println!(
+        "   Gumbel(2.5)     {:.4}   {:.4}",
+        gumbel.cdf(&test_point)?,
+        gumbel.pdf(&test_point)?
+    );
+    println!(
+        "   Gaussian(0.7)   {:.4}   {:.4}",
+        gaussian.cdf(&test_point)?,
+        gaussian.pdf(&test_point)?
+    );
+    println!(
+        "   Frank(5.0)      {:.4}   {:.4}",
+        frank.cdf(&test_point)?,
+        frank.pdf(&test_point)?
+    );
     println!();
 
     println!("✓ Example completed successfully!");

@@ -1,4 +1,3 @@
-// src/archimedean/joe.rs
 //! Joe copula implementation.
 //!
 //! ## Bibliography
@@ -9,8 +8,7 @@
 
 use crate::{ArchimedeanCopula, Copula, CopulaError, Result};
 use nalgebra::DMatrix;
-use rand::Rng;
-use rand_distr::{Distribution, Uniform};
+use rand::{Rng, RngExt};
 
 /// Joe copula with parameter `theta > 1`.
 #[derive(Debug, Clone)]
@@ -19,11 +17,15 @@ pub struct JoeCopula {
     theta: f64,
 }
 
+validated_serde!("JoeCopula", JoeCopula { theta: f64 } => JoeCopula::new(theta));
+
 impl JoeCopula {
     /// Create a new Joe copula with parameter `theta`.
     pub fn new(theta: f64) -> Result<Self> {
         if !theta.is_finite() || theta <= 1.0 {
-            return Err(CopulaError::invalid_parameter("theta must be finite and > 1"));
+            return Err(CopulaError::invalid_parameter(
+                "theta must be finite and > 1",
+            ));
         }
         Ok(Self { theta })
     }
@@ -69,12 +71,11 @@ impl Copula for JoeCopula {
     }
 
     fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
-        let uniform = Uniform::new(0.0, 1.0);
         let mut samples = DMatrix::<f64>::zeros(n, 2);
 
         for i in 0..n {
-            let u1: f64 = uniform.sample(rng);
-            let v: f64 = uniform.sample(rng);
+            let u1: f64 = rng.random::<f64>();
+            let v: f64 = rng.random::<f64>();
 
             // Binary search for u2 using conditional CDF
             let mut u2_low: f64 = 1e-10;
@@ -91,8 +92,9 @@ impl Copula for JoeCopula {
                 let sum = u1_bar_theta + u2_bar_theta - u1_bar_theta * u2_bar_theta;
 
                 // Conditional CDF (derivative w.r.t. u1)
-                let cond_cdf = u1_bar.powf(self.theta - 1.0) * sum.powf(1.0 / self.theta - 1.0)
-                              * (1.0 - u2_bar_theta);
+                let cond_cdf = u1_bar.powf(self.theta - 1.0)
+                    * sum.powf(1.0 / self.theta - 1.0)
+                    * (1.0 - u2_bar_theta);
 
                 if (cond_cdf - v).abs() < 1e-10 {
                     break;
@@ -155,8 +157,10 @@ impl ArchimedeanCopula for JoeCopula {
             2 => {
                 // Second derivative (more complex)
                 let term1 = -(1.0 / self.theta) * exp_neg_s * base.powf(1.0 / self.theta - 1.0);
-                let term2 = (1.0 / self.theta) * (1.0 / self.theta - 1.0) * exp_neg_s.powi(2)
-                           * base.powf(1.0 / self.theta - 2.0);
+                let term2 = (1.0 / self.theta)
+                    * (1.0 / self.theta - 1.0)
+                    * exp_neg_s.powi(2)
+                    * base.powf(1.0 / self.theta - 2.0);
                 Ok(term1 + term2)
             }
             _ => Err(CopulaError::not_implemented("phi_inv_deriv k>2")),

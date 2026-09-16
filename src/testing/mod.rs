@@ -138,9 +138,7 @@ where
     R: rand::Rng + ?Sized,
 {
     if n_rep == 0 {
-        return Err(CopulaError::invalid_parameter(
-            "n_rep must be at least 1",
-        ));
+        return Err(CopulaError::invalid_parameter("n_rep must be at least 1"));
     }
     crate::utils::validate_pseudo_observations(pseudo_obs)?;
     if pseudo_obs.ncols() != copula.dimension() {
@@ -175,11 +173,10 @@ where
 mod tests {
     use super::*;
     use crate::archimedean::ClaytonCopula;
-    use rand::thread_rng;
 
     #[test]
     fn cvm_small_for_true_model() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let cop = ClaytonCopula::new(2.0).unwrap();
         let data = cop.sample(100, &mut rng).unwrap();
         let stat = cramer_von_mises(&cop, &data).unwrap();
@@ -188,7 +185,7 @@ mod tests {
 
     #[test]
     fn ks_statistic_finite() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let cop = ClaytonCopula::new(2.0).unwrap();
         let data = cop.sample(50, &mut rng).unwrap();
         let stat = kolmogorov_smirnov(&cop, &data).unwrap();
@@ -197,7 +194,7 @@ mod tests {
 
     #[test]
     fn ad_statistic_finite() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let cop = ClaytonCopula::new(2.0).unwrap();
         let data = cop.sample(50, &mut rng).unwrap();
         let stat = anderson_darling(&cop, &data).unwrap();
@@ -206,7 +203,7 @@ mod tests {
 
     #[test]
     fn multiplier_bootstrap_produces_samples() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let cop = ClaytonCopula::new(2.0).unwrap();
         let data = cop.sample(40, &mut rng).unwrap();
         let reps = cvm_multiplier_bootstrap(&cop, &data, 10, &mut rng).unwrap();

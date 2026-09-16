@@ -1,5 +1,3 @@
-// src/utils.rs
-
 //! Utility functions for copula modeling and data preprocessing.
 //!
 //! This module provides essential utility functions for working with copulas,
@@ -11,7 +9,7 @@ use nalgebra::DMatrix;
 /// Convert raw data to pseudo-observations (empirical copula).
 ///
 /// Pseudo-observations are the key input for copula modeling. This function
-/// transforms each marginal distribution to uniform [0,1] using empirical
+/// transforms each marginal distribution to uniform [0, 1] using empirical
 /// ranks, which removes the marginal effects and isolates the dependence structure.
 ///
 /// # Mathematical Background
@@ -342,6 +340,25 @@ pub fn empirical_cdf_transform(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
     Ok(transformed)
 }
 
+/// The value of any copula at a point with a coordinate equal to 0 or 1, when
+/// it follows from the copula axioms alone.
+///
+/// C(u) = 0 if some u_i = 0. Coordinates equal to 1 drop out, so C(u) = 1 when
+/// every u_i = 1 and C(u) = u_j when u_j is the only coordinate below 1.
+/// Returns `None` when at least two coordinates lie strictly inside (0, 1).
+/// `u` must already be validated to lie in [0, 1].
+pub(crate) fn copula_boundary_value(u: &[f64]) -> Option<f64> {
+    if u.contains(&0.0) {
+        return Some(0.0);
+    }
+    let mut interior = u.iter().copied().filter(|&x| x < 1.0);
+    match (interior.next(), interior.next()) {
+        (None, _) => Some(1.0),
+        (Some(only), None) => Some(only),
+        _ => None,
+    }
+}
+
 /// Check if a matrix is a valid correlation matrix.
 ///
 /// A valid correlation matrix must be:
@@ -349,6 +366,7 @@ pub fn empirical_cdf_transform(data: &DMatrix<f64>) -> Result<DMatrix<f64>> {
 /// 2. Symmetric
 /// 3. Have unit diagonal
 /// 4. Be positive semi-definite
+/// 5. Have only finite entries
 ///
 /// # Arguments
 ///
@@ -368,6 +386,13 @@ pub fn validate_correlation_matrix(matrix: &DMatrix<f64>) -> Result<()> {
     }
 
     let n = n_rows;
+
+    // NaN fails every comparison below, so reject non-finite entries first.
+    if matrix.iter().any(|x| !x.is_finite()) {
+        return Err(CopulaError::invalid_parameter(
+            "Correlation matrix entries must be finite",
+        ));
+    }
 
     // Check symmetry and unit diagonal
     for i in 0..n {
@@ -427,11 +452,12 @@ pub fn validate_correlation_matrix(matrix: &DMatrix<f64>) -> Result<()> {
 /// # Examples
 ///
 /// ```rust
-/// use copula_core::random_correlation_matrix;
-/// use rand::thread_rng;
+/// use copula_core::utils::random_correlation_matrix;
 ///
-/// let mut rng = thread_rng();
-/// let corr = random_correlation_matrix(3, &mut rng).unwrap();
+/// let mut rng = rand::rng();
+/// let corr = random_correlation_matrix(3, &mut rng)?;
+/// assert_eq!(corr.shape(), (3, 3));
+/// # Ok::<(), copula_core::CopulaError>(())
 /// ```
 pub fn random_correlation_matrix<R: rand::Rng + ?Sized>(
     dimension: usize,
@@ -488,12 +514,14 @@ pub fn random_correlation_matrix<R: rand::Rng + ?Sized>(
 /// # Examples
 ///
 /// ```rust
-/// use copula_core::{empirical_copula_cdf, to_pseudo_observations};
+/// use copula_core::utils::{empirical_copula_cdf, to_pseudo_observations};
 /// use nalgebra::DMatrix;
 ///
-/// let data = DMatrix::from_row_slice(100, 2, &[/* your data */]);
-/// let pseudo_obs = to_pseudo_observations(&data).unwrap();
-/// let cdf_val = empirical_copula_cdf(&pseudo_obs, &[0.5, 0.5]).unwrap();
+/// let data = DMatrix::from_row_slice(4, 2, &[1.2, 0.3, 0.7, 0.9, 2.5, 1.1, 1.9, 2.0]);
+/// let pseudo_obs = to_pseudo_observations(&data)?;
+/// let cdf_val = empirical_copula_cdf(&pseudo_obs, &[0.5, 0.5])?;
+/// assert!((0.0..=1.0).contains(&cdf_val));
+/// # Ok::<(), copula_core::CopulaError>(())
 /// ```
 pub fn empirical_copula_cdf(pseudo_obs: &DMatrix<f64>, u: &[f64]) -> Result<f64> {
     let (n_rows, n_cols) = pseudo_obs.shape();
@@ -632,7 +660,7 @@ pub fn bootstrap_sample<R: rand::Rng + ?Sized>(data: &DMatrix<f64>, rng: &mut R)
     let (n_rows, n_cols) = data.shape();
     let mut bootstrap_data = DMatrix::<f64>::zeros(n_rows, n_cols);
 
-    use rand::seq::SliceRandom;
+    use rand::seq::IndexedRandom;
     let indices: Vec<usize> = (0..n_rows).collect();
 
     for i in 0..n_rows {
@@ -696,7 +724,6 @@ mod tests {
     use super::*;
     use approx::assert_relative_eq;
     use nalgebra::DMatrix;
-    use rand::thread_rng;
 
     #[test]
     fn test_empirical_ranks() {
@@ -802,7 +829,7 @@ mod tests {
 
     #[test]
     fn test_random_correlation_matrix() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let corr = random_correlation_matrix(3, &mut rng).unwrap();
         assert_eq!(corr.nrows(), 3);
         assert!(validate_correlation_matrix(&corr).is_ok());
@@ -812,9 +839,11 @@ mod tests {
 
     #[test]
     fn test_empirical_cdf_transform() {
-        let data = DMatrix::from_row_slice(5, 2, &[
-            1.0, 10.0, 2.0, 20.0, 3.0, 30.0, 4.0, 40.0, 5.0, 50.0,
-        ]);
+        let data = DMatrix::from_row_slice(
+            5,
+            2,
+            &[1.0, 10.0, 2.0, 20.0, 3.0, 30.0, 4.0, 40.0, 5.0, 50.0],
+        );
         let transformed = empirical_cdf_transform(&data).unwrap();
         assert_eq!(transformed.nrows(), 5);
         assert_eq!(transformed.ncols(), 2);
@@ -834,6 +863,7 @@ mod tests {
 
     #[test]
     fn test_multivariate_kendall_tau() {
+        #[rustfmt::skip]
         let data = DMatrix::from_row_slice(5, 3, &[
             1.0, 1.0, 1.0,
             2.0, 2.0, 2.0,
@@ -860,9 +890,8 @@ mod tests {
 
     #[test]
     fn test_multivariate_spearman_rho() {
-        let data = DMatrix::from_row_slice(5, 2, &[
-            1.0, 5.0, 2.0, 4.0, 3.0, 3.0, 4.0, 2.0, 5.0, 1.0,
-        ]);
+        let data =
+            DMatrix::from_row_slice(5, 2, &[1.0, 5.0, 2.0, 4.0, 3.0, 3.0, 4.0, 2.0, 5.0, 1.0]);
         let rho = multivariate_spearman_rho(&data).unwrap();
         assert_eq!(rho.nrows(), 2);
         assert_relative_eq!(rho[(0, 0)], 1.0, epsilon = 1e-10);
@@ -896,10 +925,9 @@ mod tests {
 
     #[test]
     fn test_bootstrap_sample_dimensions() {
-        let mut rng = thread_rng();
-        let data = DMatrix::from_row_slice(5, 2, &[
-            0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.1,
-        ]);
+        let mut rng = rand::rng();
+        let data =
+            DMatrix::from_row_slice(5, 2, &[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.1]);
         let boot = bootstrap_sample(&data, &mut rng);
         assert_eq!(boot.nrows(), 5);
         assert_eq!(boot.ncols(), 2);
@@ -907,7 +935,7 @@ mod tests {
 
     #[test]
     fn test_random_correlation_matrix_1d() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let corr = random_correlation_matrix(1, &mut rng).unwrap();
         assert_eq!(corr.nrows(), 1);
         assert_relative_eq!(corr[(0, 0)], 1.0);

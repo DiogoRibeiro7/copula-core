@@ -47,8 +47,8 @@ impl OneFactorGaussianCopula {
         }
 
         for (i, &loading) in loadings.iter().enumerate() {
-            if loading < 0.0 || loading > 1.0 {
-                return Err(CopulaError::invalid_parameter(&format!(
+            if !(0.0..=1.0).contains(&loading) {
+                return Err(CopulaError::invalid_parameter(format!(
                     "loading[{}] = {} must be in [0, 1]",
                     i, loading
                 )));
@@ -56,7 +56,10 @@ impl OneFactorGaussianCopula {
         }
 
         let dimension = loadings.len();
-        Ok(Self { loadings, dimension })
+        Ok(Self {
+            loadings,
+            dimension,
+        })
     }
 
     /// Get the implied correlation between dimensions i and j.
@@ -90,13 +93,17 @@ impl OneFactorGaussianCopula {
     /// Standard normal CDF.
     fn phi(x: f64) -> f64 {
         use statrs::distribution::{ContinuousCDF, Normal};
-        Normal::new(0.0, 1.0).expect("standard normal parameters are always valid").cdf(x)
+        Normal::new(0.0, 1.0)
+            .expect("standard normal parameters are always valid")
+            .cdf(x)
     }
 
     /// Inverse standard normal CDF.
     fn phi_inv(p: f64) -> f64 {
         use statrs::distribution::{ContinuousCDF, Normal};
-        Normal::new(0.0, 1.0).expect("standard normal parameters are always valid").inverse_cdf(p)
+        Normal::new(0.0, 1.0)
+            .expect("standard normal parameters are always valid")
+            .inverse_cdf(p)
     }
 }
 
@@ -118,13 +125,16 @@ impl Copula for OneFactorGaussianCopula {
 
         for k in 0..n_points {
             let z = z_min + k as f64 * h;
-            let weight = if k == 0 || k == n_points - 1 { 0.5 } else { 1.0 };
+            let weight = if k == 0 || k == n_points - 1 {
+                0.5
+            } else {
+                1.0
+            };
 
             // Compute conditional probability given Z=z
             let mut cond_prob = 1.0;
-            for i in 0..self.dimension {
-                let x_i = Self::phi_inv(u[i]);
-                let loading = self.loadings[i];
+            for (&u_i, &loading) in u.iter().zip(&self.loadings) {
+                let x_i = Self::phi_inv(u_i);
                 let idio_std = (1.0 - loading * loading).sqrt();
 
                 // P(X_i <= x_i | Z = z) = Φ((x_i - β_i*z) / sqrt(1-β_i^2))
@@ -231,6 +241,10 @@ impl MultiFactorGaussianCopula {
             ));
         }
 
+        if loadings.iter().any(|x| !x.is_finite()) {
+            return Err(CopulaError::invalid_parameter("loadings must be finite"));
+        }
+
         // Check that row sums of squares <= 1
         for i in 0..dimension {
             let mut sum_sq = 0.0;
@@ -238,7 +252,7 @@ impl MultiFactorGaussianCopula {
                 sum_sq += loadings[(i, k)].powi(2);
             }
             if sum_sq > 1.0 + 1e-10 {
-                return Err(CopulaError::invalid_parameter(&format!(
+                return Err(CopulaError::invalid_parameter(format!(
                     "row {} has sum of squared loadings > 1",
                     i
                 )));
@@ -269,13 +283,9 @@ impl MultiFactorGaussianCopula {
     /// Standard normal CDF.
     fn phi(x: f64) -> f64 {
         use statrs::distribution::{ContinuousCDF, Normal};
-        Normal::new(0.0, 1.0).expect("standard normal parameters are always valid").cdf(x)
-    }
-
-    /// Inverse standard normal CDF.
-    fn phi_inv(p: f64) -> f64 {
-        use statrs::distribution::{ContinuousCDF, Normal};
-        Normal::new(0.0, 1.0).expect("standard normal parameters are always valid").inverse_cdf(p)
+        Normal::new(0.0, 1.0)
+            .expect("standard normal parameters are always valid")
+            .cdf(x)
     }
 }
 
@@ -377,9 +387,29 @@ mod tests {
     }
 
     #[test]
+    fn test_one_factor_cdf_zero_loadings_is_independence() {
+        let cop = OneFactorGaussianCopula::new(vec![0.0, 0.0]).unwrap();
+        let c = cop.cdf(&[0.3, 0.6]).unwrap();
+        assert!((c - 0.18).abs() < 1e-4, "C(0.3, 0.6) = {c}");
+    }
+
+    #[test]
+    fn test_one_factor_cdf_matches_bivariate_normal_at_median() {
+        // Sheppard's formula: P(X <= 0, Y <= 0) = 1/4 + asin(rho) / (2 pi),
+        // with rho = beta_1 * beta_2 for a one-factor model.
+        let cop = OneFactorGaussianCopula::new(vec![0.6, 0.8]).unwrap();
+        let rho: f64 = 0.6 * 0.8;
+        let expected = 0.25 + rho.asin() / (2.0 * std::f64::consts::PI);
+        let c = cop.cdf(&[0.5, 0.5]).unwrap();
+        assert!(
+            (c - expected).abs() < 1e-3,
+            "C(0.5, 0.5) = {c}, expected {expected}"
+        );
+    }
+
+    #[test]
     fn test_one_factor_sample() {
-        use rand::thread_rng;
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
 
         let loadings = vec![0.7, 0.7, 0.7];
         let cop = OneFactorGaussianCopula::new(loadings).unwrap();
@@ -398,6 +428,7 @@ mod tests {
 
     #[test]
     fn test_multi_factor_new() {
+        #[rustfmt::skip]
         let loadings = DMatrix::from_row_slice(3, 2, &[
             0.5, 0.3,  // dim 1
             0.6, 0.4,  // dim 2
@@ -408,14 +439,17 @@ mod tests {
     }
 
     #[test]
-    fn test_multi_factor_sample() {
-        use rand::thread_rng;
-        let mut rng = thread_rng();
+    fn test_multi_factor_rejects_row_variance_above_one() {
+        // 0.8^2 + 0.7^2 = 1.13 > 1
+        let loadings = DMatrix::from_row_slice(2, 2, &[0.8, 0.7, 0.5, 0.4]);
+        assert!(MultiFactorGaussianCopula::new(loadings).is_err());
+    }
 
-        let loadings = DMatrix::from_row_slice(2, 2, &[
-            0.6, 0.3,
-            0.5, 0.4,
-        ]);
+    #[test]
+    fn test_multi_factor_sample() {
+        let mut rng = rand::rng();
+
+        let loadings = DMatrix::from_row_slice(2, 2, &[0.6, 0.3, 0.5, 0.4]);
         let cop = MultiFactorGaussianCopula::new(loadings).unwrap();
         let samples = cop.sample(50, &mut rng).unwrap();
 
