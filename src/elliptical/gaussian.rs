@@ -44,6 +44,11 @@ impl GaussianCopula {
         })
     }
 
+    /// The correlation matrix.
+    pub fn correlation(&self) -> &DMatrix<f64> {
+        &self.correlation
+    }
+
     fn dim(&self) -> usize {
         self.correlation.ncols()
     }
