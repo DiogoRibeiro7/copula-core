@@ -17,8 +17,7 @@
 
 use crate::{Copula, CopulaError, Result};
 use nalgebra::DMatrix;
-use rand::Rng;
-use rand_distr::{Distribution, Uniform};
+use rand::{Rng, RngExt};
 
 /// Galambos copula with parameter θ ≥ 0.
 ///
@@ -93,12 +92,11 @@ impl Copula for GalambosCopula {
 
     fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
         // Use conditional sampling method
-        let uniform = Uniform::new(0.0, 1.0);
         let mut samples = DMatrix::<f64>::zeros(n, 2);
 
         for i in 0..n {
-            let u1: f64 = uniform.sample(rng);
-            let v: f64 = uniform.sample(rng);
+            let u1: f64 = rng.random::<f64>();
+            let v: f64 = rng.random::<f64>();
 
             // Binary search for u2 using conditional CDF
             let mut u2_low: f64 = 1e-10;
@@ -212,12 +210,11 @@ impl Copula for HuslerReissCopula {
     }
 
     fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
-        let uniform = Uniform::new(0.0, 1.0);
         let mut samples = DMatrix::<f64>::zeros(n, 2);
 
         for i in 0..n {
-            let u1: f64 = uniform.sample(rng);
-            let v: f64 = uniform.sample(rng);
+            let u1: f64 = rng.random::<f64>();
+            let v: f64 = rng.random::<f64>();
 
             // Binary search for u2
             let mut u2_low: f64 = 1e-10;
@@ -288,8 +285,7 @@ mod tests {
 
     #[test]
     fn test_galambos_sample() {
-        use rand::thread_rng;
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let cop = GalambosCopula::new(1.5).unwrap();
         let samples = cop.sample(10, &mut rng).unwrap();
 

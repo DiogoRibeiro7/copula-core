@@ -216,7 +216,7 @@ fn empirical_copula_cdf_out_of_range() {
 
 #[test]
 fn sample_returns_correct_dimensions() {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let cop = ClaytonCopula::new(2.0).unwrap();
     let samples = cop.sample(50, &mut rng).unwrap();
@@ -237,7 +237,7 @@ fn sample_returns_correct_dimensions() {
 
 #[test]
 fn sample_values_in_unit_interval() {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     fn check(cop: &impl Copula, rng: &mut impl rand::Rng) {
         let samples = cop.sample(100, rng).unwrap();
@@ -403,7 +403,7 @@ fn remove_missing_values_filters_nan() {
 
 #[test]
 fn bootstrap_sample_preserves_dimensions() {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     #[rustfmt::skip]
     let data = DMatrix::from_row_slice(10, 3, &[
         0.1, 0.2, 0.3,
@@ -479,7 +479,7 @@ fn estimation_to_pseudo_observations_rejects_empty() {
 #[test]
 fn cvm_bootstrap_rejects_zero_reps() {
     use copula_core::testing::cvm_multiplier_bootstrap;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let cop = ClaytonCopula::new(2.0).unwrap();
     let data = cop.sample(20, &mut rng).unwrap();
     assert!(cvm_multiplier_bootstrap(&cop, &data, 0, &mut rng).is_err());
@@ -489,7 +489,7 @@ fn cvm_bootstrap_rejects_zero_reps() {
 #[should_panic(expected = "latin_hypercube requires n > 0 and d > 0")]
 fn latin_hypercube_rejects_zero_n() {
     use copula_core::sampling::latin_hypercube;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let _ = latin_hypercube(0, 2, &mut rng);
 }
 

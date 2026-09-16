@@ -42,7 +42,7 @@ use crate::archimedean::{AMHCopula, ClaytonCopula, FrankCopula, GumbelCopula, Jo
 use crate::elliptical::{GaussianCopula, StudentTCopula};
 use crate::{Copula, CopulaError, Result};
 use nalgebra::DMatrix;
-use rand::Rng;
+use rand::{Rng, RngExt};
 use statrs::distribution::{ContinuousCDF, Normal, StudentsT};
 
 /// Probabilities are kept at least this far from 0 and 1 before quantile
@@ -368,14 +368,11 @@ impl Copula for CVineCopula {
     /// applying the inverse h-functions of its pair-copulas from the deepest
     /// tree to the first.
     fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
-        use rand_distr::{Distribution, Uniform};
-        let uniform = Uniform::new(0.0, 1.0);
-
         let d = self.dimension;
         let mut samples = DMatrix::<f64>::zeros(n, d);
 
         for row in 0..n {
-            let w: Vec<f64> = (0..d).map(|_| uniform.sample(rng)).collect();
+            let w: Vec<f64> = (0..d).map(|_| rng.random::<f64>()).collect();
 
             for i in 0..d {
                 let mut value = w[i];
@@ -468,16 +465,13 @@ impl Copula for DVineCopula {
     /// first recursion down to `fwd[i][1]`; the second recursion then extends
     /// `bwd` for the variables that follow.
     fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
-        use rand_distr::{Distribution, Uniform};
-        let uniform = Uniform::new(0.0, 1.0);
-
         let d = self.dimension;
         let mut samples = DMatrix::<f64>::zeros(n, d);
         let mut fwd = vec![vec![0.0; d + 1]; d];
         let mut bwd = vec![vec![0.0; d + 1]; d];
 
         for row in 0..n {
-            let w: Vec<f64> = (0..d).map(|_| uniform.sample(rng)).collect();
+            let w: Vec<f64> = (0..d).map(|_| rng.random::<f64>()).collect();
 
             for i in 0..d {
                 let mut value = w[i];
@@ -863,8 +857,7 @@ mod tests {
 
     #[test]
     fn test_cvine_sample() {
-        use rand::thread_rng;
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
 
         // Create a simple 2D C-vine (just one copula)
         let c12 = CopulaType::Clayton(ClaytonCopula::new(2.0).unwrap());

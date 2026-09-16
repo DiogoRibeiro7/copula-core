@@ -26,6 +26,14 @@ Before 1.0, breaking changes increment the minor version.
   the dependency graph enabled one of them.
 - **Breaking:** `nalgebra`'s `serde-serialize` feature is enabled only by this
   crate's `serde` feature instead of unconditionally.
+- **Breaking:** upgraded `rand` to 0.10 and `nalgebra` to 0.35, both of which
+  appear in the public API: `Copula::sample` takes a `rand` 0.10 RNG, and
+  matrices are `nalgebra` 0.35 types. The prelude re-exports `rand::rng` and
+  `rand::RngExt` in place of `rand::thread_rng`.
+- Upgraded `rand_distr` to 0.6, `statrs` to 0.19, `argmin` to 0.11 (without
+  default features), and `thiserror` to 2. The dependency tree no longer
+  contains two versions of `nalgebra`, or the unmaintained `bincode` and
+  `instant` crates.
 - The published package contains only sources, examples, tests, benchmarks, the
   README, this changelog, and the license files.
 

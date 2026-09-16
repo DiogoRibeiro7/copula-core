@@ -5,7 +5,6 @@
 
 use copula_core::prelude::*;
 use nalgebra::DMatrix;
-use rand::thread_rng;
 
 // ============================================================================
 // Full workflow: data -> pseudo-obs -> fit -> evaluate -> compare
@@ -13,7 +12,7 @@ use rand::thread_rng;
 
 #[test]
 fn e2e_archimedean_copula_workflow() {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     // 1. Generate data from a known Clayton copula
     let true_copula = ClaytonCopula::new(2.0).unwrap();
@@ -59,7 +58,7 @@ fn e2e_archimedean_copula_workflow() {
 
 #[test]
 fn e2e_gaussian_copula_workflow() {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     // 1. Create a Gaussian copula with known correlation
     let rho = 0.7;
@@ -90,7 +89,7 @@ fn e2e_gaussian_copula_workflow() {
 
 #[test]
 fn e2e_student_t_copula_workflow() {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     let corr = DMatrix::from_row_slice(2, 2, &[1.0, 0.5, 0.5, 1.0]);
     let copula = StudentTCopula::new(corr, 5.0).unwrap();
@@ -112,7 +111,7 @@ fn e2e_student_t_copula_workflow() {
 
 #[test]
 fn e2e_multi_copula_comparison() {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     // Generate data from Clayton(2)
     let true_cop = ClaytonCopula::new(2.0).unwrap();
@@ -147,7 +146,7 @@ fn e2e_multi_copula_comparison() {
 
 #[test]
 fn e2e_high_dimensional_gaussian() {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     // 5-dimensional Gaussian copula with identity correlation
     let dim = 5;
@@ -265,7 +264,7 @@ mod estimation_e2e {
 
     #[test]
     fn e2e_gaussian_fit_and_evaluate() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
 
         let true_rho = 0.6;
         let corr = DMatrix::from_row_slice(2, 2, &[1.0, true_rho, true_rho, 1.0]);
@@ -286,7 +285,7 @@ mod estimation_e2e {
 
     #[test]
     fn e2e_student_t_fit_and_evaluate() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
 
         let true_rho = 0.5;
         let corr = DMatrix::from_row_slice(2, 2, &[1.0, true_rho, true_rho, 1.0]);
@@ -314,7 +313,7 @@ mod estimation_e2e {
 fn e2e_goodness_of_fit_workflow() {
     use copula_core::testing::{anderson_darling, cramer_von_mises, kolmogorov_smirnov};
 
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     let cop = ClaytonCopula::new(2.0).unwrap();
     let data = cop.sample(100, &mut rng).unwrap();

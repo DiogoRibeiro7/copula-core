@@ -1,10 +1,11 @@
 use copula_core::prelude::*;
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use rand::thread_rng;
+use std::hint::black_box;
+
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 
 fn clayton_sampling_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("clayton_sampling");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     for n in [100, 1000, 10000].iter() {
         let copula = ClaytonCopula::new(2.0).unwrap();
@@ -21,7 +22,7 @@ fn clayton_sampling_benchmark(c: &mut Criterion) {
 
 fn gumbel_sampling_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("gumbel_sampling");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     for n in [100, 1000, 10000].iter() {
         let copula = GumbelCopula::new(2.0).unwrap();
@@ -38,7 +39,7 @@ fn gumbel_sampling_benchmark(c: &mut Criterion) {
 
 fn frank_sampling_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("frank_sampling");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     for n in [100, 1000, 10000].iter() {
         let copula = FrankCopula::new(5.0).unwrap();
@@ -55,7 +56,7 @@ fn frank_sampling_benchmark(c: &mut Criterion) {
 
 fn gaussian_sampling_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("gaussian_sampling");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     for n in [100, 1000, 10000].iter() {
         let corr_matrix = nalgebra::DMatrix::from_row_slice(2, 2, &[1.0, 0.5, 0.5, 1.0]);
@@ -73,7 +74,7 @@ fn gaussian_sampling_benchmark(c: &mut Criterion) {
 
 fn student_t_sampling_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("student_t_sampling");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     for n in [100, 1000, 10000].iter() {
         let corr_matrix = nalgebra::DMatrix::from_row_slice(2, 2, &[1.0, 0.5, 0.5, 1.0]);
@@ -91,7 +92,7 @@ fn student_t_sampling_benchmark(c: &mut Criterion) {
 
 fn joe_sampling_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("joe_sampling");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     for n in [100, 1000, 10000].iter() {
         let copula = JoeCopula::new(2.5).unwrap();
@@ -108,7 +109,7 @@ fn joe_sampling_benchmark(c: &mut Criterion) {
 
 fn amh_sampling_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("amh_sampling");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     for n in [100, 1000, 10000].iter() {
         let copula = AMHCopula::new(0.5).unwrap();
@@ -126,7 +127,7 @@ fn amh_sampling_benchmark(c: &mut Criterion) {
 // Benchmark higher-dimensional sampling
 fn gaussian_high_dim_sampling_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("gaussian_high_dim_sampling");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     for dim in [3, 5, 10].iter() {
         let d = *dim;

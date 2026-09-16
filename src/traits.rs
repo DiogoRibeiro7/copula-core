@@ -29,7 +29,6 @@ use serde::{Deserialize, Serialize};
 ///
 /// ```rust
 /// use copula_core::{Copula, ClaytonCopula};
-/// use rand::thread_rng;
 ///
 /// let copula = ClaytonCopula::new(2.0)?;
 ///
@@ -40,7 +39,7 @@ use serde::{Deserialize, Serialize};
 /// let pdf = copula.pdf(&[0.5, 0.7])?;
 ///
 /// // Generate samples
-/// let mut rng = thread_rng();
+/// let mut rng = rand::rng();
 /// let samples = copula.sample(100, &mut rng)?;
 /// # Ok::<(), copula_core::CopulaError>(())
 /// ```
@@ -600,14 +599,13 @@ mod tests {
         }
 
         fn sample<R: Rng + ?Sized>(&self, n: usize, rng: &mut R) -> Result<DMatrix<f64>> {
-            use rand_distr::{Distribution, Uniform};
+            use rand::RngExt;
 
-            let uniform = Uniform::new(0.0, 1.0);
             let mut samples = DMatrix::<f64>::zeros(n, self.dimension);
 
             for i in 0..n {
                 for j in 0..self.dimension {
-                    samples[(i, j)] = uniform.sample(rng);
+                    samples[(i, j)] = rng.random::<f64>();
                 }
             }
 

@@ -1,16 +1,18 @@
 use copula_core::estimation::{kendall_tau, spearman_rho, to_pseudo_observations, TauEstimator};
 use copula_core::prelude::*;
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use std::hint::black_box;
+
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use nalgebra::DMatrix;
-use rand::{thread_rng, Rng};
+use rand::RngExt;
 
 fn kendall_tau_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("kendall_tau");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     for n in [100, 500, 1000].iter() {
-        let x: Vec<f64> = (0..*n).map(|_| rng.gen()).collect();
-        let y: Vec<f64> = (0..*n).map(|_| rng.gen()).collect();
+        let x: Vec<f64> = (0..*n).map(|_| rng.random()).collect();
+        let y: Vec<f64> = (0..*n).map(|_| rng.random()).collect();
 
         group.bench_with_input(BenchmarkId::from_parameter(n), n, |b, _| {
             b.iter(|| {
@@ -24,11 +26,11 @@ fn kendall_tau_benchmark(c: &mut Criterion) {
 
 fn spearman_rho_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("spearman_rho");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     for n in [100, 500, 1000].iter() {
-        let x: Vec<f64> = (0..*n).map(|_| rng.gen()).collect();
-        let y: Vec<f64> = (0..*n).map(|_| rng.gen()).collect();
+        let x: Vec<f64> = (0..*n).map(|_| rng.random()).collect();
+        let y: Vec<f64> = (0..*n).map(|_| rng.random()).collect();
 
         group.bench_with_input(BenchmarkId::from_parameter(n), n, |b, _| {
             b.iter(|| {
@@ -42,10 +44,10 @@ fn spearman_rho_benchmark(c: &mut Criterion) {
 
 fn pseudo_observations_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("pseudo_observations");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     for n in [100, 500, 1000].iter() {
-        let data: Vec<f64> = (0..(n * 2)).map(|_| rng.gen()).collect();
+        let data: Vec<f64> = (0..(n * 2)).map(|_| rng.random()).collect();
         let matrix = DMatrix::from_row_slice(*n, 2, &data);
 
         group.bench_with_input(BenchmarkId::from_parameter(n), n, |b, _| {
@@ -58,7 +60,7 @@ fn pseudo_observations_benchmark(c: &mut Criterion) {
 
 fn clayton_mle_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("clayton_mle");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     // Generate sample data from Clayton copula
     let copula = ClaytonCopula::new(2.0).unwrap();
@@ -83,7 +85,7 @@ fn clayton_mle_benchmark(c: &mut Criterion) {
 
 fn gumbel_mle_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("gumbel_mle");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     // Generate sample data from Gumbel copula
     let copula = GumbelCopula::new(2.0).unwrap();
@@ -108,7 +110,7 @@ fn gumbel_mle_benchmark(c: &mut Criterion) {
 
 fn gaussian_correlation_estimation_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("gaussian_correlation_estimation");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     // Generate sample data from Gaussian copula
     let corr_matrix = nalgebra::DMatrix::from_row_slice(2, 2, &[1.0, 0.7, 0.7, 1.0]);

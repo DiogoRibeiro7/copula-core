@@ -31,7 +31,7 @@ fn main() -> copula_core::Result<()> {
     println!("   c(0.3, 0.7) = {:.6}", pdf_value);
 
     // Generate samples
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let samples = clayton.sample(5, &mut rng)?;
     println!("   Sample (first 5):");
     for i in 0..5 {

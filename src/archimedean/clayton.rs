@@ -333,7 +333,7 @@ mod tests {
 
     #[test]
     fn sample_produces_valid_data() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let cop = ClaytonCopula::new(1.2).unwrap();
         let samples = cop.sample(10, &mut rng).unwrap();
         assert_eq!(samples.ncols(), 2);

@@ -82,7 +82,7 @@ impl Copula for StudentTCopula {
             .clone()
             .cholesky()
             .ok_or_else(|| CopulaError::invalid_parameter("correlation not PD"))?;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let chi = ChiSquared::new(self.df)
             .map_err(|_| CopulaError::computation("failed to create Chi-squared distribution"))?;
         let normal = StandardNormal;
@@ -335,7 +335,7 @@ mod tests {
 
     #[test]
     fn sample_returns_valid_matrix() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let cop = StudentTCopula::new_identity(2, 5.0).unwrap();
         let samples = cop.sample(5, &mut rng).unwrap();
         assert_eq!(samples.nrows(), 5);

@@ -10,7 +10,7 @@
 
 use crate::{Copula, CopulaError, Result};
 use nalgebra::DMatrix;
-use rand::seq::SliceRandom;
+use rand::seq::IndexedRandom;
 use rand::Rng;
 
 /// Marshall-Olkin copula with parameters α and β in [0,1).
@@ -222,7 +222,7 @@ mod tests {
 
     #[test]
     fn marshall_olkin_sampling() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let cop = MarshallOlkinCopula::new(0.3, 0.4).unwrap();
         let samples = cop.sample(50, &mut rng).unwrap();
         assert_eq!(samples.nrows(), 50);
@@ -265,7 +265,7 @@ mod tests {
 
     #[test]
     fn empirical_copula_sampling() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let data = DMatrix::from_row_slice(3, 2, &[0.2, 0.3, 0.5, 0.6, 0.8, 0.9]);
         let cop = EmpiricalCopula::new(data).unwrap();
         let samples = cop.sample(10, &mut rng).unwrap();

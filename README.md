@@ -18,7 +18,7 @@ Copula modelling, simulation, and dependence analysis for Rust.
 
 ```sh
 cargo add copula-core
-cargo add rand@0.8   # sampling takes a `rand` 0.8 RNG
+cargo add rand@0.10   # sampling takes a `rand` 0.10 RNG
 ```
 
 ### Cargo features
@@ -42,7 +42,7 @@ fn main() -> Result<(), copula_core::CopulaError> {
     let c = copula.cdf(&[0.5, 0.5])?;
     println!("C(0.5, 0.5) = {c}");
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let samples = copula.sample(1_000, &mut rng)?;
     println!("generated {} observations", samples.nrows());
 

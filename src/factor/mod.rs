@@ -409,8 +409,7 @@ mod tests {
 
     #[test]
     fn test_one_factor_sample() {
-        use rand::thread_rng;
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
 
         let loadings = vec![0.7, 0.7, 0.7];
         let cop = OneFactorGaussianCopula::new(loadings).unwrap();
@@ -448,8 +447,7 @@ mod tests {
 
     #[test]
     fn test_multi_factor_sample() {
-        use rand::thread_rng;
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
 
         let loadings = DMatrix::from_row_slice(2, 2, &[0.6, 0.3, 0.5, 0.4]);
         let cop = MultiFactorGaussianCopula::new(loadings).unwrap();

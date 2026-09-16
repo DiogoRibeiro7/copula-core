@@ -19,7 +19,7 @@ fn gaussian_basic_cdf() {
 #[test]
 fn gaussian_sampling() {
     let cop = GaussianCopula::new_identity(2).unwrap();
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let samples = cop.sample(3, &mut rng).unwrap();
     assert_eq!(samples.nrows(), 3);
     assert_eq!(samples.ncols(), 2);

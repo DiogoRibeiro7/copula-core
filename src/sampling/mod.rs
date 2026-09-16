@@ -10,17 +10,15 @@
 //! ## Example
 //! ```
 //! use copula_core::sampling::latin_hypercube;
-//! use rand::thread_rng;
 //!
-//! let mut rng = thread_rng();
+//! let mut rng = rand::rng();
 //! let samples = latin_hypercube(100, 2, &mut rng);
 //! assert_eq!(samples.nrows(), 100);
 //! assert_eq!(samples.ncols(), 2);
 //! ```
 
 use nalgebra::DMatrix;
-use rand::Rng;
-use rand_distr::{Distribution, Uniform};
+use rand::{Rng, RngExt};
 
 /// Generate Latin hypercube samples.
 ///
@@ -36,7 +34,6 @@ use rand_distr::{Distribution, Uniform};
 /// Matrix of shape (n, d) with samples in [0, 1]^d
 pub fn latin_hypercube<R: Rng + ?Sized>(n: usize, d: usize, rng: &mut R) -> DMatrix<f64> {
     assert!(n > 0 && d > 0, "latin_hypercube requires n > 0 and d > 0");
-    let uniform = Uniform::new(0.0, 1.0);
     let mut samples = DMatrix::<f64>::zeros(n, d);
 
     for j in 0..d {
@@ -44,7 +41,7 @@ pub fn latin_hypercube<R: Rng + ?Sized>(n: usize, d: usize, rng: &mut R) -> DMat
         let mut perm: Vec<usize> = (0..n).collect();
         // Shuffle the permutation
         for i in (1..n).rev() {
-            let swap_idx = rng.gen_range(0..=i);
+            let swap_idx = rng.random_range(0..=i);
             perm.swap(i, swap_idx);
         }
 
@@ -52,7 +49,7 @@ pub fn latin_hypercube<R: Rng + ?Sized>(n: usize, d: usize, rng: &mut R) -> DMat
         for i in 0..n {
             let strata_start = perm[i] as f64 / n as f64;
             let strata_end = (perm[i] + 1) as f64 / n as f64;
-            samples[(i, j)] = strata_start + (strata_end - strata_start) * uniform.sample(rng);
+            samples[(i, j)] = strata_start + (strata_end - strata_start) * rng.random::<f64>();
         }
     }
 
@@ -85,12 +82,11 @@ where
     T: Fn(f64) -> f64,
     D: Fn(f64) -> f64,
 {
-    let uniform = Uniform::new(0.0, 1.0);
     let mut accepted = Vec::with_capacity(n);
 
     while accepted.len() < n {
         let x = proposal(rng);
-        let u = uniform.sample(rng);
+        let u = rng.random::<f64>();
         let acceptance_prob = target(x) / (m * proposal_density(x));
 
         if u < acceptance_prob {
@@ -201,11 +197,10 @@ pub fn sobol_1d(n: usize) -> Vec<f64> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::thread_rng;
 
     #[test]
     fn test_latin_hypercube() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let samples = latin_hypercube(50, 3, &mut rng);
 
         // Check dimensions
@@ -248,7 +243,7 @@ mod tests {
 
     #[test]
     fn test_rejection_sampling() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
 
         // Sample from a truncated normal using uniform proposal
         let target = |x: f64| {
@@ -258,7 +253,7 @@ mod tests {
                 0.0
             }
         };
-        let proposal = |rng: &mut rand::rngs::ThreadRng| Uniform::new(0.0, 1.0).sample(rng);
+        let proposal = |rng: &mut rand::rngs::ThreadRng| rng.random::<f64>();
         let proposal_density = |_x: f64| 1.0;
         let m = 1.5; // M such that target(x) <= M * proposal_density(x)
 
@@ -272,7 +267,7 @@ mod tests {
 
     #[test]
     fn test_latin_hypercube_stratification() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let n = 100;
         let samples = latin_hypercube(n, 1, &mut rng);
 
@@ -290,7 +285,7 @@ mod tests {
 
     #[test]
     fn test_latin_hypercube_single_sample() {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let samples = latin_hypercube(1, 2, &mut rng);
         assert_eq!(samples.nrows(), 1);
         assert_eq!(samples.ncols(), 2);
