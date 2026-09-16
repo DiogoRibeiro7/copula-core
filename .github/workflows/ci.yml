@@ -57,7 +57,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Test no default features
-        run: cargo test --no-default-features
+        run: cargo test --lib --no-default-features
 
       - name: Test estimation feature
         run: cargo test --features estimation
@@ -88,7 +88,6 @@ jobs:
   fmt:
     name: Rustfmt advisory
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -98,6 +97,7 @@ jobs:
           components: rustfmt
 
       - name: Check formatting
+        continue-on-error: true
         run: cargo fmt --all -- --check
 
   docs:

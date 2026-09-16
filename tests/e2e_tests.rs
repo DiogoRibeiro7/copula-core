@@ -210,10 +210,11 @@ fn e2e_pseudo_observations_rank_ordering_preserved() {
 mod estimation_e2e {
     use super::*;
     use copula_core::traits::FittableCopula;
+    use rand::{rngs::StdRng, SeedableRng};
 
     #[test]
     fn e2e_fit_evaluate_compare() {
-        let mut rng = thread_rng();
+        let mut rng = StdRng::seed_from_u64(42);
 
         // Generate from Clayton(2.5)
         let true_theta = 2.5;
