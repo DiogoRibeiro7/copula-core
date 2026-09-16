@@ -10,6 +10,8 @@ Before 1.0, breaking changes increment the minor version.
 
 ### Added
 
+- `GaussianCopula::correlation`, `StudentTCopula::correlation`, and
+  `StudentTCopula::df` accessors.
 - `vine::PairCopula::var1`, `var2`, and `conditioning_set` accessors.
 - `sampling::HaltonSequence` implements `Iterator<Item = Vec<f64>>`.
 - Declared minimum supported Rust version: 1.89.
@@ -38,6 +40,17 @@ Before 1.0, breaking changes increment the minor version.
 
 ### Fixed
 
+- `CVineCopula::sample` and `DVineCopula::sample` ignored every tree after the
+  first, so vines with three or more variables produced samples with the wrong
+  dependence structure. In a D-vine, variables beyond the second were also
+  independent of the rest.
+- Vine sampling with Student-t pair-copulas differentiated a Monte Carlo CDF
+  estimate numerically, which produced meaningless samples. Gaussian and
+  Student-t pair-copulas now use closed-form h-functions and inverses.
+- Vine sampling could fail with an invalid-range error when a conditioning
+  value was within 1e-8 of 1.
+- `CVineCopula::new` and `DVineCopula::new` accepted pair-copulas that are not
+  bivariate.
 - `cargo test` with default features failed to compile.
 - Doctests were disabled and four of them failed. All doctests now run.
 - Broken intra-doc links wherever documentation wrote the unit interval as `[0,1]`.

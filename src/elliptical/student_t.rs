@@ -44,6 +44,16 @@ impl StudentTCopula {
         Self::new(DMatrix::identity(dim, dim), df)
     }
 
+    /// The correlation matrix.
+    pub fn correlation(&self) -> &DMatrix<f64> {
+        &self.correlation
+    }
+
+    /// The degrees of freedom.
+    pub fn df(&self) -> f64 {
+        self.df
+    }
+
     fn dim(&self) -> usize {
         self.correlation.ncols()
     }
